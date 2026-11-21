@@ -15,7 +15,7 @@ records: ["ControlTasks:policy_review yearly", "ControlTasks:continuity_test yea
 
 # Business continuity plan
 
-{{dictionary.company.legal_name}} · Version {{generated.version}} · Approved {{generated.date}} · Next review {{generated.next_review}}
+{{dictionary.company.legal_name}} · Version {{generated.version}} · Approved: {{generated.date}} · Next review {{generated.next_review}}
 
 Keep a sealed offline copy of this plan, together with the items in section 2, where the owner and the deputy can reach it without company systems.
 

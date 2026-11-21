@@ -15,7 +15,7 @@ records: ["ControlTasks:access_review quarterly", "ControlTasks:break_glass_test
 
 # Identity and access policy
 
-{{dictionary.company.legal_name}} · Version {{generated.version}} · Approved {{generated.date}} · Next review {{generated.next_review}}
+{{dictionary.company.legal_name}} · Version {{generated.version}} · Approved: {{generated.date}} · Next review {{generated.next_review}}
 
 ## 1. Purpose
 

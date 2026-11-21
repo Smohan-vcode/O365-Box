@@ -15,7 +15,7 @@ records: ["ControlTasks:risk_assessment yearly", "Risks:register yearly and afte
 
 # Risk assessment method and register
 
-{{dictionary.company.legal_name}} · Version {{generated.version}} · Approved {{generated.date}} · Next review {{generated.next_review}}
+{{dictionary.company.legal_name}} · Version {{generated.version}} · Approved: {{generated.date}} · Next review {{generated.next_review}}
 
 ## 1. When
 

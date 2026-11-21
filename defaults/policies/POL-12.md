@@ -15,7 +15,7 @@ records: ["PrivacyRequests:each request on event"]
 
 # Privacy and data-subject requests policy
 
-{{dictionary.company.legal_name}} · Version {{generated.version}} · Approved {{generated.date}} · Next review {{generated.next_review}}
+{{dictionary.company.legal_name}} · Version {{generated.version}} · Approved: {{generated.date}} · Next review {{generated.next_review}}
 
 ## 1. Purpose
 

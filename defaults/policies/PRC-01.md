@@ -15,7 +15,7 @@ records: ["ControlTasks:incident_exercise yearly", "ControlTasks:incident_regist
 
 # Incident response plan
 
-{{dictionary.company.legal_name}} · Version {{generated.version}} · Approved {{generated.date}} · Next review {{generated.next_review}}
+{{dictionary.company.legal_name}} · Version {{generated.version}} · Approved: {{generated.date}} · Next review {{generated.next_review}}
 
 Keep a printed or offline copy of this plan with the continuity plan (PRC-04). You may need it when company systems are down.
 

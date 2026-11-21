@@ -15,7 +15,7 @@ records: ["ControlTasks:vendor_review yearly", "Vendors:register on event"]
 
 # Supplier assessment and review procedure
 
-{{dictionary.company.legal_name}} · Version {{generated.version}} · Approved {{generated.date}} · Next review {{generated.next_review}}
+{{dictionary.company.legal_name}} · Version {{generated.version}} · Approved: {{generated.date}} · Next review {{generated.next_review}}
 
 ## 1. Scope
 

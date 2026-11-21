@@ -299,11 +299,31 @@ func table(t *Table) string {
 	if cols == 0 {
 		return ""
 	}
-	w := textWidth / cols
+	// Columns share the width by how much text they hold (header and
+	// longest cell, within limits), so short codes stay narrow.
+	weight := make([]int, cols)
+	total := 0
+	for i := 0; i < cols; i++ {
+		m := 0
+		if i < len(t.Header) {
+			m = len(t.Header[i])
+		}
+		for _, r := range t.Rows {
+			if i < len(r) {
+				m = max(m, len(r[i]))
+			}
+		}
+		weight[i] = min(max(m, 8), 60)
+		total += weight[i]
+	}
+	widths := make([]int, cols)
+	for i := range widths {
+		widths[i] = textWidth * weight[i] / total
+	}
 	var s strings.Builder
 	s.WriteString(`<w:tbl><w:tblPr><w:tblStyle w:val="TableGrid"/><w:tblW w:w="5000" w:type="pct"/><w:tblLook w:val="04A0" w:firstRow="1" w:lastRow="0" w:firstColumn="0" w:lastColumn="0" w:noHBand="0" w:noVBand="1"/></w:tblPr><w:tblGrid>`)
 	for i := 0; i < cols; i++ {
-		fmt.Fprintf(&s, `<w:gridCol w:w="%d"/>`, w)
+		fmt.Fprintf(&s, `<w:gridCol w:w="%d"/>`, widths[i])
 	}
 	s.WriteString(`</w:tblGrid>`)
 	row := func(cells []string, header bool) {
@@ -322,7 +342,7 @@ func table(t *Table) string {
 					runs[j].Bold = true
 				}
 			}
-			fmt.Fprintf(&s, `<w:tc><w:tcPr><w:tcW w:w="%d" w:type="dxa"/></w:tcPr>%s</w:tc>`, w, para("", "", runs))
+			fmt.Fprintf(&s, `<w:tc><w:tcPr><w:tcW w:w="%d" w:type="dxa"/></w:tcPr>%s</w:tc>`, widths[i], para("", "", runs))
 		}
 		s.WriteString(`</w:tr>`)
 	}

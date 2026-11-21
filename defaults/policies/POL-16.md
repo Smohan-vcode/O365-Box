@@ -15,7 +15,7 @@ records: ["ControlTasks:restore_test yearly", "ControlTasks:continuity_test year
 
 # Business continuity and backup policy
 
-{{dictionary.company.legal_name}} · Version {{generated.version}} · Approved {{generated.date}} · Next review {{generated.next_review}}
+{{dictionary.company.legal_name}} · Version {{generated.version}} · Approved: {{generated.date}} · Next review {{generated.next_review}}
 
 ## 1. Purpose
 

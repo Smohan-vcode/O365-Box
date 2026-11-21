@@ -15,7 +15,7 @@ records: ["ControlTasks:vulnerability_review weekly", "ControlTasks:pen_test yea
 
 # Secure development and vulnerability management policy
 
-{{dictionary.company.legal_name}} · Version {{generated.version}} · Approved {{generated.date}} · Next review {{generated.next_review}}
+{{dictionary.company.legal_name}} · Version {{generated.version}} · Approved: {{generated.date}} · Next review {{generated.next_review}}
 
 ## 1. Purpose
 

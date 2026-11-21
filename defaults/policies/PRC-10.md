@@ -15,7 +15,7 @@ records: ["ControlTasks:awareness yearly", "Acknowledgements:on joining and each
 
 # Awareness training programme
 
-{{dictionary.company.legal_name}} · Version {{generated.version}} · Approved {{generated.date}} · Next review {{generated.next_review}}
+{{dictionary.company.legal_name}} · Version {{generated.version}} · Approved: {{generated.date}} · Next review {{generated.next_review}}
 
 ## 1. Purpose
 

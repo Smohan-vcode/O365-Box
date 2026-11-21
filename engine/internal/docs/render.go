@@ -291,7 +291,7 @@ func generated(d Doc, c Context) (map[string]string, error) {
 	months := reviewMonths(d)
 	g := map[string]string{
 		"generated.id": d.ID, "generated.title": d.Title, "generated.version": d.Version, "generated.status": StatusDraft,
-		"generated.date":          "pending approval",
+		"generated.date":          "not yet (draft)",
 		"generated.next_review":   fmt.Sprintf("%d months after approval", months),
 		"generated.review_months": strconv.Itoa(months),
 		"generated.owner_role":    d.OwnerRole, "generated.approver_role": d.ApproverRole,

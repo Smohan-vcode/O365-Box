@@ -15,7 +15,7 @@ records: ["Evidence:mail_auth weekly", "Evidence:forwarding monthly"]
 
 # Email and external communication policy
 
-{{dictionary.company.legal_name}} · Version {{generated.version}} · Approved {{generated.date}} · Next review {{generated.next_review}}
+{{dictionary.company.legal_name}} · Version {{generated.version}} · Approved: {{generated.date}} · Next review {{generated.next_review}}
 
 ## 1. Purpose
 

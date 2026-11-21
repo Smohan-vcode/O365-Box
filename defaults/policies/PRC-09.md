@@ -15,7 +15,7 @@ records: ["ControlTasks:vulnerability_review weekly"]
 
 # Vulnerability review procedure
 
-{{dictionary.company.legal_name}} · Version {{generated.version}} · Approved {{generated.date}} · Next review {{generated.next_review}}
+{{dictionary.company.legal_name}} · Version {{generated.version}} · Approved: {{generated.date}} · Next review {{generated.next_review}}
 
 ## 1. Purpose
 

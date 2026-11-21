@@ -15,7 +15,7 @@ records: ["ControlTasks:alert_review each working day", "Evidence:audit_logs wee
 
 # Logging and monitoring policy
 
-{{dictionary.company.legal_name}} · Version {{generated.version}} · Approved {{generated.date}} · Next review {{generated.next_review}}
+{{dictionary.company.legal_name}} · Version {{generated.version}} · Approved: {{generated.date}} · Next review {{generated.next_review}}
 
 ## 1. Purpose
 

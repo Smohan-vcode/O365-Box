@@ -15,7 +15,7 @@ records: ["ControlTasks:incident_register on event"]
 
 # Regulatory incident notification procedure
 
-{{dictionary.company.legal_name}} · Version {{generated.version}} · Approved {{generated.date}} · Next review {{generated.next_review}}
+{{dictionary.company.legal_name}} · Version {{generated.version}} · Approved: {{generated.date}} · Next review {{generated.next_review}}
 
 This procedure helps the company meet deadlines to notify regulators, customers and affected people after an incident. It is not legal advice. The deadlines below are rendered from the jurisdiction rules the company has selected; rules marked as not yet reviewed by counsel must be confirmed with counsel before they are relied on.
 

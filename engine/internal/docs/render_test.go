@@ -100,7 +100,7 @@ func TestRenderDraft(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, want := range []string{"Testbed Instruments Limited", "pending approval", "version 1.0", "security@testbed.invalid", "Testland",
+	for _, want := range []string{"Testbed Instruments Limited", "not yet (draft)", "version 1.0", "security@testbed.invalid", "Testland",
 		"| IAM-01 | Every user signs in with multi-factor authentication for every cloud service. | core | technical | SOC 2",
 		"Settings applied by the box |", "| IAM-13 |", "Procedure (this document)", "- Require MFA for all users: on (Entra admin centre)"} {
 		if !strings.Contains(r.Markdown, want) {

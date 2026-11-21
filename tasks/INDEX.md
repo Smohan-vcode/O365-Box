@@ -73,7 +73,7 @@ CI runs `box backlog check`.
 | T11-05 | Upgrade: assistants | P2 | S | T5-09, T9-02 | yes | TODO |
 | T12-01 | Second-company dry run | P2 | M | T5-08, T7-02, T9-02 |  | TODO |
 | T12-02 | Installer guide | P2 | S | T12-01 |  | TODO |
-| T14-01 | Resolver, validation and coverage | P0 | S | T0-01 |  | TODO |
+| T14-01 | Resolver, validation and coverage | P0 | S | T0-01 |  | DONE |
 | T14-02 | Capability check against tenant licences | P0 | S | T14-01, T0-04 |  | TODO |
 | T14-03 | Setting resolution | P0 | L | T14-02, S-02 | yes | TODO |
 | T14-04 | Apply engine with audit and enforce modes | P0 | M | T14-03 |  | TODO |

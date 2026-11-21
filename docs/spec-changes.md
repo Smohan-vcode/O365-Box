@@ -1128,7 +1128,7 @@ company on day one."
 5. Development and testing on a test tenant may apply directly (owner,
    2026-11-21); the approval gate is how the product treats every company.
 
-### B. Super simple for anyone (proposed)
+### B. Super simple for anyone (approved 2026-11-21; SPEC §25)
 
 Organise everything by what an owner cares about, not by Microsoft admin centre:
 
@@ -1163,7 +1163,7 @@ After the build the home screen shows one status per area (protected,
 watching in audit, needs you), the audit report, and an **Enforce** button
 per area when its audit period is clean.
 
-## SC-26  Audit pack: a read-only entry point (proposed)
+## SC-26  Audit pack: a read-only entry point (approved 2026-11-21; SPEC §26)
 
 Owner idea (2026-11-21): a simple feature that extracts everything an IT
 audit (SOC 2, ISO 27001, NIST CSF, Cyber Essentials, HIPAA, …) asks for,

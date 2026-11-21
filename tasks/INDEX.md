@@ -21,6 +21,7 @@ CI runs `box backlog check`.
 | T0-05 | Pipeline and scheduled jobs | P0 | S | T0-04, T0-06 |  | TODO |
 | T0-06 | Configuration store | P0 | M | T0-02, T0-04 |  | TODO |
 | T0-07 | Permission bundles granted by the selection | P0 | S | T0-04, T13-09 | yes | TODO |
+| T0-08 | Approval gate: proposals and approve before apply | P0 | M | T0-05 |  | TODO |
 | T13-01 | TUI shell | P0 | S | T0-02 |  | DONE |
 | T13-02 | Start, sign-in and discovery screen | P0 | M | T13-01, T0-04, S-08 |  | TODO |
 | T13-03 | Company, addresses and people screens | P0 | M | T13-02 |  | TODO |
@@ -31,6 +32,8 @@ CI runs `box backlog check`.
 | T13-08 | Run view, report and home screen | P0 | M | T13-07, T0-05, T0-06 |  | TODO |
 | T13-09 | Choices engine | P0 | M | T14-01 |  | DONE |
 | T13-10 | Choices screens | P0 | M | T13-09, T13-02 |  | TODO |
+| T13-11 | Five-question onboarding and the careful dial | P0 | M | T13-10 |  | TODO |
+| T13-12 | Review by area and the home screen | P0 | M | T13-11, T0-08 |  | TODO |
 | T1-01 | Break-glass accounts and exclusion group | P0 | S | T0-04 | yes | BLOCKED |
 | T1-02 | Users and licences | P0 | S | T1-01 |  | TODO |
 | T1-03 | Groups and role groups | P0 | S | T1-02 |  | TODO |
@@ -96,3 +99,8 @@ CI runs `box backlog check`.
 | T15-02 | Domain control | P1 | S | T13-09, T2-03 | yes | TODO |
 | T15-03 | Azure provider and discovery | P1 | M | T13-09, T0-07 | yes | TODO |
 | T15-04 | Azure governance apply | P1 | M | T15-03, T14-04 |  | TODO |
+| T16-01 | Read-only sign-in and audit mode | P1 | M | T14-03 |  | TODO |
+| T16-02 | Inventories | P1 | M | T16-01 |  | TODO |
+| T16-03 | Control status per framework | P1 | M | T16-01 |  | TODO |
+| T16-04 | Pack writer | P1 | M | T16-02, T16-03 |  | TODO |
+| T16-05 | Prepare for an audit path in the TUI | P1 | M | T16-04, T13-11 |  | TODO |

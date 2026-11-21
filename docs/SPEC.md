@@ -176,6 +176,7 @@ run that step and its plan or verify only.
 | T12 Product packaging | Second-company dry run in CI, installer guide | P2 | M | all P0 and P1 |
 | T14 Policy sets | Resolver, validation and coverage; capability check; setting resolution; apply per admin area in audit then enforce; sensitivity labels; data loss prevention; audit and alerts; Frameworks list; exceptions; evidence per requirement; standards rendered from requirements | P0 | L | T0, T1, T2, T3, S-02 |
 | T15 Directory, domains and Azure | Hybrid directory (Cloud Sync), domain control, Azure governance at no extra cost, each driven by choices (§24) | P1 | M | T13-09, T14-03 |
+| T16 Audit pack | Read-only audit path: delegated read sign-in, live setting reads, inventories, control status, the evidence pack (§26) | P1 | M | T14-03 |
 
 Each provider step is usable headless before its TUI screen exists.
 
@@ -897,3 +898,72 @@ The product applies only what the subscription includes (R2). An option
 that could lead to a charge says so in its `cost` (for example creating an
 Azure subscription: nothing is billed until resources are created), and
 the Review screen lists every such note before the build.
+
+## 25. Approval and simplicity
+
+The product suggests; the owner decides (SC-25). It never makes a decision
+for the company.
+
+### 25.1 Suggest, then approve
+
+- Every value the box would otherwise pick is a choice with a recommended
+  answer (§24), shown before anything is applied. An unanswered value is
+  listed on the Review screen; the box never fills one silently or skips
+  one silently. Choices may carry `values` that fill configuration keys the
+  settings read (`devices.*`, `ai_policy.*`, `values.*`).
+- `box plan` writes a **proposal**: every change in plain words, grouped by
+  area (§25.2), with why (requirement, framework) and what it affects. The
+  owner approves all of it, an area, or single changes (`box approve`, or the
+  Review screen); a rejected change becomes an exception with the owner's
+  reason. The approval (who, when, the digest of each approved change) is
+  an `Events` item and a local record.
+- `box apply` and `box up` apply only approved changes. A step whose plan
+  holds an unapproved change waits ("needs approval") and names the changes.
+- Policies take two approvals: audit (report-only, nobody blocked), then,
+  after the audit report, enforce. Enforcing is never automatic.
+- Later changes (a new choice, a catalogue update, drift repair) arrive as a
+  new proposal on the home screen; nothing is applied in the background.
+- Development on a test tenant may approve with `box approve --all` from the
+  developer's own terminal.
+
+### 25.2 Areas
+
+Everything is organised by what an owner cares about, not by admin centre
+(`defaults/areas.yaml` maps steps and centres to areas): Sign-in and
+accounts; Email; Files and sharing; Meetings and chat; Computers and
+phones; Sensitive information; Apps and automation; Your web address;
+Cloud.
+
+### 25.3 Five questions
+
+The onboarding asks five things, with everything else on the
+recommendation: sign in; what do you run (modules); how careful (one dial:
+Essential, Recommended, Strict, setting the tier and each choice's default,
+with "fine-tune" for the individual choices); who works here; review and
+approve (one card per area in plain words: Approve, Show details, Not now).
+After the build the home screen shows each area as protected, watching
+(audit), or needs you, with an Enforce action per area once its audit
+period is clean.
+
+## 26. Audit pack
+
+A second entry point, "Prepare for an audit" (`box audit`), reads and
+never writes (SC-26). It works on any Microsoft 365 tenant.
+
+- Sign-in is delegated, as a person with Global Reader (plus Security Reader
+  and Compliance Reader), with read-only scopes. No app registration,
+  certificate or tenant write. In audit mode the executor runs only `test`,
+  `verify` and `evidence`; `plan` and `apply` are refused.
+- It reads every catalogue setting's live value through its mapping's
+  `read` and `check`; inventories (users and admins with MFA and last
+  sign-in, roles, guests, Conditional Access, authentication methods,
+  devices and compliance, sharing, mailbox forwarding, DLP, labels,
+  retention, audit log status, alert policies, licences); and activity over
+  the audit period where the tenant keeps it.
+- The pack, written to a folder the person chooses and never to the
+  repository: `index.html` and `controls.csv` (one row per framework
+  control: met, partly met, not met, document needed; evidence files; the
+  gap in plain words); `evidence/<control>/` raw reads stamped with tenant,
+  time and query; `manifest.sha256`; `gaps.md` ordered by risk, each with
+  the proposal that would fix it.
+

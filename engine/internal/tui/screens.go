@@ -5,7 +5,9 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 
+	"github.com/Smohan-vcode/O365-Box/engine/internal/choices"
 	"github.com/Smohan-vcode/O365-Box/engine/internal/draft"
 )
 
@@ -55,24 +57,54 @@ func (c *choiceScreen) View(width, _ int, th Theme, d *draft.Draft) string {
 	b.WriteString(wrap(c.question, width) + "\n\n")
 	chosen := d.String(c.key)
 	for i, o := range c.options {
-		mark := "  "
-		if i == c.cursor {
-			mark = th.Cursor + " "
-		}
-		box := th.Unchecked
-		if o.Value == chosen {
-			box = th.Checked
-		}
-		line := fmt.Sprintf("%s%s %s", mark, box, o.Label)
-		if i == c.cursor {
-			line = th.Selected.Render(line)
-		}
-		b.WriteString(line + "\n")
-		if o.Detail != "" {
-			b.WriteString(th.Muted.Render(wrapIndent(o.Detail, width, "      ")) + "\n")
-		}
+		b.WriteString(optionCard(th, width, i == c.cursor, o.Value == chosen, o.Label, o.Detail, nil) + "\n")
 	}
 	return b.String()
+}
+
+// optionCard renders one answer: a card in colour themes, a line in plain.
+// badges are short labels such as "★ recommended" or "free".
+func optionCard(th Theme, width int, cursor, chosen bool, label, detail string, badges []string) string {
+	box := th.Unchecked
+	if chosen {
+		box = th.Checked
+	}
+	mark := "  "
+	if cursor {
+		mark = th.Cursor + " "
+	}
+	if th.Plain {
+		line := fmt.Sprintf("%s%s %s", mark, box, label)
+		for _, bd := range badges {
+			line += " (" + bd + ")"
+		}
+		out := line
+		if detail != "" {
+			out += "\n" + wrapIndent(detail, width, "      ")
+		}
+		return out
+	}
+	head := box + " " + label
+	if cursor || chosen {
+		head = th.Selected.Render(head)
+	}
+	for i, bd := range badges {
+		st := th.BadgeOK
+		if i == 0 && strings.HasPrefix(bd, "★") {
+			st = th.Badge
+		}
+		head += " " + st.Render(bd)
+	}
+	inner := width - 6
+	body := head
+	if detail != "" {
+		body += "\n" + th.Muted.Render(wrap(detail, inner))
+	}
+	card := th.Card
+	if cursor {
+		card = th.CardOn
+	}
+	return lipgloss.JoinHorizontal(lipgloss.Top, mark, card.Width(inner+2).Render(body))
 }
 
 func (c *choiceScreen) Ready(d *draft.Draft) error {
@@ -104,9 +136,10 @@ func (p *plannedScreen) View(width, _ int, th Theme, _ *draft.Draft) string {
 	return b.String()
 }
 
-// Steps returns the eight wizard steps (SPEC §18.4).
-func Steps() []Screen {
-	return []Screen{
+// Steps returns the eight wizard steps (SPEC §18.4). With the choices
+// catalogue, Security and Structure ask its questions (T13-10).
+func Steps(cat *choices.Catalogue) []Screen {
+	steps := []Screen{
 		&choiceScreen{id: "start", title: "Start", key: "start.mode",
 			question: "Do you already have Microsoft 365 for your company?",
 			help:     "We sign you in to your Microsoft 365 organisation and read what Microsoft already knows: your organisation's name and address, domains and licences. Nothing is changed until the Build step.\n\nWhy we ask: if you do not have Microsoft 365 yet, we show you how to sign up first.",
@@ -133,8 +166,20 @@ func Steps() []Screen {
 		&plannedScreen{id: "review", title: "Review", task: "T13-07",
 			help:     "Check everything that will be built before anything changes.",
 			collects: []string{"The full plan, with every change", "Licence use, manual steps ahead and estimated time", "Your typed confirmation"}},
-		&plannedScreen{id: "build", title: "Build", task: "T13-08",
-			help:     "The build runs step by step. When something needs you, such as a security key, we show a short guide and wait.",
-			collects: []string{"Live progress", "Guides for the few steps only you can do", "A final report"}},
+		newBuildScreen(nil, []string{"Your people, groups and emergency accounts", "Shared mailboxes, lists and automatic replies",
+			"Sites, libraries and the company registers", "Security policies, audit mode first", "A final report"}),
 	}
+	if cat != nil {
+		for i, st := range steps {
+			p, ok := st.(*plannedScreen)
+			if !ok || (p.id != "security" && p.id != "structure") {
+				continue
+			}
+			cs := newChoicesScreen(p.id, p.title, p.help, cat, p.collects)
+			if len(cs.questions) > 0 {
+				steps[i] = cs
+			}
+		}
+	}
+	return steps
 }

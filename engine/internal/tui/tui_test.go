@@ -26,6 +26,9 @@ func newModel(t *testing.T, path, theme string) *Model {
 	t.Helper()
 	m := New(Options{DraftPath: path, Theme: theme, Keys: testKey})
 	send(m, tea.WindowSizeMsg{Width: 80, Height: 24})
+	if m.phase == phaseWelcome {
+		send(m, key(tea.KeyEnter))
+	}
 	return m
 }
 
@@ -46,7 +49,9 @@ func TestEveryScreenFits(t *testing.T) {
 	for _, theme := range []string{"dark", "light", "plain"} {
 		for _, size := range [][2]int{{80, 24}, {120, 40}, {40, 12}} {
 			m := New(Options{DraftPath: filepath.Join(t.TempDir(), "d"), Theme: theme, Keys: testKey})
-			send(m, tea.WindowSizeMsg{Width: size[0], Height: size[1]}, key(tea.KeyEnter))
+			send(m, tea.WindowSizeMsg{Width: size[0], Height: size[1]})
+			checkFits(t, m.View(), size[0], size[1], theme+" welcome")
+			send(m, key(tea.KeyEnter), key(tea.KeyEnter))
 			for i := range m.steps {
 				checkFits(t, m.View(), size[0], size[1], theme+" "+m.steps[i].ID())
 				if !strings.Contains(m.View(), m.steps[i].Title()) {
@@ -92,7 +97,7 @@ func TestQuitAndResumeAtSameScreen(t *testing.T) {
 		t.Error("no welcome-back message")
 	}
 	send(m2, key(tea.KeyShiftTab), key(tea.KeyShiftTab))
-	if m2.cur != 0 || !strings.Contains(m2.View(), "[x] Yes, sign me in") {
+	if m2.cur != 0 || !strings.Contains(m2.View(), "◆ Yes, sign me in") {
 		t.Errorf("start choice not restored on screen:\n%s", m2.View())
 	}
 }
@@ -119,8 +124,12 @@ func TestPassphraseWhenNoKeychain(t *testing.T) {
 		t.Fatal("short passphrase accepted")
 	}
 	send(m, runes("correct horse battery"), key(tea.KeyEnter))
+	if m.phase != phaseWelcome || !strings.Contains(m.View(), "Press enter to begin") {
+		t.Fatalf("not unlocked to the welcome screen: %q", m.status)
+	}
+	send(m, key(tea.KeyEnter))
 	if m.phase != phaseWizard {
-		t.Fatalf("not unlocked: %q", m.status)
+		t.Fatalf("welcome did not start the wizard")
 	}
 	if strings.Contains(m.View(), "correct horse") {
 		t.Error("passphrase shown on screen")

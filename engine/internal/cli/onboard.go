@@ -2,11 +2,14 @@ package cli
 
 import (
 	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
 
+	"github.com/Smohan-vcode/O365-Box/engine/internal/choices"
 	"github.com/Smohan-vcode/O365-Box/engine/internal/draft"
+	"github.com/Smohan-vcode/O365-Box/engine/internal/repo"
 	"github.com/Smohan-vcode/O365-Box/engine/internal/tui"
 )
 
@@ -38,7 +41,17 @@ func (f *tuiFlags) run() error {
 	if f.plain {
 		theme = "plain"
 	}
-	return tui.Run(tui.Options{DraftPath: p, Theme: theme})
+	opt := tui.Options{DraftPath: p, Theme: theme}
+	// The choices catalogue is engine data; until it is embedded in the
+	// binary it is read from the repository when box runs inside one.
+	if wd, err := os.Getwd(); err == nil {
+		if root, err := repo.FindRoot(wd); err == nil {
+			if cat, err := choices.Load(filepath.Join(root, "defaults", "choices.yaml")); err == nil {
+				opt.Choices = cat
+			}
+		}
+	}
+	return tui.Run(opt)
 }
 
 func isTerminal() bool {

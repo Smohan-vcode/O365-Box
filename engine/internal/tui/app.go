@@ -9,21 +9,25 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
+	"github.com/Smohan-vcode/O365-Box/engine/internal/choices"
 	"github.com/Smohan-vcode/O365-Box/engine/internal/draft"
 )
 
 // Options configure the TUI.
 type Options struct {
-	DraftPath string          // encrypted draft file
-	Theme     string          // auto | dark | light | plain
-	Keys      draft.KeySource // fixed key source (tests); nil picks keychain or passphrase
-	Keychain  func() bool     // reports keychain availability; default draft.KeychainAvailable
+	DraftPath string             // encrypted draft file
+	Theme     string             // auto | dark | light | plain
+	Keys      draft.KeySource    // fixed key source (tests); nil picks keychain or passphrase
+	Keychain  func() bool        // reports keychain availability; default draft.KeychainAvailable
+	Choices   *choices.Catalogue // defaults/choices.yaml; nil keeps Security and Structure as outlines
+	Build     BuildFeed          // starts the build; nil shows the outline only
 }
 
 type phase int
 
 const (
 	phaseUnlock phase = iota
+	phaseWelcome
 	phaseWizard
 )
 
@@ -44,6 +48,8 @@ type Model struct {
 	phase    phase
 	pass     textinput.Model
 	newDraft bool
+	frame    int  // animation frame (tickMsg)
+	ticking  bool // a tick is scheduled
 	Saved    bool // set when the model quit after saving
 	Err      error
 }
@@ -53,8 +59,13 @@ var themeCycle = []string{"dark", "light", "plain"}
 // New builds the model. It opens the draft with the keychain when the
 // machine has one; otherwise it asks for a passphrase first.
 func New(opt Options) *Model {
-	m := &Model{opt: opt, steps: Steps(), w: 80, h: 24, d: draft.New()}
+	m := &Model{opt: opt, steps: Steps(opt.Choices), w: 80, h: 24, d: draft.New()}
 	m.th = ThemeFor(opt.Theme)
+	if opt.Build != nil {
+		if b, ok := m.steps[len(m.steps)-1].(*buildScreen); ok {
+			b.feed = opt.Build
+		}
+	}
 	for i, n := range themeCycle {
 		if n == m.th.Name {
 			m.themeIdx = i
@@ -104,15 +115,23 @@ func (m *Model) unlock() bool {
 		m.isErr = false
 	}
 	m.phase = phaseWizard
+	if m.d.Step == "" && len(m.d.Answers) == 0 {
+		m.phase = phaseWelcome
+	}
 	for i, s := range m.steps {
 		if s.ID() == m.d.Step {
 			m.cur = i
 		}
 	}
-	if c, ok := m.steps[0].(*choiceScreen); ok {
-		c.sync(m.d)
-	}
+	m.syncCur()
 	return true
+}
+
+// syncCur moves the current screen's cursor to its saved answer.
+func (m *Model) syncCur() {
+	if sy, ok := m.steps[m.cur].(interface{ sync(*draft.Draft) }); ok {
+		sy.sync(m.d)
+	}
 }
 
 func (m *Model) setErr(err error) {
@@ -131,7 +150,30 @@ func (m *Model) Init() tea.Cmd {
 	if m.phase == phaseUnlock {
 		return textinput.Blink
 	}
-	return nil
+	return m.animate()
+}
+
+// animating reports whether something on screen moves.
+func (m *Model) animating() bool {
+	if m.th.Plain {
+		return false
+	}
+	if m.phase == phaseWelcome {
+		return true
+	}
+	if a, ok := m.steps[m.cur].(interface{ Animating() bool }); ok && m.phase == phaseWizard {
+		return a.Animating()
+	}
+	return false
+}
+
+// animate schedules the next frame when something moves and none is pending.
+func (m *Model) animate() tea.Cmd {
+	if m.ticking || !m.animating() {
+		return nil
+	}
+	m.ticking = true
+	return tick()
 }
 
 // Update implements tea.Model.
@@ -143,11 +185,39 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.help = m.w >= 72
 		}
 		return m, nil
-	case tea.KeyMsg:
-		if m.phase == phaseUnlock {
-			return m.updateUnlock(msg)
+	case tickMsg:
+		m.ticking = false
+		m.frame++
+		if t, ok := m.steps[m.cur].(interface{ Tick(*draft.Draft) }); ok && m.phase == phaseWizard {
+			t.Tick(m.d)
 		}
-		return m.updateWizard(msg)
+		return m, m.animate()
+	case tea.KeyMsg:
+		var model tea.Model
+		var cmd tea.Cmd
+		switch m.phase {
+		case phaseUnlock:
+			model, cmd = m.updateUnlock(msg)
+		case phaseWelcome:
+			model, cmd = m.updateWelcome(msg)
+		default:
+			model, cmd = m.updateWizard(msg)
+		}
+		return model, tea.Batch(cmd, m.animate())
+	}
+	return m, nil
+}
+
+func (m *Model) updateWelcome(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch msg.String() {
+	case "ctrl+c", "esc", "q":
+		return m, tea.Quit
+	case "enter", " ":
+		m.phase = phaseWizard
+		m.status = "Let's go! Answers save as you move between steps."
+	case "ctrl+t":
+		m.themeIdx = (m.themeIdx + 1) % len(themeCycle)
+		m.th = ThemeFor(themeCycle[m.themeIdx])
 	}
 	return m, nil
 }
@@ -195,12 +265,14 @@ func (m *Model) updateWizard(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		if m.cur < len(m.steps)-1 {
 			m.cur++
 			m.save()
+			m.syncCur()
 		}
 		return m, nil
 	case "shift+tab", "ctrl+p":
 		if m.cur > 0 {
 			m.cur--
 			m.save()
+			m.syncCur()
 		}
 		return m, nil
 	case "?":
@@ -231,19 +303,39 @@ func (m *Model) View() string {
 	if m.phase == phaseUnlock {
 		return fit(m.viewUnlock(w), w, h)
 	}
+	if m.phase == phaseWelcome {
+		v := m.welcomeCentered(w)
+		top := (h - strings.Count(v, "\n") - 1) / 2
+		if top > 0 {
+			v = strings.Repeat("\n", top) + v
+		}
+		return fit(v, w, h)
+	}
 	th := m.th
 	s := m.steps[m.cur]
 	sep := strings.Repeat("─", w)
 	if th.Plain {
 		sep = strings.Repeat("-", w)
 	}
+	frac := float64(m.cur) / float64(len(m.steps)-1)
 	right := fmt.Sprintf("Step %d of %d · %s", m.cur+1, len(m.steps), s.Title())
-	left := "Company in a Box"
-	gap := w - lipgloss.Width(left) - lipgloss.Width(right)
+	left := "▣ Company in a Box"
+	if th.Plain {
+		left = "Company in a Box"
+	}
+	barW := w - lipgloss.Width(left) - lipgloss.Width(right) - 4 - 5
+	bar := ""
+	if barW >= 8 {
+		bar = "  " + th.Bar(min(barW, 30), frac) + th.Muted.Render(fmt.Sprintf(" %3d%%", int(frac*100+0.5)))
+	}
+	gap := w - lipgloss.Width(left) - lipgloss.Width(bar) - lipgloss.Width(right)
 	if gap < 1 {
 		gap = 1
 	}
-	header := th.Title.Render(left) + strings.Repeat(" ", gap) + th.Accent.Render(right)
+	header := th.Gradient(left, 0, true) + bar + strings.Repeat(" ", gap) + th.Accent.Render(right)
+	if th.Plain {
+		header = th.Title.Render(left) + bar + strings.Repeat(" ", gap) + th.Accent.Render(right)
+	}
 	progress := m.progress(w)
 	footer := m.keyBar(w)
 	status := ""
@@ -310,7 +402,7 @@ func (m *Model) body(w, h int) string {
 	mainW := w*3/5 - 1
 	helpW := w - mainW - 3
 	main := fit(title+"\n\n"+s.View(mainW, h-2, m.th, m.d), mainW, h)
-	help := fit(m.th.Accent.Render("What is this?")+"\n"+wrap(s.Help(), helpW), helpW, h)
+	help := fit(m.th.Accent.Render(m.helpTitle())+"\n\n"+wrap(s.Help(), helpW), helpW, h)
 	ml, hl := strings.Split(main, "\n"), strings.Split(help, "\n")
 	var b strings.Builder
 	for i := 0; i < h; i++ {
@@ -321,6 +413,13 @@ func (m *Model) body(w, h int) string {
 		}
 	}
 	return b.String()
+}
+
+func (m *Model) helpTitle() string {
+	if m.th.Plain {
+		return "What is this?"
+	}
+	return "✦ What is this?"
 }
 
 func (m *Model) keyBar(w int) string {

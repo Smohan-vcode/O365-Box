@@ -1,21 +1,43 @@
 # Starter control set. mappings.soc2 lists common-criteria references;
 # confirm each mapping with the auditor at readiness review.
+#
+# frequency: daily (each working day) | weekly | monthly | quarterly |
+# semiannually | annually | on_event.
+#
+# A control whose source is task.<kind> is a recurring control task (F17,
+# T10-02): the box keeps the next due ControlTasks item for it, assigned to
+# the owner role of its procedure (or, without one, of its policy). Such a
+# control also names:
+#   procedure     the written procedure (defaults/policies/PRC-*.md) it follows
+#   requirements  the requirement ids (policy/requirements.yaml) its record proves
+#   prepares      optional: an artefact the box generates from a read for the
+#                 owner to review and confirm (access_review_sheet, app_consent_list)
+# Every "ControlTasks:<kind> <frequency>" in a document's records names one
+# of these kinds at the same frequency (checked by engine/internal/docs).
 controls:
   - {id: C-01, statement: "2-Step Verification is enforced for all users.", soc2: [CC6.1], frequency: monthly, source: collector.users_2sv, automated: true, policy: POL-03}
   - {id: C-02, statement: "Super-administrator rights are held only by dedicated administrator accounts.", soc2: [CC6.1, CC6.3], frequency: monthly, source: collector.admin_roles, automated: true, policy: POL-03}
   - {id: C-03, statement: "Access to shared drives is granted through groups.", soc2: [CC6.1, CC6.3], frequency: monthly, source: collector.drive_permissions, automated: true, policy: POL-03}
-  - {id: C-04, statement: "User access, administrator roles and drive permissions are reviewed.", soc2: [CC6.2, CC6.3], frequency: quarterly, source: task.access_review, automated: false, policy: POL-03}
+  - {id: C-04, statement: "User access, administrator roles and drive permissions are reviewed.", soc2: [CC6.2, CC6.3], frequency: quarterly, source: task.access_review, automated: false, policy: POL-03, procedure: PRC-06, requirements: [IAM-13, IAM-06, IAM-11, SUP-02], prepares: access_review_sheet}
   - {id: C-05, statement: "Third-party application access is limited to an approved list.", soc2: [CC6.6], frequency: monthly, source: collector.allowed_apps, automated: true, policy: POL-11}
   - {id: C-06, statement: "Mail authentication is published and enforced.", soc2: [CC6.6], frequency: weekly, source: collector.mail_auth, automated: true, policy: POL-04}
   - {id: C-07, statement: "Configuration changes are made by reviewed pull request.", soc2: [CC8.1], frequency: on_event, source: collector.pull_requests, automated: true, policy: POL-14}
   - {id: C-08, statement: "Configuration drift is detected and reported.", soc2: [CC7.1], frequency: weekly, source: collector.drift, automated: true, policy: POL-14}
   - {id: C-09, statement: "Administrator and sign-in activity is logged and retained.", soc2: [CC7.2], frequency: weekly, source: collector.audit_logs, automated: true, policy: POL-18}
-  - {id: C-10, statement: "Policies are approved, versioned and reviewed.", soc2: [CC1.4, CC5.3], frequency: annually, source: task.policy_review, automated: false, policy: POL-01}
+  - {id: C-10, statement: "Policies are approved, versioned and reviewed.", soc2: [CC1.4, CC5.3], frequency: annually, source: task.policy_review, automated: false, policy: POL-01, procedure: PRC-15, requirements: [GOV-01, GOV-04, BCK-04]}
   - {id: C-11, statement: "Personnel acknowledge policies on joining and each year.", soc2: [CC1.4], frequency: on_event, source: collector.acknowledgements, automated: true, policy: POL-20}
   - {id: C-12, statement: "Joiner and leaver steps are completed and recorded.", soc2: [CC6.2], frequency: on_event, source: collector.checklists, automated: true, policy: POL-20}
-  - {id: C-13, statement: "A risk assessment is performed.", soc2: [CC3.1, CC3.2], frequency: annually, source: task.risk_assessment, automated: false, policy: POL-15}
-  - {id: C-14, statement: "Vendors are inventoried, under agreement and reviewed.", soc2: [CC9.2], frequency: annually, source: task.vendor_review, automated: false, policy: POL-11}
-  - {id: C-15, statement: "An independent penetration test is performed.", soc2: [CC4.1], frequency: annually, source: task.pen_test, automated: false, policy: POL-17}
-  - {id: C-16, statement: "Incident response is exercised.", soc2: [CC7.4], frequency: annually, source: task.incident_exercise, automated: false, policy: POL-13}
-  - {id: C-17, statement: "Continuity and restore are tested.", soc2: [CC7.5, A1.3], frequency: annually, source: task.continuity_test, automated: false, policy: POL-16}
+  - {id: C-13, statement: "A risk assessment is performed.", soc2: [CC3.1, CC3.2], frequency: annually, source: task.risk_assessment, automated: false, policy: POL-15, procedure: PRC-05, requirements: [GOV-02]}
+  - {id: C-14, statement: "Vendors are inventoried, under agreement and reviewed.", soc2: [CC9.2], frequency: annually, source: task.vendor_review, automated: false, policy: POL-11, procedure: PRC-11, requirements: [SUP-01, SUP-02]}
+  - {id: C-15, statement: "An independent penetration test is performed.", soc2: [CC4.1], frequency: annually, source: task.pen_test, automated: false, policy: POL-17, requirements: []}
+  - {id: C-16, statement: "Incident response is exercised.", soc2: [CC7.4], frequency: annually, source: task.incident_exercise, automated: false, policy: POL-13, procedure: PRC-01, requirements: [INC-01]}
+  - {id: C-17, statement: "Continuity and restore are tested.", soc2: [CC7.5, A1.3], frequency: annually, source: task.continuity_test, automated: false, policy: POL-16, procedure: PRC-04, requirements: [BCK-04]}
   - {id: C-18, statement: "Legal documents are approved under recorded rules before sending.", soc2: [CC2.3], frequency: on_event, source: collector.approvals, automated: true, policy: POL-08}
+  - {id: C-19, statement: "The emergency access accounts are tested.", soc2: [CC6.1, A1.2], frequency: semiannually, source: task.break_glass_test, automated: false, policy: POL-03, procedure: PRC-07, requirements: [IAM-07]}
+  - {id: C-20, statement: "Software vulnerabilities are reviewed.", soc2: [CC7.1], frequency: weekly, source: task.vulnerability_review, automated: false, policy: POL-17, procedure: PRC-09, requirements: [CFG-04]}
+  - {id: C-21, statement: "Security alerts are reviewed.", soc2: [CC7.2, CC7.3], frequency: daily, source: task.alert_review, automated: false, policy: POL-18, procedure: PRC-08, requirements: [LOG-02]}
+  - {id: C-22, statement: "Restore from backup is tested.", soc2: [A1.2, A1.3], frequency: annually, source: task.restore_test, automated: false, policy: POL-16, procedure: PRC-03, requirements: [BCK-02, BCK-03]}
+  - {id: C-23, statement: "Applications granted access to company data are reviewed.", soc2: [CC6.1, CC9.2], frequency: monthly, source: task.app_consent_review, automated: false, policy: POL-21, procedure: PRC-13, requirements: [APP-01, IAM-10, IAM-17], prepares: app_consent_list}
+  - {id: C-24, statement: "Open exceptions are reviewed.", soc2: [CC3.4, CC5.3], frequency: monthly, source: task.exception_review, automated: false, policy: POL-15, procedure: PRC-14, requirements: [GOV-03]}
+  - {id: C-25, statement: "Security awareness training is completed.", soc2: [CC1.4, CC2.2], frequency: annually, source: task.awareness, automated: false, policy: POL-20, procedure: PRC-10, requirements: [AWR-01]}
+  - {id: C-26, statement: "Incidents are recorded and notified on time.", soc2: [CC7.4, CC2.3], frequency: on_event, source: task.incident_register, automated: false, policy: POL-13, procedure: PRC-02, requirements: [INC-02]}

@@ -16,6 +16,10 @@
 #>
 
 $script:Operations = @('test', 'plan', 'apply', 'verify', 'evidence')
+# Optional operations a step may add for a narrow CLI command: read
+# (read-only) and record (one write the person asked for, such as box tasks
+# done). The orchestrator never calls them; they are not required.
+$script:OptionalOperations = @('read', 'record')
 
 function Invoke-BoxDispatch {
   param(
@@ -24,7 +28,7 @@ function Invoke-BoxDispatch {
     [Parameter(Mandatory)] [string] $Operation,
     $InputObject
   )
-  if ($Operation -notin $script:Operations) { throw "unknown operation '$Operation'" }
+  if ($Operation -notin $script:Operations -and $Operation -notin $script:OptionalOperations) { throw "unknown operation '$Operation'" }
   if (-not $Steps.Contains($Step)) { throw "unknown step '$Step'" }
   $handler = $Steps[$Step]
   if (-not $handler.Contains($Operation)) { throw "step '$Step' does not implement '$Operation'" }

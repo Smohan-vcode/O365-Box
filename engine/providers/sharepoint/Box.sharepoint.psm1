@@ -201,6 +201,30 @@ function Get-AdminSiteUrl($In) {
   if ($a.Count -ne 1) { throw "the step's input has no Admin site: add 'structure' to its reads" }
   return Get-SiteUrl $In $a[0].url
 }
+function Get-FieldChoices($Field) {
+  # A choice column's values, read from its schema (works for any field type PnP returns).
+  $x = [string]$Field.SchemaXml
+  if (-not $x) { return @() }
+  return @(([xml]$x).SelectNodes('//CHOICES/CHOICE') | ForEach-Object { [string]$_.InnerText })
+}
+function Get-MissingChoices($Field, [string[]] $Want) {
+  $have = @(Get-FieldChoices $Field)
+  if (-not [string]$Field.SchemaXml) { return @() } # schema not read: nothing to compare
+  return @($Want | Where-Object { $_ -and $_ -notin $have })
+}
+function Add-FieldChoices($sc, $ListId, $Field, [string[]] $Add) {
+  $ctx = $sc.Context
+  $f = $ctx.Web.Lists.GetById($ListId).Fields.GetByInternalNameOrTitle([string]$Field.InternalName)
+  $ctx.Load($f)
+  $ctx.ExecuteQuery()
+  $x = [xml]$f.SchemaXml
+  $choices = $x.SelectSingleNode('//CHOICES')
+  if (-not $choices) { $choices = $x.DocumentElement.AppendChild($x.CreateElement('CHOICES')) }
+  foreach ($a in $Add) { $n = $x.CreateElement('CHOICE'); $n.InnerText = $a; [void]$choices.AppendChild($n) }
+  $f.SchemaXml = $x.OuterXml
+  $f.Update()
+  $ctx.ExecuteQuery()
+}
 function Get-RegisterChanges($In, [switch] $Apply) {
   $changes = @()
   $sc = Connect-Site (Get-AdminSiteUrl $In)
@@ -244,7 +268,17 @@ function Get-RegisterChanges($In, [switch] $Apply) {
         $type = [string]$col.type
         $isRef = $type -like 'ref(*'
         if (($pass -eq 1) -eq $isRef) { continue }
-        if ($have.ContainsKey([string]$col.name)) { continue }
+        if ($have.ContainsKey([string]$col.name)) {
+          # An enum gains values over time: add the choices a column lacks.
+          if ($type -eq 'enum') {
+            $missing = @(Get-MissingChoices $have[[string]$col.name] @($def.enums.([string]$col.enum)))
+            if ($missing.Count -gt 0) {
+              $changes += New-BoxChange update "column $name.$($col.name) choices" "add $($missing -join ', ')"
+              if ($Apply) { Add-FieldChoices $sc $list.Id $have[[string]$col.name] $missing }
+            }
+          }
+          continue
+        }
         $changes += New-BoxChange create "column $name.$($col.name)" $type
         if (-not $Apply) { continue }
         if ($isRef) {
@@ -322,6 +356,395 @@ function Get-StoreChanges($In, [switch] $Apply) {
     }
   }
   return $changes
+}
+
+# ---------- sharepoint.control-tasks (T10-02, F17) ----------
+# Keeps the next due ControlTasks item per recurring control task kind. The
+# schedule (kind, control, frequency, owner role, current and next period)
+# comes from the engine ($In.control_tasks, read "@controltasks"), derived
+# from the documents' records and defaults/controls.yaml. The step creates
+# the current period's item, and the next one once the current is DONE;
+# marks an OPEN item past its due date OVERDUE; and, for kinds that prepare
+# an artefact, writes the review sheet to the Compliance site's Evidence
+# library and links it on the item. It never edits or deletes a DONE item
+# and never marks a task done: the assignee does (box tasks done).
+$DoneNeedsOutput = '=OR([state]<>"DONE",LEN([output_url])>0)'
+$DoneNeedsOutputMessage = 'A control task is closed only with its output: fill output_url (the review, test or exercise record).'
+$PrepareNames = @{ access_review_sheet = 'review-sheet.csv'; app_consent_list = 'app-consents.csv' }
+$PrepareWords = @{
+  access_review_sheet = 'review sheet of users, administrator roles, guests and site permissions'
+  app_consent_list    = 'list of applications granted access, with their permissions'
+}
+
+function Get-ControlTasksInput($In) {
+  if ($In.control_tasks_error) { throw "control task schedule: $($In.control_tasks_error)" }
+  $ct = $In.control_tasks
+  if (-not $ct -or -not $ct.today) { throw "the step's input has no control task schedule: add '@controltasks' to its reads" }
+  return $ct
+}
+
+function Test-SameFormula([string] $Have, [string] $Want) {
+  # SharePoint stores a validation formula without the brackets around
+  # column names: compare without them and without spaces.
+  $n = { param($s) ($s -replace '[\[\]\s]', '') }
+  return (& $n $Have) -eq (& $n $Want)
+}
+
+function ConvertTo-BoxDay($Value) {
+  # A SharePoint date-only value as yyyy-MM-dd. It is stored as midnight in
+  # the site's time zone and read back in UTC: round to the nearest day.
+  if ($null -eq $Value -or "$Value" -eq '') { return '' }
+  if ($Value -is [string]) { if ($Value -match '^\d{4}-\d{2}-\d{2}$') { return $Value }; $Value = [datetime]::Parse($Value, [Globalization.CultureInfo]::InvariantCulture).ToUniversalTime() }
+  return ([datetime]$Value).ToUniversalTime().AddHours(12).ToString('yyyy-MM-dd')
+}
+
+function Get-ControlTaskActions {
+  # Pure: what the step must do. Kinds: the schedule's kinds (current and
+  # next period). Items: task_id -> @{ id; state; due_on (yyyy-MM-dd);
+  # prepared_url }. Today: yyyy-MM-dd. Returns actions in a stable order.
+  param($Kinds, [hashtable] $Items, [string] $Today)
+  $out = [System.Collections.Generic.List[object]]::new()
+  foreach ($k in @($Kinds | Sort-Object { [string]$_.kind })) {
+    $cur = $k.current; $next = $k.next
+    $have = $Items[[string]$cur.task_id]
+    if (-not $have) {
+      $out.Add(@{ op = 'create'; kind = $k; period = $cur })
+      if ($k.prepares) { $out.Add(@{ op = 'prepare'; kind = $k; period = $cur }) }
+      continue
+    }
+    if ([string]$have.state -eq 'DONE') {
+      if (-not $Items[[string]$next.task_id]) { $out.Add(@{ op = 'create'; kind = $k; period = $next }) }
+      continue
+    }
+    if ($k.prepares -and -not [string]$have.prepared_url) { $out.Add(@{ op = 'prepare'; kind = $k; period = $cur }) }
+  }
+  foreach ($id in @($Items.Keys | Sort-Object)) {
+    $i = $Items[$id]
+    if ([string]$i.state -eq 'OPEN' -and [string]$i.due_on -and [string]$i.due_on -lt $Today) {
+      $out.Add(@{ op = 'overdue'; task_id = $id; due_on = [string]$i.due_on })
+    }
+  }
+  return $out.ToArray()
+}
+
+function Get-RegisterList($sc, [string] $Name, [string[]] $Includes) {
+  $p = @{ Identity = "Lists/$Name"; Connection = $sc; ErrorAction = 'SilentlyContinue' }
+  if ($Includes) { $p.Includes = $Includes }
+  return Get-PnPList @p
+}
+
+function Get-ControlTaskItems($sc) {
+  $items = @{}
+  foreach ($i in @(Get-PnPListItem -List 'Lists/ControlTasks' -PageSize 500 -Connection $sc)) {
+    $id = [string]$i['task_id']
+    if (-not $id) { continue }
+    $items[$id] = @{ id = $i.Id; state = [string]$i['state']; due_on = (ConvertTo-BoxDay $i['due_on']); prepared_url = [string]$i['prepared_url']
+      output_url = [string]$i['output_url']; assignee_role = [string]$i['assignee_role']; title = [string]$i['Title']
+      control = $(if ($i['control_id']) { [string]$i['control_id'].LookupValue } else { '' }); closed_at = (ConvertTo-BoxDay $i['closed_at']) }
+  }
+  return $items
+}
+
+function Get-ControlItems($sc) {
+  $c = @{}
+  foreach ($i in @(Get-PnPListItem -List 'Lists/Controls' -PageSize 500 -Connection $sc)) {
+    if ([string]$i['control_id']) { $c[[string]$i['control_id']] = $i.Id }
+  }
+  return $c
+}
+
+function Add-BoxEvent($sc, [string] $Entity, [string] $EntityId, [string] $Action, [string] $From, [string] $To, $Detail, [string] $Actor = 'box pipeline', [string] $OnBehalfOf) {
+  $v = @{ Title = "$Entity $EntityId $Action"; event_id = [guid]::NewGuid().ToString(); at = (Get-Date).ToUniversalTime().ToString('o'); actor = $Actor
+    entity = $Entity; entity_id = $EntityId; action = $Action }
+  if ($From) { $v.from_state = $From }
+  if ($To) { $v.to_state = $To }
+  if ($OnBehalfOf) { $v.on_behalf_of = $OnBehalfOf }
+  if ($null -ne $Detail) { $v.detail = ($Detail | ConvertTo-Json -Depth 5 -Compress) }
+  Add-PnPListItem -List 'Lists/Events' -Values $v -Connection $sc -ErrorAction Stop | Out-Null
+}
+
+function Get-ComplianceSiteUrl($In) {
+  $a = @($In.config.structure.sites | Where-Object { $_.name -eq 'Compliance' })
+  if ($a.Count -ne 1) { throw "the structure has no Compliance site: the control task artefacts go to its Evidence library" }
+  return Get-SiteUrl $In $a[0].url
+}
+
+function Get-PreparedPath([string] $TaskId, [string] $Prepares) {
+  return "Evidence/Control tasks/$TaskId/$TaskId-$($PrepareNames[$Prepares])"
+}
+
+function Save-EvidenceFile($In, [string] $Folder, [string] $FileName, [byte[]] $Bytes) {
+  # Writes a file under the Compliance site's Evidence library; returns its URL.
+  $cc = Connect-Site (Get-ComplianceSiteUrl $In)
+  $ms = [IO.MemoryStream]::new($Bytes)
+  $f = Add-PnPFile -Folder $Folder -FileName $FileName -Stream $ms -Connection $cc -ErrorAction Stop
+  return "$(Get-Root $In)$($f.ServerRelativeUrl)"
+}
+
+function ConvertTo-CsvBytes($Rows, [string[]] $Columns) {
+  $lines = @($Rows | Select-Object -Property $Columns | ConvertTo-Csv -NoTypeInformation -UseQuotes AsNeeded)
+  if ($lines.Count -eq 0) { $lines = @(($Columns | ForEach-Object { $_ }) -join ',') }
+  return [Text.Encoding]::UTF8.GetBytes(($lines -join "`r`n") + "`r`n")
+}
+
+function Get-LastSignIn($u) {
+  $a = [string]$u.signInActivity.lastSignInDateTime; $b = [string]$u.signInActivity.lastNonInteractiveSignInDateTime
+  if ($b -gt $a) { return $b }; return $a
+}
+
+$ReviewColumns = @('section', 'name', 'account', 'type', 'access', 'state', 'last_sign_in', 'decision')
+function Get-AccessReviewRows($In) {
+  # Users, administrator roles, guests and site permissions, for the
+  # quarterly access review (PRC-06). A guest's address can be personal:
+  # only its domain is kept. The decision column is the reviewer's.
+  $rows = [System.Collections.Generic.List[object]]::new()
+  $sel = 'id,displayName,userPrincipalName,userType,accountEnabled,mail,externalUserState'
+  # signInActivity needs AuditLog.Read.All and Entra ID P1, and pages of at most 120.
+  try { $users = @(Get-BoxGraphAll "/users?`$top=120&`$select=$sel,signInActivity") }
+  catch {
+    $rows.Add([pscustomobject]@{ section = 'note'; name = 'last sign-in not read'; account = ''; type = ''; access = ''; state = "$_"; last_sign_in = ''; decision = '' })
+    $users = @(Get-BoxGraphAll "/users?`$top=999&`$select=$sel")
+  }
+  foreach ($u in @($users | Sort-Object { [string]$_.userType }, { [string]$_.displayName })) {
+    $state = if ($u.accountEnabled) { 'enabled' } else { 'disabled' }
+    if ([string]$u.userType -eq 'Guest') {
+      $dom = ([string]$u.mail -split '@')[-1].ToLowerInvariant()
+      $rows.Add([pscustomobject]@{ section = 'guest'; name = [string]$u.displayName; account = "guest from $dom"; type = 'guest'; access = ''
+          state = "$state $([string]$u.externalUserState)".Trim(); last_sign_in = (Get-LastSignIn $u); decision = '' })
+    } else {
+      $rows.Add([pscustomobject]@{ section = 'user'; name = [string]$u.displayName; account = [string]$u.userPrincipalName; type = 'member'; access = ''
+          state = $state; last_sign_in = (Get-LastSignIn $u); decision = '' })
+    }
+  }
+  foreach ($r in @(Get-BoxGraphAll '/directoryRoles?$expand=members' | Sort-Object { [string]$_.displayName })) {
+    foreach ($m in @($r.members | Where-Object { $_ })) {
+      $type = ([string]$m.'@odata.type').Replace('#microsoft.graph.', '')
+      $acct = [string]$m.userPrincipalName
+      if ($acct -like '*#EXT#*') { $acct = 'guest' }
+      if (-not $acct) { $acct = [string]$m.appId }
+      $rows.Add([pscustomobject]@{ section = 'admin_role'; name = [string]$m.displayName; account = $acct; type = $type; access = [string]$r.displayName
+          state = ''; last_sign_in = ''; decision = '' })
+    }
+  }
+  foreach ($s in @($In.config.structure.sites)) {
+    $sc = Connect-Site (Get-SiteUrl $In $s.url)
+    foreach ($p in @(Get-SitePermissionRows $sc ([string]$s.name) '')) { $rows.Add($p) }
+    foreach ($l in @(Get-PnPList -Includes HasUniqueRoleAssignments, BaseTemplate, Hidden -Connection $sc | Where-Object { $_.BaseTemplate -eq 101 -and -not $_.Hidden -and $_.HasUniqueRoleAssignments })) {
+      foreach ($p in @(Get-SitePermissionRows $sc "$($s.name)/$($l.Title)" ([string]$l.Title))) { $rows.Add($p) }
+    }
+  }
+  return $rows.ToArray()
+}
+
+function Get-SitePermissionRows($sc, [string] $Where, [string] $ListTitle) {
+  # Role assignments of a site (or of one list with unique permissions),
+  # with the members of each SharePoint group. Names only: a login can hold
+  # a guest's address.
+  $ctx = $sc.Context
+  $obj = if ($ListTitle) { $ctx.Web.Lists.GetByTitle($ListTitle) } else { $ctx.Web }
+  $ras = $obj.RoleAssignments
+  $ctx.Load($ras)
+  $ctx.ExecuteQuery()
+  foreach ($ra in $ras) { $ctx.Load($ra.Member); $ctx.Load($ra.RoleDefinitionBindings) }
+  $ctx.ExecuteQuery()
+  $out = @()
+  foreach ($ra in $ras) {
+    $roles = (@($ra.RoleDefinitionBindings | ForEach-Object { $_.Name } | Where-Object { $_ -ne 'Limited Access' }) -join '; ')
+    if (-not $roles) { continue }
+    $m = $ra.Member
+    $kind = [string]$m.PrincipalType
+    if ($kind -eq 'SharePointGroup') {
+      $members = @(Get-PnPGroupMember -Group $m.Title -Connection $sc -ErrorAction SilentlyContinue | Where-Object { $_.Title -and $_.Title -ne 'System Account' })
+      if ($members.Count -eq 0) { $out += [pscustomobject]@{ section = 'site_permission'; name = [string]$m.Title; account = $Where; type = 'sharepoint group (empty)'; access = $roles; state = ''; last_sign_in = ''; decision = '' } }
+      foreach ($x in $members) {
+        $out += [pscustomobject]@{ section = 'site_permission'; name = [string]$x.Title; account = $Where; type = "via $($m.Title)"; access = $roles; state = ''; last_sign_in = ''; decision = '' }
+      }
+    } else {
+      $out += [pscustomobject]@{ section = 'site_permission'; name = [string]$m.Title; account = $Where; type = $kind; access = $roles; state = ''; last_sign_in = ''; decision = '' }
+    }
+  }
+  return $out
+}
+
+# Resource applications whose application permissions the consent list shows.
+$ConsentResources = [ordered]@{ '00000003-0000-0000-c000-000000000000' = 'Microsoft Graph'; '00000002-0000-0ff1-ce00-000000000000' = 'Exchange Online'; '00000003-0000-0ff1-ce00-000000000000' = 'SharePoint Online' }
+# Microsoft's own tenants: an app they own is published by Microsoft.
+$MicrosoftTenants = @('f8cdef31-a31e-4b4a-93e4-5f571e91255a', '72f988bf-86f1-41af-91ab-2d7cd011db47')
+$ConsentColumns = @('section', 'app', 'app_id', 'publisher', 'resource', 'permissions', 'granted_for', 'decision')
+function Get-AppConsentRows {
+  # Delegated grants and application permissions of every app, for the
+  # monthly app consent review (PRC-13). User grants are counted, not named.
+  $sps = @{}
+  foreach ($s in @(Get-BoxGraphAll '/servicePrincipals?$top=999&$select=id,appId,displayName,appOwnerOrganizationId,publisherName,verifiedPublisher,appRoles')) { $sps[[string]$s.id] = $s }
+  $publisher = {
+    param($s)
+    if ([string]$s.appOwnerOrganizationId -in $MicrosoftTenants) { return 'Microsoft' }
+    if ($s.verifiedPublisher.displayName) { return "$($s.verifiedPublisher.displayName) (verified)" }
+    if ($s.publisherName) { return "$($s.publisherName) (not verified)" }
+    return 'not verified'
+  }
+  $rows = [System.Collections.Generic.List[object]]::new()
+  $groups = @{}
+  foreach ($g in @(Get-BoxGraphAll '/oauth2PermissionGrants')) {
+    $key = "$($g.clientId)|$($g.resourceId)|$($g.consentType)"
+    if (-not $groups.ContainsKey($key)) { $groups[$key] = @{ g = $g; scopes = [System.Collections.Generic.HashSet[string]]::new(); n = 0 } }
+    $groups[$key].n++
+    foreach ($sc in ([string]$g.scope -split ' ' | Where-Object { $_ })) { [void]$groups[$key].scopes.Add($sc) }
+  }
+  foreach ($e in $groups.Values) {
+    $c = $sps[[string]$e.g.clientId]; $r = $sps[[string]$e.g.resourceId]
+    $for = if ([string]$e.g.consentType -eq 'AllPrincipals') { 'everyone (administrator consent)' } else { "$($e.n) user(s), each for themselves" }
+    $rows.Add([pscustomobject]@{ section = 'delegated'; app = [string]$c.displayName; app_id = [string]$c.appId; publisher = $(if ($c) { & $publisher $c } else { '' })
+        resource = [string]$r.displayName; permissions = (@($e.scopes | Sort-Object) -join ' '); granted_for = $for; decision = '' })
+  }
+  foreach ($appId in $ConsentResources.Keys) {
+    $res = @($sps.Values | Where-Object { [string]$_.appId -eq $appId })
+    if ($res.Count -ne 1) { continue }
+    $roleName = @{}
+    foreach ($ar in @($res[0].appRoles)) { $roleName[[string]$ar.id] = [string]$ar.value }
+    $byClient = @{}
+    foreach ($a in @(Get-BoxGraphAll "/servicePrincipals/$($res[0].id)/appRoleAssignedTo?`$top=999")) {
+      if ([string]$a.principalType -ne 'ServicePrincipal') { continue }
+      $k = [string]$a.principalId
+      if (-not $byClient.ContainsKey($k)) { $byClient[$k] = [System.Collections.Generic.List[string]]::new() }
+      $byClient[$k].Add($(if ($roleName[[string]$a.appRoleId]) { $roleName[[string]$a.appRoleId] } else { [string]$a.appRoleId }))
+    }
+    foreach ($k in $byClient.Keys) {
+      $c = $sps[$k]
+      $rows.Add([pscustomobject]@{ section = 'application'; app = $(if ($c) { [string]$c.displayName } else { $k }); app_id = [string]$c.appId; publisher = $(if ($c) { & $publisher $c } else { '' })
+          resource = $ConsentResources[$appId]; permissions = (@($byClient[$k] | Sort-Object -Unique) -join ' '); granted_for = 'the app itself (application permission)'; decision = '' })
+    }
+  }
+  return @($rows | Sort-Object section, app, resource)
+}
+
+function New-PreparedArtefact($In, [string] $Prepares) {
+  switch ($Prepares) {
+    'access_review_sheet' { return ConvertTo-CsvBytes (Get-AccessReviewRows $In) $ReviewColumns }
+    'app_consent_list' { return ConvertTo-CsvBytes (Get-AppConsentRows) $ConsentColumns }
+    default { throw "unknown artefact '$Prepares'" }
+  }
+}
+
+function Get-ControlTaskChanges($In, [switch] $Apply) {
+  $ct = Get-ControlTasksInput $In
+  $changes = @()
+  $sc = Connect-Site (Get-AdminSiteUrl $In)
+  $tl = Get-RegisterList $sc 'ControlTasks' @('ValidationFormula')
+  $ready = $tl -and (Get-RegisterList $sc 'Controls') -and (Get-RegisterList $sc 'Events') -and
+    (Get-PnPField -List $tl.Id -Identity 'prepared_url' -Connection $sc -ErrorAction SilentlyContinue)
+  if (-not $ready) {
+    if ($Apply) { throw 'the ControlTasks, Controls or Events list, or ControlTasks.prepared_url, does not exist (run sharepoint.register)' }
+    return @(New-BoxChange create 'ControlTasks items' 'after sharepoint.register adds the lists and columns')
+  }
+  # A DONE task needs its output, whoever closes it (T10-02 exit criterion).
+  if (-not (Test-SameFormula ([string]$tl.ValidationFormula) $DoneNeedsOutput)) {
+    $changes += New-BoxChange update 'ControlTasks validation' 'a task is DONE only with an output_url'
+    if ($Apply) {
+      $tl.ValidationFormula = $DoneNeedsOutput
+      $tl.ValidationMessage = $DoneNeedsOutputMessage
+      $tl.Update()
+      Invoke-PnPQuery -Connection $sc
+    }
+  }
+  # The Controls item each kind's tasks point at. Existing items are left
+  # as they are (T10-01 seeds and owns the control set).
+  $controls = Get-ControlItems $sc
+  foreach ($k in @($ct.kinds | Sort-Object { [string]$_.control_id })) {
+    if ($controls.ContainsKey([string]$k.control_id)) { continue }
+    $changes += New-BoxChange create "Controls $($k.control_id)" ([string]$k.statement)
+    if ($Apply) {
+      $item = Add-PnPListItem -List 'Lists/Controls' -Values @{ Title = [string]$k.control_id; control_id = [string]$k.control_id; statement = [string]$k.statement
+        mappings = (@{ soc2 = @($k.soc2) } | ConvertTo-Json -Compress); owner_role = [string]$k.owner_role; frequency = [string]$k.frequency
+        evidence_source = "task.$($k.kind)"; automated = $false; policy_ref = (@($k.policy, $k.procedure) | Where-Object { $_ }) -join ', ' } -Connection $sc -ErrorAction Stop
+      $controls[[string]$k.control_id] = $item.Id
+      Add-BoxEvent $sc 'Controls' ([string]$k.control_id) 'create' '' '' @{ source = "task.$($k.kind)" }
+    }
+  }
+  $items = Get-ControlTaskItems $sc
+  foreach ($a in @(Get-ControlTaskActions -Kinds $ct.kinds -Items $items -Today ([string]$ct.today))) {
+    switch ($a.op) {
+      'create' {
+        $k = $a.kind; $p = $a.period
+        $changes += New-BoxChange create "ControlTasks $($p.task_id)" "due $($p.due_on), for $($k.owner_role)"
+        if ($Apply) {
+          $item = Add-PnPListItem -List 'Lists/ControlTasks' -Values @{ Title = "$($k.statement) ($($p.period))"; task_id = [string]$p.task_id
+            control_id = $controls[[string]$k.control_id]; due_on = [string]$p.due_on; assignee_role = [string]$k.owner_role; state = 'OPEN' } -Connection $sc -ErrorAction Stop
+          $items[[string]$p.task_id] = @{ id = $item.Id; state = 'OPEN'; due_on = [string]$p.due_on; prepared_url = '' }
+          Add-BoxEvent $sc 'ControlTasks' ([string]$p.task_id) 'create' '' 'OPEN' @{ kind = [string]$k.kind; due_on = [string]$p.due_on; assignee_role = [string]$k.owner_role }
+        }
+      }
+      'prepare' {
+        $k = $a.kind; $p = $a.period
+        $path = Get-PreparedPath ([string]$p.task_id) ([string]$k.prepares)
+        $changes += New-BoxChange create "Compliance/$path" "$($PrepareWords[[string]$k.prepares]), for $($k.owner_role) to review"
+        if ($Apply) {
+          $bytes = New-PreparedArtefact $In ([string]$k.prepares)
+          $url = Save-EvidenceFile $In (Split-Path $path -Parent).Replace('\', '/') (Split-Path $path -Leaf) $bytes
+          Set-PnPListItem -List 'Lists/ControlTasks' -Identity $items[[string]$p.task_id].id -Values @{ prepared_url = $url } -Connection $sc -ErrorAction Stop | Out-Null
+          Add-BoxEvent $sc 'ControlTasks' ([string]$p.task_id) 'prepare' '' '' @{ prepared_url = $url }
+        }
+      }
+      'overdue' {
+        $changes += New-BoxChange update "ControlTasks $($a.task_id)" "OVERDUE (was due $($a.due_on))"
+        if ($Apply) {
+          Set-PnPListItem -List 'Lists/ControlTasks' -Identity $items[$a.task_id].id -Values @{ state = 'OVERDUE' } -Connection $sc -ErrorAction Stop | Out-Null
+          Add-BoxEvent $sc 'ControlTasks' $a.task_id 'overdue' 'OPEN' 'OVERDUE' $null
+        }
+      }
+    }
+  }
+  return $changes
+}
+
+function Read-ControlTasks($In) {
+  $sc = Connect-Site (Get-AdminSiteUrl $In)
+  if (-not (Get-RegisterList $sc 'ControlTasks')) { return @{ items = @() } }
+  $items = Get-ControlTaskItems $sc
+  return @{ items = @($items.Keys | Sort-Object | ForEach-Object { $i = $items[$_]; @{ task_id = $_; title = $i.title; control_id = $i.control; due_on = $i.due_on
+          state = $i.state; assignee_role = $i.assignee_role; output_url = $i.output_url; prepared_url = $i.prepared_url; closed_at = $i.closed_at } }) }
+}
+
+function Test-CloseRequest($Close, $Item) {
+  # Pure: the reasons a close request is refused (none: it may proceed).
+  $out = @()
+  if (-not $Item) { $out += "no ControlTasks item $($Close.task_id)" }
+  elseif ([string]$Item.state -eq 'DONE') { $out += "$($Close.task_id) is already DONE; a completed task is never changed" }
+  if (-not [string]$Close.output_url -and -not [string]$Close.file_name) { $out += 'an output is required: a URL or a file' }
+  if ([string]$Close.output_url -and [string]$Close.output_url -notlike 'https://*') { $out += 'the output URL must start with https://' }
+  if (-not [string]$Close.by) { $out += 'the person who did the task is required' }
+  return $out
+}
+
+function Complete-ControlTask($In) {
+  # box tasks done: the assignee records completion. Uploads the output when
+  # it is a file, sets DONE with the output, closed_at and closed_by, and
+  # writes one Evidence item and one Events item.
+  $ct = Get-ControlTasksInput $In
+  $close = $In.close
+  if (-not $close) { throw 'no close request in the input' }
+  $sc = Connect-Site (Get-AdminSiteUrl $In)
+  $items = Get-ControlTaskItems $sc
+  $item = $items[[string]$close.task_id]
+  $why = @(Test-CloseRequest $close $item)
+  if ($why.Count -gt 0) { throw ($why -join '; ') }
+  $url = [string]$close.output_url
+  if ([string]$close.file_name) {
+    $url = Save-EvidenceFile $In "Evidence/Control tasks/$($close.task_id)" ([string]$close.file_name) ([Convert]::FromBase64String([string]$close.file_b64))
+  }
+  $now = (Get-Date).ToUniversalTime()
+  $v = @{ state = 'DONE'; output_url = $url; closed_at = $now.ToString('o') }
+  $person = @(Get-PnPListItem -List 'Lists/People' -PageSize 500 -Connection $sc -ErrorAction SilentlyContinue | Where-Object { [string]$_['person_id'] -eq [string]$close.by })
+  if ($person.Count -eq 1) { $v.closed_by = $person[0].Id }
+  Set-PnPListItem -List 'Lists/ControlTasks' -Identity $item.id -Values $v -Connection $sc -ErrorAction Stop | Out-Null
+  $controls = Get-ControlItems $sc
+  $kind = @($ct.kinds | Where-Object { [string]$_.kind -eq [string]$close.kind })[0]
+  $evid = [guid]::NewGuid().ToString()
+  $period = ([string]$close.task_id).Substring(([string]$close.kind).Length + 1)
+  Add-PnPListItem -List 'Lists/Evidence' -Values @{ Title = "$($close.task_id) output"; evidence_id = $evid; control_id = $controls[[string]$kind.control_id]; period = $period
+    artefact_url = $url; collected_at = $now.ToString('o'); collected_by = [string]$close.by } -Connection $sc -ErrorAction Stop | Out-Null
+  Add-BoxEvent $sc 'ControlTasks' ([string]$close.task_id) 'close' ([string]$item.state) 'DONE' @{ output_url = $url; evidence_id = $evid; closed_by = [string]$close.by; via = 'box tasks done' } 'box pipeline' "person:$($close.by)"
+  return @{ task_id = [string]$close.task_id; state = 'DONE'; output_url = $url; evidence_id = $evid; closed_by_person = ($person.Count -eq 1) }
 }
 
 # ---------- policy.sharepoint (T14-09) ----------
@@ -891,6 +1314,16 @@ $script:Steps = [ordered]@{
     verify = { param($In) $c = @(Get-PolicyChanges $In -Verify | Where-Object { $_ }); @{ ok = ($c.Count -eq 0); drift = $c } }
     evidence = { param($In) Get-PolicyEvidence $In }
   }
+  'sharepoint.control-tasks' = @{
+    test = $ok
+    plan = { param($In) Result-Changes (Get-ControlTaskChanges $In) }
+    apply = { param($In) Result-Changes (Get-ControlTaskChanges $In -Apply) }
+    verify = { param($In) $c = @(Get-ControlTaskChanges $In | Where-Object { $_ }); @{ ok = ($c.Count -eq 0); drift = $c } }
+    evidence = { param($In) New-Evidence 'control-tasks' "next due ControlTasks item kept for: $((@($In.control_tasks.kinds | ForEach-Object { $_.kind })) -join ', ')" }
+    # Narrow operations for box tasks (SPEC §25: the assignee closes a task, never the box).
+    read = { param($In) Read-ControlTasks $In }
+    record = { param($In) Complete-ControlTask $In }
+  }
   'policy.sharepoint' = @{
     test = $ok
     plan = { param($In) Result-Changes (Get-SpPolicyChanges $In) }
@@ -906,4 +1339,4 @@ function Invoke-BoxStep {
 }
 function Get-BoxStepIds { @($script:Steps.Keys) }
 function Get-BoxStepProblems { Test-BoxStepTable -Steps $script:Steps }
-Export-ModuleMember -Function Invoke-BoxStep, Get-BoxStepIds, Get-BoxStepProblems, Compare-BoxProperties, Merge-BoxPayload, Test-BaselineAgreement, Get-SupersededTenantKeys, Get-CaPolicyFix
+Export-ModuleMember -Function Invoke-BoxStep, Get-BoxStepIds, Get-BoxStepProblems, Compare-BoxProperties, Merge-BoxPayload, Test-BaselineAgreement, Get-SupersededTenantKeys, Get-CaPolicyFix, Get-ControlTaskActions, Test-CloseRequest, ConvertTo-BoxDay, Get-MissingChoices

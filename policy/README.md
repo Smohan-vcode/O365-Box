@@ -9,7 +9,7 @@ engine data and holds no company values (R1).
 | File | Holds |
 | --- | --- |
 | `requirements.yaml` | 90 requirements in 14 domains. Each has a plain statement, a tier, a type, the settings that enforce it, its evidence source, and references to five frameworks. |
-| `settings/<centre>.yaml` | 333 settings across 12 admin centres. Each names the requirements it serves, the licence capability it needs, and whether it starts in audit. |
+| `settings/<centre>.yaml` | 334 settings across 12 admin centres. Each names the requirements it serves, the licence capability it needs, and whether it starts in audit. |
 | `frameworks/<id>.yaml` | Each framework's controls and the requirements that answer them. |
 | `capabilities.yaml` | What each capability means, which plans include it and which need an add-on. The plan lists must agree with `engine/capabilities.yaml`. |
 

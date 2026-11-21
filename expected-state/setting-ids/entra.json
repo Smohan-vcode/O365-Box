@@ -1903,5 +1903,46 @@
     },
     "verified": "read-only GET /v1.0/auditLogs/signIns and /auditLogs/directoryAudits returned 200",
     "notes": "Mode report. The sign-in log API needs Entra P1 in the tenant; a tenant without P1 keeps only 7 days and the signIns API may refuse, so weekly is the longest safe interval. Exports hold personal data (user names, IP addresses): store only in the evidence library, never in logs (R1/R8)."
+  },
+  "ENT-050": {
+    "status": "resolved",
+    "provider": "identity",
+    "step": "policy.entra",
+    "method": "graph-beta",
+    "apply": "PATCH /beta/policies/authenticationMethodsPolicy with registrationEnforcement.authenticationMethodsRegistrationCampaign",
+    "payload": {
+      "registrationEnforcement": {
+        "authenticationMethodsRegistrationCampaign": {
+          "state": "enabled",
+          "snoozeDurationInDays": "{number:mfa_snooze_days}",
+          "enforceRegistrationAfterAllowedSnoozes": true,
+          "includeTargets": [
+            {
+              "id": "all_users",
+              "targetType": "group",
+              "targetedAuthenticationMethod": "microsoftAuthenticator"
+            }
+          ],
+          "excludeTargets": [
+            {
+              "id": "{group:grp-break-glass}",
+              "targetType": "group"
+            }
+          ]
+        }
+      }
+    },
+    "read": "GET /beta/policies/authenticationMethodsPolicy",
+    "check": "registrationEnforcement.authenticationMethodsRegistrationCampaign: state == 'enabled'; snoozeDurationInDays == choice signin.mfa_snooze_days (1 recommended); enforceRegistrationAfterAllowedSnoozes == true; includeTargets == [{all_users, group, microsoftAuthenticator}]; excludeTargets == [{group:grp-break-glass}]",
+    "permissions": [
+      "graph:Policy.ReadWrite.AuthenticationMethod"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": "microsoft.entra.authenticationmethodpolicy",
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "applied on the test tenant 2026-11-21; second plan 0 changes",
+    "notes": "SC-27 (approved 2026-11-21). Read and written on beta: enforceRegistrationAfterAllowedSnoozes exists only there (v1.0 omits it). {number:mfa_snooze_days} is filled from the choice signin.mfa_snooze_days (values.mfa_snooze_days, 0 to 14). policy.entra owns the campaign; identity.auth-methods leaves it alone and keeps the registration report and CA01 readiness (T14-17). A registration prompt, not a block: mode enforce."
   }
 }

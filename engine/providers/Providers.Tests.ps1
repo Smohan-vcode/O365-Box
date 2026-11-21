@@ -102,7 +102,10 @@ Describe 'policy.capabilities: users not covered (T14-02)' {
 Describe 'MFA registration campaign and CA01 readiness (T14-17)' {
   BeforeAll {
     Import-Module (Join-Path $PSScriptRoot 'identity' 'Box.identity.psm1') -Force
-    $script:base = [pscustomobject]@{ state = 'enabled'; method = 'microsoft_authenticator'; include = 'all_users'; exclude_group = 'grp-break-glass'; snooze_days = 1; enforce_after_snoozes = $true }
+    # The campaign is ENT-050 (SC-27): its mapping payload, resolved as policy.entra does.
+    $script:map = (Get-Content (Join-Path $PSScriptRoot '..' '..' 'expected-state' 'setting-ids' 'entra.json') -Raw | ConvertFrom-Json).'ENT-050'
+    $script:want = { param([string] $Bg = 'grp-id', $Snooze = '1')
+      (Resolve-BoxPayload -Payload $map.payload -Groups @{ 'grp-break-glass' = $Bg } -Fill @{ 'number:mfa_snooze_days' = $Snooze }).registrationEnforcement.authenticationMethodsRegistrationCampaign }
     $script:rows = @(
       [pscustomobject]@{ id = 'u1'; userDisplayName = 'A'; userType = 'member'; isAdmin = $true; isMfaRegistered = $true }
       [pscustomobject]@{ id = 'u2'; userDisplayName = 'B'; userType = 'member'; isAdmin = $true; isMfaRegistered = $false }
@@ -111,26 +114,29 @@ Describe 'MFA registration campaign and CA01 readiness (T14-17)' {
       [pscustomobject]@{ id = 'bg1'; userDisplayName = 'BG'; userType = 'member'; isAdmin = $true; isMfaRegistered = $false })
   }
   It 'targets everyone with the Authenticator app and excludes the break-glass group' {
-    $w = Get-BoxCampaignWant -Baseline $base -ExcludeGroupId 'grp-id'
+    $w = & $want
     $w.state | Should -Be 'enabled'
     $w.snoozeDurationInDays | Should -Be 1
+    $w.snoozeDurationInDays | Should -BeOfType [int]
+    $w.enforceRegistrationAfterAllowedSnoozes | Should -BeTrue
     $w.includeTargets[0].id | Should -Be 'all_users'
     $w.includeTargets[0].targetedAuthenticationMethod | Should -Be 'microsoftAuthenticator'
     $w.excludeTargets[0].id | Should -Be 'grp-id'
+    $map.step | Should -Be 'policy.entra'
   }
-  It 'rejects a snooze outside 0 to 14 days and an unknown method' {
-    { Get-BoxCampaignWant -Baseline ([pscustomobject]@{ state = 'enabled'; method = 'microsoft_authenticator'; snooze_days = 15 }) } | Should -Throw '*0 to 14*'
-    { Get-BoxCampaignWant -Baseline ([pscustomobject]@{ state = 'enabled'; method = 'sms'; snooze_days = 1 }) } | Should -Throw '*not known*'
+  It 'takes the snooze from the choice and refuses without one' {
+    (& $want 'grp-id' '7').snoozeDurationInDays | Should -Be 7
+    { Resolve-BoxPayload -Payload $map.payload -Groups @{ 'grp-break-glass' = 'grp-id' } } | Should -Throw '*unresolved*mfa_snooze_days*'
   }
   It 'finds no drift when Graph holds the campaign, whatever the case' {
-    $w = Get-BoxCampaignWant -Baseline $base -ExcludeGroupId 'GRP-ID'
+    $w = & $want 'GRP-ID'
     $have = [pscustomobject]@{ state = 'enabled'; snoozeDurationInDays = 1; enforceRegistrationAfterAllowedSnoozes = $true
       includeTargets = @([pscustomobject]@{ id = 'all_users'; targetType = 'group'; targetedAuthenticationMethod = 'microsoftAuthenticator' })
       excludeTargets = @([pscustomobject]@{ id = 'grp-id'; targetType = 'group' }) }
     @(Get-BoxCampaignDrift -Want $w -Have $have).Count | Should -Be 0
   }
   It 'reports the default Microsoft-managed campaign as drift' {
-    $w = Get-BoxCampaignWant -Baseline $base -ExcludeGroupId 'grp-id'
+    $w = & $want
     $have = [pscustomobject]@{ state = 'default'; snoozeDurationInDays = 1; enforceRegistrationAfterAllowedSnoozes = $true
       includeTargets = @([pscustomobject]@{ id = 'all_users'; targetType = 'group'; targetedAuthenticationMethod = 'microsoftAuthenticator' }); excludeTargets = @() }
     $d = @(Get-BoxCampaignDrift -Want $w -Have $have)
@@ -203,6 +209,15 @@ Describe 'policy steps of the identity provider: pure functions (T14-04)' {
   It 'refuses a payload that needs a missing group or a company value' {
     { Resolve-BoxPayload -Payload @{ g = @('{group:plan-x}') } -Groups @{ 'plan-x' = $null } } | Should -Throw '*unresolved*plan-x*'
     { Resolve-BoxPayload -Payload @{ v = '{dictionary:company.trading_name}\t{config:policy.x}' } -Groups @{} } | Should -Throw '*unresolved*'
+  }
+  It 'fills text, number and terms placeholders from the values the choices supply' {
+    $r = Resolve-BoxPayload -Payload @{ n = '{number:days}'; t = 'at {text:time}'; l = '{terms:company}' } -Groups @{} -Fill @{ 'number:days' = 3; 'text:time' = '02:00'; 'terms:company' = "A`tB" }
+    $r.n | Should -Be 3
+    $r.n | Should -BeOfType [int]
+    $r.t | Should -Be 'at 02:00'
+    $r.l | Should -Be "A`tB"
+    { Resolve-BoxPayload -Payload @{ t = '{text:time}' } -Groups @{} } | Should -Throw '*unresolved*'
+    { Resolve-BoxPayload -Payload @{ n = '{number:days}' } -Groups @{} -Fill @{ 'number:days' = 'x' } } | Should -Throw '*unresolved*'
   }
   It 'keeps Conditional Access report-only unless enforced with break-glass ready' {
     Get-BoxCAState -Want 'enabled' -Mode 'audit' -BreakGlassReady $true | Should -Be 'enabledForReportingButNotEnforced'

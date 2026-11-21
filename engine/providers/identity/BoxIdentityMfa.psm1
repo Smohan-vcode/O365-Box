@@ -1,12 +1,11 @@
-# MFA registration (T14-17): the authentication methods registration
-# campaign, the registration report and whether CA01 can be enforced.
-# Graph over REST (common/BoxGraph.psm1). Used by identity.auth-methods.
-# The campaign is read and written on beta: enforceRegistrationAfterAllowedSnoozes
-# (registration required after three snoozes) exists only there.
+# MFA registration (T14-17): the registration report, whether CA01 can be
+# enforced, and the drift check of the authentication methods registration
+# campaign. Graph over REST (common/BoxGraph.psm1). Used by
+# identity.auth-methods (report, readiness) and policy.entra (campaign).
 #
-# The campaign is not a catalogue setting yet: identity.auth-methods sets it
-# from baseline/identity.yaml (registration_campaign) and docs/spec-changes.md
-# proposes the catalogue entry. Nothing here enforces CA01: enforcement stays
+# The campaign is catalogue setting ENT-050 (SC-27): policy.entra applies it
+# from its mapping, on beta (enforceRegistrationAfterAllowedSnoozes, registration
+# required after three snoozes, exists only there). Nothing here enforces CA01: enforcement stays
 # an owner approval (SPEC §25.1); Get-BoxCA01Readiness only says whether it
 # could be proposed.
 #
@@ -18,34 +17,13 @@ Import-Module (Join-Path $PSScriptRoot '..' 'common' 'BoxProvider.psm1') -Force
 Import-Module (Join-Path $PSScriptRoot '..' 'common' 'BoxGraph.psm1') -Force
 
 $script:Beta = 'https://graph.microsoft.com/beta'
-$script:MethodNames = @{ microsoft_authenticator = 'microsoftAuthenticator'; fido2 = 'fido2' }
 $script:ReportUri = '/reports/authenticationMethods/userRegistrationDetails?$select=id,userDisplayName,userType,isAdmin,isMfaRegistered'
 
 # ---------------------------------------------------------------- pure
 
-function Get-BoxCampaignWant {
-  # The campaign object Graph should hold, from baseline/identity.yaml
-  # registration_campaign and the exclusion group's object id.
-  param([Parameter(Mandatory)] $Baseline, [string] $ExcludeGroupId)
-  $method = $script:MethodNames[[string]$Baseline.method]
-  if (-not $method) { throw "registration_campaign.method '$($Baseline.method)' is not known" }
-  $snooze = [int]$Baseline.snooze_days
-  if ($snooze -lt 0 -or $snooze -gt 14) { throw "registration_campaign.snooze_days must be 0 to 14, not $snooze" }
-  $include = if ($Baseline.include) { [string]$Baseline.include } else { 'all_users' }
-  $exclude = @()
-  if ($ExcludeGroupId) { $exclude = @(@{ id = $ExcludeGroupId; targetType = 'group' }) }
-  return [ordered]@{
-    state = [string]$Baseline.state
-    snoozeDurationInDays = $snooze
-    enforceRegistrationAfterAllowedSnoozes = [bool]$Baseline.enforce_after_snoozes
-    includeTargets = @(@{ id = $include; targetType = 'group'; targetedAuthenticationMethod = $method })
-    excludeTargets = $exclude
-  }
-}
-
 function Get-BoxCampaignDrift {
-  # Differences between the wanted campaign and the one Graph returned
-  # (registrationEnforcement.authenticationMethodsRegistrationCampaign).
+  # Differences between the wanted campaign (ENT-050's resolved payload) and
+  # the one Graph returned (registrationEnforcement.authenticationMethodsRegistrationCampaign).
   param([Parameter(Mandatory)] $Want, $Have)
   if ($null -eq $Have) { return @('campaign (missing)') }
   $out = @()
@@ -107,23 +85,6 @@ function Format-BoxRegistrationSummary($Counts) {
 
 # ---------------------------------------------------------------- tenant
 
-function Get-BoxCampaignChanges {
-  # Plan (or apply) the registration campaign. Returns BoxChange items.
-  param([Parameter(Mandatory)] $Baseline, [string] $ExcludeGroupId, [switch] $Apply)
-  if (-not $Baseline) { return @() }
-  $want = Get-BoxCampaignWant -Baseline $Baseline -ExcludeGroupId $ExcludeGroupId
-  $pol = Invoke-BoxGraph -Uri "$script:Beta/policies/authenticationMethodsPolicy"
-  $have = $pol.registrationEnforcement.authenticationMethodsRegistrationCampaign
-  $drift = @(Get-BoxCampaignDrift -Want $want -Have $have)
-  if ($drift.Count -eq 0) { return @() }
-  $change = New-BoxChange update 'registration campaign (Microsoft Authenticator)' ($drift -join '; ')
-  if ($Apply) {
-    Invoke-BoxGraph -Method PATCH -Uri "$script:Beta/policies/authenticationMethodsPolicy" -Body @{
-      registrationEnforcement = @{ authenticationMethodsRegistrationCampaign = $want } } | Out-Null
-  }
-  return @($change)
-}
-
 function Get-BoxMfaRegistration {
   # Reads the registration report. Returns @{ counts; error }.
   param([string[]] $ExcludeIds = @())
@@ -148,5 +109,5 @@ function Write-BoxRegistrationWarnings {
   Write-Warning $Readiness.message
 }
 
-Export-ModuleMember -Function Get-BoxCampaignWant, Get-BoxCampaignDrift, Get-BoxMfaRegistrationCounts, Get-BoxCA01Readiness,
-  Format-BoxRegistrationSummary, Get-BoxCampaignChanges, Get-BoxMfaRegistration, Write-BoxRegistrationWarnings
+Export-ModuleMember -Function Get-BoxCampaignDrift, Get-BoxMfaRegistrationCounts, Get-BoxCA01Readiness,
+  Format-BoxRegistrationSummary, Get-BoxMfaRegistration, Write-BoxRegistrationWarnings

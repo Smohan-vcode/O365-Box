@@ -1255,3 +1255,12 @@ mode enforce, requirements IAM-01, IAM-02):
 
 When approved: add the ENT entry and mapping, remove `registration_campaign`
 from `baseline/identity.yaml`, and let `policy.entra` own the object.
+
+**Applied (2026-11-21).** ENT-050 added (policy/settings/entra.yaml,
+expected-state/setting-ids/entra.json, IAM-01 and IAM-02); the snooze is
+choice `signin.mfa_snooze_days` (0, 1 recommended, 7) filling
+`values.mfa_snooze_days`. `registration_campaign` removed from
+`baseline/identity.yaml`; `policy.entra` owns the campaign and
+`identity.auth-methods` keeps the registration report and
+`Get-BoxMfaEnforcementReadiness`. Catalogue: 334 settings (SPEC §23 count
+updated). Items 1 and 2 stay proposed.

@@ -153,6 +153,28 @@ choices:
         detail: Strongest. This setup tool must then be used from a computer with a browser.
         cost: none
 
+  - id: signin.mfa_snooze_days
+    step: security
+    question: How long may staff put off setting up the Microsoft Authenticator app?
+    help: After signing in, anyone without the app is asked to set it up. They can say "not now" three times; after that they must set it up before they continue. This is how long each "not now" lasts.
+    options:
+      - value: "0"
+        label: Ask at every sign-in
+        detail: The fastest way to get everyone protected; staff are asked each time they sign in until they set it up.
+        cost: none
+        effects: {values: {values.mfa_snooze_days: "0"}}
+      - value: "1"
+        label: One day
+        detail: Staff are asked again the next day, so everyone is set up within a few days.
+        recommended: true
+        cost: none
+        effects: {values: {values.mfa_snooze_days: "1"}}
+      - value: "7"
+        label: One week
+        detail: Gentler; everyone is set up within about a month.
+        cost: none
+        effects: {values: {values.mfa_snooze_days: "7"}}
+
   - id: forms.external_responses
     step: security
     question: Can people outside the company fill in your Microsoft Forms?

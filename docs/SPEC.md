@@ -778,7 +778,7 @@ for a selection and a plan.
 | File | Holds |
 | --- | --- |
 | `policy/requirements.yaml` | 90 requirements in 14 domains. Each has a plain statement, a tier (`core`, `enhanced`, `addon`), a type (technical, procedural, mixed), the settings that enforce it, its evidence source, and references to the five frameworks. |
-| `policy/settings/<area>.yaml` | 333 settings across 12 admin areas. Each names the requirements it serves, the capability it needs, its tier, and its mode (`enforce`, `staged`, `report`). Values are stated in words; T14-03 resolves each to the exact API setting. |
+| `policy/settings/<area>.yaml` | 334 settings across 12 admin areas. Each names the requirements it serves, the capability it needs, its tier, and its mode (`enforce`, `staged`, `report`). Values are stated in words; T14-03 resolves each to the exact API setting. |
 | `policy/frameworks/<id>.yaml` | Each framework's controls and the requirements that answer them. |
 | `policy/capabilities.yaml` | Which capabilities the base plans include and which need an add-on; reconciled with `engine/capabilities.yaml` (T14-02). |
 

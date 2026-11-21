@@ -454,3 +454,13 @@ settings:
   capability: free
   requirements:
   - LOG-03
+- id: ENT-050
+  platform: all
+  name: 'Authentication methods: registration campaign (Microsoft Authenticator)'
+  value: on for all users; break-glass group excluded; snooze 1 day (choice signin.mfa_snooze_days); registration required after three snoozes
+  tier: core
+  mode: enforce
+  capability: free
+  requirements:
+  - IAM-01
+  - IAM-02

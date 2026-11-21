@@ -431,6 +431,11 @@ settings:
       status: resolved
       apply_by: identity step policy.entra (graph)
       monitor_by: box drift (policy.entra verify)
+    - setting: ENT-050
+      centre: entra
+      status: resolved
+      apply_by: identity step policy.entra (graph-beta)
+      monitor_by: box drift (policy.entra verify); configuration monitor microsoft.entra.authenticationmethodpolicy after SC-20
     - setting: EXO-001
       centre: exchange
       status: resolved

@@ -29,6 +29,7 @@ requirements:
   - ENT-019
   - ENT-020
   - ENT-021
+  - ENT-050
   evidence: collector.mfa_registration
 - id: IAM-02
   domain: Identity and access
@@ -55,6 +56,7 @@ requirements:
   - ENT-019
   - WIN-035
   - MAC-024
+  - ENT-050
   evidence: collector.ca_policies
 - id: IAM-03
   domain: Identity and access

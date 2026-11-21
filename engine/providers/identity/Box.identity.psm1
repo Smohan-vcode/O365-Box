@@ -3,6 +3,7 @@
 # pipeline app's token.
 Import-Module (Join-Path $PSScriptRoot '..' 'common' 'BoxProvider.psm1') -Force
 Import-Module (Join-Path $PSScriptRoot '..' 'common' 'BoxGraph.psm1') -Force
+Import-Module (Join-Path $PSScriptRoot 'BoxIdentityPolicy.psm1') -Force
 
 $GlobalAdmin = '62e90394-69f5-4237-9190-012177145e10'
 # Roles treated as privileged by CA03 and CA05.
@@ -12,6 +13,7 @@ $PrivilegedRoles = @(
   'b1be1c3e-b65d-4f19-8427-f6fa0d97feb9', '9b895d92-2cd3-44c7-9d02-a6ac2d5ea5c3', '158c047a-c907-4556-b7ef-446551a6b5f7',
   'c4e39bd9-1100-46d3-8c65-fb160da0071f', 'b0f54661-2d74-4c50-afa3-1ec803f12efe', '729827e3-9c14-49f7-bb1b-9608f156bbb8',
   '69091246-20e8-4a56-aa4d-066075b2a7a8')
+Set-BoxPolicyRoles $PrivilegedRoles
 $PlanSkus = @{ business_premium = 'SPB'; business_standard = 'O365_BUSINESS_PREMIUM'; business_basic = 'O365_BUSINESS_ESSENTIALS' }
 
 function Get-Domain($In) {
@@ -177,8 +179,9 @@ $MethodIds = @{ fido2 = @('Fido2', 'fido2AuthenticationMethodConfiguration'); mi
 function Get-AuthMethodChanges($In, [switch] $Apply) {
   $changes = @()
   $want = $In.defaults.baseline_identity.authentication_methods
+  $claimed = (Get-BoxEntraClaims).auth_methods   # owned by policy.entra (T14-04)
   foreach ($p in $want.PSObject.Properties) {
-    if (-not $MethodIds.ContainsKey($p.Name)) { continue }
+    if (-not $MethodIds.ContainsKey($p.Name) -or $p.Name -in $claimed) { continue }
     $id, $type = $MethodIds[$p.Name]
     $cur = Invoke-BoxGraph -Uri "/policies/authenticationMethodsPolicy/authenticationMethodConfigurations/$id"
     $state = [string]$p.Value.state
@@ -230,7 +233,10 @@ function Get-CAChanges($In, [switch] $Apply) {
   $ready = Test-BreakGlassReady $In
   $have = @{}
   foreach ($x in @(Get-BoxGraphAll '/identity/conditionalAccess/policies')) { $have[$x.displayName] = $x }
-  foreach ($p in @($In.defaults.baseline_identity.conditional_access.policies)) {
+  # Policies an entra mapping names are owned by policy.entra (T14-04): this
+  # step leaves them alone so the two never write the same policy.
+  $claimed = (Get-BoxEntraClaims).ca
+  foreach ($p in @($In.defaults.baseline_identity.conditional_access.policies | Where-Object { $_.name -notin $claimed })) {
     $state = 'enabled'
     if ($p.start_state -eq 'report_only' -or -not $ready) { $state = 'enabledForReportingButNotEnforced' }
     $body = Get-PolicyBody $p $grp.id $state
@@ -255,7 +261,10 @@ $RestrictedGuestRole = '2af84b1e-32c8-42b7-82bc-daa82404023b'   # guests see onl
 $GuestRoleIds = @{ restricted = $RestrictedGuestRole; limited = '10dae51f-b6af-4016-8d66-8c2a99b929b3'; same_as_members = 'a0b1b346-4d3e-4e8b-98f8-753987be4970' }
 $InviteFrom = @{ admins_only = 'adminsAndGuestInviters'; members = 'adminsGuestInvitersAndAllMembers'; everyone = 'everyone'; none = 'none' }
 function Get-DirectoryChanges($In, [switch] $Apply) {
-  $want = $In.defaults.baseline_identity.directory
+  $want = ConvertTo-BoxPlain $In.defaults.baseline_identity.directory
+  # Properties an entra mapping names are owned by policy.entra (T14-04).
+  foreach ($k in (Get-BoxEntraClaims).directory) { if ($want -and $want.Contains($k)) { $want.Remove($k) } }
+  $want = [pscustomobject]$want
   $changes = @()
   $ap = Invoke-BoxGraph -Uri '/policies/authorizationPolicy'
   $patch = @{}
@@ -440,6 +449,34 @@ $script:Steps = [ordered]@{
       $nc = @($r.not_covered)
       New-Evidence 'capabilities' "$($r.applied) resolved settings on plan $($r.plan); capabilities confirmed; probes: $(($r.probes.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)" }) -join ', '); users not covered: $($nc.Count)" }
   }
+  'policy.entra' = @{
+    test = { param($In) if ($In.policy_error) { @{ ok = $false; reason = "policy resolution failed: $($In.policy_error)" } } else { @{ ok = $true } } }
+    plan = { param($In) Get-BoxPolicyPlan $In }
+    apply = { param($In) Invoke-BoxPolicyApply $In }
+    verify = { param($In) Test-BoxPolicyVerify $In }
+    evidence = { param($In) Get-BoxPolicyEvidence $In 'policy-entra' }
+  }
+  'policy.m365-admin' = @{
+    test = $ok
+    plan = { param($In) Get-BoxPolicyPlan $In }
+    apply = { param($In) Invoke-BoxPolicyApply $In }
+    verify = { param($In) Test-BoxPolicyVerify $In }
+    evidence = { param($In) Get-BoxPolicyEvidence $In 'policy-m365-admin' }
+  }
+  'policy.teams.identity' = @{
+    test = $ok
+    plan = { param($In) Get-BoxPolicyPlan $In }
+    apply = { param($In) Invoke-BoxPolicyApply $In }
+    verify = { param($In) Test-BoxPolicyVerify $In }
+    evidence = { param($In) Get-BoxPolicyEvidence $In 'policy-teams-identity' }
+  }
+  'policy.purview.identity' = @{
+    test = $ok
+    plan = { param($In) Get-BoxPolicyPlan $In }
+    apply = { param($In) Invoke-BoxPolicyApply $In }
+    verify = { param($In) Test-BoxPolicyVerify $In }
+    evidence = { param($In) Get-BoxPolicyEvidence $In 'policy-purview-identity' }
+  }
   'identity.security-defaults' = @{
     test = $ok
     plan = { param($In) Result-Changes (Get-SDChanges) }
@@ -455,4 +492,5 @@ function Invoke-BoxStep {
 }
 function Get-BoxStepIds { @($script:Steps.Keys) }
 function Get-BoxStepProblems { Test-BoxStepTable -Steps $script:Steps }
-Export-ModuleMember -Function Invoke-BoxStep, Get-BoxStepIds, Get-BoxStepProblems, Get-NotCoveredUsers
+Export-ModuleMember -Function Invoke-BoxStep, Get-BoxStepIds, Get-BoxStepProblems, Get-NotCoveredUsers,
+  Compare-BoxValue, Resolve-BoxPayload, Get-BoxCAState, Merge-BoxGroupSettingValues, Get-BoxIdleTimeout, Get-BoxEntraClaims

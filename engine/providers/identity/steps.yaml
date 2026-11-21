@@ -54,3 +54,31 @@ steps:
     task: T14-02
     depends_on: [identity.users]
     reads: ["@policy", tenant, users, company]
+  # Resolved policy settings (T14-04). policy.entra owns the Conditional
+  # Access policies, authentication methods and directory properties its
+  # mappings name; identity.conditional-access, identity.auth-methods and
+  # identity.directory-settings leave those to it (BoxIdentityPolicy.psm1).
+  - id: policy.entra
+    title: Entra ID policy settings (Conditional Access, sign-in methods, directory, device registration)
+    track: T14
+    task: T14-04
+    depends_on: [identity.groups, identity.conditional-access, identity.directory-settings, identity.auth-methods]
+    reads: ["@policy", tenant, users, modules]
+  - id: policy.m365-admin
+    title: Microsoft 365 admin centre settings (idle timeout, password expiry, apps and services, third-party storage)
+    track: T14
+    task: T14-04
+    depends_on: [identity.groups]
+    reads: ["@policy", tenant]
+  - id: policy.teams.identity
+    title: Teams settings held in Entra (who can create groups and teams)
+    track: T14
+    task: T14-04
+    depends_on: [identity.groups, policy.entra]
+    reads: ["@policy", tenant]
+  - id: policy.purview.identity
+    title: Purview settings read through Graph (audit log sources for the weekly export)
+    track: T14
+    task: T14-04
+    depends_on: [identity.groups]
+    reads: ["@policy", tenant]

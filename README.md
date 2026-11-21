@@ -6,7 +6,7 @@ flows. The owner runs one command, `box`. A terminal UI signs them in,
 discovers what Microsoft already knows, asks for the rest in plain
 language, shows the full plan and builds it.
 
-- Specification: `docs/SPEC.md` (v1.1); change record: `docs/spec-changes.md`
+- Specification: `docs/SPEC.md` (v1.2); change record: `docs/spec-changes.md`
 - Working instructions for Claude Code: `CLAUDE.md`
 - Development backlog: `tasks/INDEX.md`; spikes: `spikes/`
 - Engine defaults: `defaults/`, `baseline/`, `flows/`, `expected-state/`

@@ -10,7 +10,7 @@ same front matter (T0-02).
 | S-02 | Write coverage of the Tenant Configuration Management APIs | P0 | S | T0-04 |  | TODO |
 | S-03 | Deploying the flow solution from source under the included licence | P0 | S | T0-04, T3-04 | yes | TODO |
 | S-04 | Standard connector check and limits | P0 | S | S-03 |  | TODO |
-| S-05 | Go orchestrator driving PowerShell providers | P0 | S | T0-01 |  | TODO |
+| S-05 | Go orchestrator driving PowerShell providers | P0 | S | T0-01 |  | DONE |
 | S-06 | Bootstrap with a delegated Global Administrator session | P0 | S | T0-01 | yes | TODO |
 | S-07 | Exchange disclaimer rendering | P0 | S | T0-01 | yes | TODO |
 | S-08 | Fresh-tenant discovery and browser sign-in | P0 | S | T0-01 | yes | TODO |

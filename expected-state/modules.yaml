@@ -1,0 +1,11 @@
+# PowerShell runtime and modules the providers run on, at pinned versions
+# (SPEC §3). `box doctor` (T0-03) checks these. Measured in spike S-05.
+pwsh: {minimum: "7.4.0", tested: "7.4.6"}
+modules:
+  - {name: Microsoft.Graph.Authentication, version: "2.25.0", provider: identity}
+  - {name: Microsoft.Graph.Identity.DirectoryManagement, version: "2.25.0", provider: identity}
+  - {name: ExchangeOnlineManagement, version: "3.6.0", provider: exchange}
+  - {name: PnP.PowerShell, version: "2.12.0", provider: sharepoint}
+  - {name: MicrosoftTeams, version: "6.7.0", provider: teams}
+tools:
+  - {name: pac, purpose: "Power Platform CLI, solution deployment (S-03)", provider: powerplatform}

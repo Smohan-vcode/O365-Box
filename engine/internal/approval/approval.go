@@ -461,15 +461,24 @@ type EventItem struct {
 	Detail    map[string]any `json:"detail,omitempty"`
 }
 
+// NewEventID returns a new Events item id.
+func NewEventID() (string, error) {
+	b := make([]byte, 8)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	return "ev-" + hex.EncodeToString(b), nil
+}
+
 // AppendEvent adds an item to the local Events file (one JSON line each);
 // items are only ever added.
 func AppendEvent(path string, it *EventItem) error {
 	if it.EventID == "" {
-		b := make([]byte, 8)
-		if _, err := rand.Read(b); err != nil {
+		id, err := NewEventID()
+		if err != nil {
 			return err
 		}
-		it.EventID = "ev-" + hex.EncodeToString(b)
+		it.EventID = id
 	}
 	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
 		return err

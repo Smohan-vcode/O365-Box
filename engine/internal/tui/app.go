@@ -32,6 +32,11 @@ type Options struct {
 	// After the build.
 	Home    func() []AreaStatus // status per area from the last check; nil: no home screen
 	Enforce func(area string) error
+	// Requests reads the Edge extension requests waiting for the owner;
+	// DecideRequest records an approval or rejection and returns a line for
+	// the status bar (T14-18). Nil Requests shows no card.
+	Requests      func() ([]ExtensionRequest, error)
+	DecideRequest func(RequestDecision) (string, error)
 
 	// Audit runs the read-only audit (box audit, SPEC §26) after the TUI
 	// closes; nil explains the path only.
@@ -56,27 +61,31 @@ const (
 
 // Model is the Bubble Tea model of the onboarding wizard.
 type Model struct {
-	opt      Options
-	steps    []Screen
-	cur      int
-	d        *draft.Draft
-	store    *draft.Store
-	th       Theme
-	themeIdx int
-	w, h     int
-	help     bool
-	helpSet  bool
-	status   string
-	isErr    bool
-	phase    phase
-	pass     textinput.Model
-	newDraft bool
-	frame    int  // animation frame (tickMsg)
-	ticking  bool // a tick is scheduled
-	path     int  // welcome screen: pathSetup or pathAudit
-	home     []AreaStatus
-	homeCur  int
-	Saved    bool // set when the model quit after saving
+	opt       Options
+	steps     []Screen
+	cur       int
+	d         *draft.Draft
+	store     *draft.Store
+	th        Theme
+	themeIdx  int
+	w, h      int
+	help      bool
+	helpSet   bool
+	status    string
+	isErr     bool
+	phase     phase
+	pass      textinput.Model
+	newDraft  bool
+	frame     int  // animation frame (tickMsg)
+	ticking   bool // a tick is scheduled
+	path      int  // welcome screen: pathSetup or pathAudit
+	home      []AreaStatus
+	homeCur   int
+	reqs      []ExtensionRequest // waiting extension requests (home card)
+	reqErr    string
+	rejecting int // the request whose rejection reason is being typed
+	reason    textinput.Model
+	Saved     bool // set when the model quit after saving
 	// AuditChosen is set when the owner chose "Prepare for an audit" and
 	// started it; Run then calls Options.Audit.
 	AuditChosen bool

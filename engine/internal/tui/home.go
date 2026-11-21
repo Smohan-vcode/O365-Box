@@ -17,6 +17,7 @@ func (m *Model) openHome() {
 	m.phase = phaseHome
 	m.homeCur = 0
 	m.home = m.opt.Home()
+	m.loadRequests()
 	m.status, m.isErr = "", false
 }
 
@@ -30,7 +31,13 @@ func (m *Model) areaTitle(id string) string {
 }
 
 func (m *Model) updateHome(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.rejecting != 0 {
+		return m.updateReason(msg)
+	}
 	m.status, m.isErr = "", false
+	if m.updateRequestKey(msg) {
+		return m, nil
+	}
 	switch msg.String() {
 	case "ctrl+c", "q", "esc":
 		return m, tea.Quit
@@ -39,14 +46,16 @@ func (m *Model) updateHome(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			m.homeCur--
 		}
 	case "down", "j", "right", "l":
-		if m.homeCur < len(m.home)-1 {
+		if m.homeCur < m.homeRows()-1 {
 			m.homeCur++
 		}
 	case "r":
 		m.home = m.opt.Home()
+		m.loadRequests()
+		m.homeCur = min(m.homeCur, max(0, m.homeRows()-1))
 		m.status = "Status refreshed from the last check."
 	case "e":
-		if len(m.home) == 0 {
+		if m.homeCur >= len(m.home) {
 			break
 		}
 		a := m.home[m.homeCur]
@@ -140,6 +149,7 @@ func (m *Model) viewHome(w, h int) string {
 			b.WriteString(th.Muted.Render(fit("    "+a.Note, w, 1)) + "\n")
 		}
 	}
+	b.WriteString(m.viewRequests(w))
 	b.WriteString("\n" + th.Muted.Render(wrap("Policies start by watching (audit): they report what they would block and block nobody. Enforce an area once its audit period is clean.", w)))
 	status := ""
 	if m.status != "" {
@@ -150,6 +160,12 @@ func (m *Model) viewHome(w, h int) string {
 		status = st.Render(m.status)
 	}
 	keys := []Key{{"↑↓", "move"}, {"e", "enforce"}, {"r", "refresh"}, {"ctrl+t", "theme"}, {"q", "quit"}}
+	if m.curRequest() != nil {
+		keys = []Key{{"↑↓", "move"}, {"a", "approve"}, {"i", "approve, install for everyone"}, {"x", "turn down"}, {"q", "quit"}}
+	}
+	if m.rejecting != 0 {
+		keys = []Key{{"enter", "turn down"}, {"esc", "cancel"}}
+	}
 	var parts []string
 	for _, k := range keys {
 		parts = append(parts, th.Key.Render(k.Keys)+" "+k.Does)

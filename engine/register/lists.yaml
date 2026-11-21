@@ -72,6 +72,10 @@ enums:
   - OPEN
   - DONE
   - OVERDUE
+  request_state:
+  - requested
+  - approved
+  - rejected
   frequency:
   - daily
   - weekly
@@ -809,6 +813,39 @@ lists:
       type: ref(People)
     - name: closed_at
       type: datetime
+  ExtensionRequests:
+    purpose: Staff ask for a Microsoft Edge extension on company devices (T14-18). Staff add items with the list's form and read only their own; the owner decides with box extensions approve or reject, or on the home screen. An approval adds the id to the configuration's devices.browser.extension_allowlist as a new version with one Events item; the state column alone allows nothing.
+    columns:
+    - name: extension_id
+      type: text
+      required: true
+      note: 32 lowercase letters a to p, shown on edge://extensions with developer mode on
+    - name: extension_name
+      type: text
+      note: the extension's name as the requester knows it
+    - name: store_name
+      type: text
+      note: the name the Edge Add-ons store gives, filled by the box when the store could be reached
+    - name: reason
+      type: long
+      required: true
+    - name: requester
+      type: text
+      note: the work account that asked; empty for a form entry (the item's author is the requester)
+    - name: install_for_everyone
+      type: bool
+      note: the requester asks for it to be installed for everyone; the owner decides
+    - name: state
+      type: enum
+      enum: request_state
+      required: true
+    - name: decided_by
+      type: text
+    - name: decided_at
+      type: datetime
+    - name: decision_reason
+      type: long
+      note: the owner's reason, required for a rejection
   Risks:
     columns:
     - name: risk_id

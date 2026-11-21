@@ -59,3 +59,10 @@ steps:
     module: policies
     depends_on: [sharepoint.libraries, sharepoint.register]
     reads: ["@policies", tenant, structure]
+  - id: sharepoint.extension-requests
+    title: Edge extension requests open to staff (they ask; the owner decides)
+    track: T14
+    task: T14-18
+    module: devices
+    depends_on: [sharepoint.register, identity.groups]
+    reads: [tenant, structure, users]

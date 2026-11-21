@@ -831,6 +831,37 @@
         "type": "string"
       }
     },
+    "devices": {
+      "type": "object",
+      "description": "Device decisions the owner made that the device policies read (SPEC §24, §25). The extension lists are written by box extensions approve, never by a step.",
+      "properties": {
+        "browser": {
+          "type": "object",
+          "properties": {
+            "extension_allowlist": {
+              "type": "array",
+              "description": "Microsoft Edge extension ids the owner approved (ExtensionInstallAllowlist).",
+              "items": {
+                "type": "string",
+                "pattern": "^[a-p]{32}$"
+              },
+              "uniqueItems": true
+            },
+            "forced_extensions": {
+              "type": "array",
+              "description": "Approved extension ids installed for everyone (ExtensionInstallForcelist) while the choice devices.browser_forced_extensions is everyone. Each must also be in extension_allowlist.",
+              "items": {
+                "type": "string",
+                "pattern": "^[a-p]{32}$"
+              },
+              "uniqueItems": true
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
     "choices": {
       "description": "Answers to the onboarding choices (defaults/choices.yaml, SPEC §24): choice id -> option value. Unanswered choices take their recommended default.",
       "type": "object",

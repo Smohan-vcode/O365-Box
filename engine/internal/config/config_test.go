@@ -87,6 +87,31 @@ func TestInvalidConfigurations(t *testing.T) {
 	}
 }
 
+func TestBrowserExtensionLists(t *testing.T) {
+	const a, b = "aaaabbbbccccddddeeeeffffgggghhhh", "ppppoooonnnnmmmmllllkkkkjjjjiiii"
+	base := loadExample(t)
+	ok := base + "devices:\n  browser:\n    extension_allowlist:\n    - " + a + "\n    - " + b + "\n    forced_extensions:\n    - " + b + "\n"
+	if issues := validateText(t, ok); len(issues) > 0 {
+		t.Fatalf("valid lists refused: %v", issues)
+	}
+	cases := []struct{ name, text, path, want string }{
+		{"forced but not approved", base + "devices:\n  browser:\n    extension_allowlist: [" + a + "]\n    forced_extensions: [" + b + "]\n",
+			"devices.browser.forced_extensions[0]", "not approved"},
+		{"not an extension id", base + "devices:\n  browser:\n    extension_allowlist: [ABC]\n", "devices.browser.extension_allowlist[0]", "does not match pattern"},
+		{"unknown key", base + "devices:\n  browser:\n    blocklist: [" + a + "]\n", "devices.browser", "blocklist"},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			for _, i := range validateText(t, c.text) {
+				if strings.HasPrefix(i.Path, c.path) && strings.Contains(i.Message, c.want) {
+					return
+				}
+			}
+			t.Errorf("want issue at %s containing %q; got %v", c.path, c.want, validateText(t, c.text))
+		})
+	}
+}
+
 func TestEngineDataChecks(t *testing.T) {
 	d, err := Parse("fixture.yaml", []byte(loadExample(t)))
 	if err != nil {

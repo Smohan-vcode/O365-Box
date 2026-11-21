@@ -71,9 +71,13 @@ function Get-ImChoiceValue($In, [string] $Kind, [string] $Key) {
   # company's choices supply is an answer even when empty ("" for a list
   # means none: "only approved extensions, none at first"); an absent key
   # is missing.
+  # A key under devices., ai_policy. or values. is a configuration path
+  # (such as devices.browser.extension_allowlist, which the owner's
+  # approvals fill); any other key is values.<key>.
   $cur = Get-ImProp $In 'config'
   $found = $true
-  foreach ($part in @('values') + $Key.Split('.')) {
+  $path = if ($Key -match '^(devices|ai_policy|values)\.') { $Key.Split('.') } else { @('values') + $Key.Split('.') }
+  foreach ($part in $path) {
     if ($null -eq $cur -or $part -notmatch '^[A-Za-z0-9_-]+$') { $found = $false; break }
     $has = if ($cur -is [System.Collections.IDictionary]) { $cur.Contains($part) } else { $null -ne $cur.PSObject.Properties[$part] }
     if (-not $has) { $found = $false; break }

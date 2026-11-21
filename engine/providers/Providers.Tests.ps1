@@ -384,6 +384,25 @@ Describe 'intune policy helpers (T14-05)' {
       $r.missing | Should -Be @('{config:devices.windows.minimum_os_version}')
     }
   }
+  It 'expands Edge extension lists and leaves out a setting whose list is empty (T14-18)' {
+    InModuleScope Box.intune {
+      $str = { param($v) [ordered]@{ '@odata.type' = '#microsoft.graph.deviceManagementConfigurationStringSettingValue'; value = $v } }
+      $set = { param($id, $v) [ordered]@{ settingInstance = [ordered]@{ settingDefinitionId = $id; choiceSettingValue = [ordered]@{ value = "${id}_1"; children = @([ordered]@{ settingDefinitionId = "${id}_desc"; simpleSettingCollectionValue = @((& $str $v)) }) } } } }
+      $p = [ordered]@{ policy = [ordered]@{ name = 'Box - Windows - Microsoft Edge' }; settings = @((& $set 'block' '*'), (& $set 'allow' '{list:devices.browser.extension_allowlist}'), (& $set 'force' '{list:devices.browser.forced_extensions}')) }
+      $ids = @('aaaabbbbccccddddeeeeffffgggghhhh', 'ppppoooonnnnmmmmllllkkkkjjjjiiii')
+      $in = @{ config = @{ devices = @{ browser = @{ extension_allowlist = $ids; forced_extensions = '' } } } }
+      $m = [System.Collections.Generic.List[string]]::new()
+      $r = Expand-WinLists $p $in $m
+      $m.Count | Should -Be 0
+      @($r.settings).Count | Should -Be 2
+      @($r.settings[1].settingInstance.choiceSettingValue.children[0].simpleSettingCollectionValue | ForEach-Object { $_.value }) | Should -Be $ids
+      $r.settings[0].settingInstance.choiceSettingValue.children[0].simpleSettingCollectionValue[0].value | Should -Be '*'
+      # No answer at all is missing, never an empty list.
+      $m2 = [System.Collections.Generic.List[string]]::new()
+      Expand-WinLists $p @{ config = @{} } $m2 | Out-Null
+      @($m2 | Select-Object -Unique) | Should -Be @('{list:devices.browser.extension_allowlist}', '{list:devices.browser.forced_extensions}')
+    }
+  }
   It 'builds the Edge sign-in pattern from verified domains' {
     InModuleScope Box.intune {
       ConvertTo-WinDomainPattern @('acme.example', 'Acme.onmicrosoft.com') | Should -Be '.*@(acme\.example|acme\.onmicrosoft\.com)$'

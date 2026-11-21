@@ -33,6 +33,15 @@ Describe 'placeholders' {
     @($r.two | ForEach-Object { $_.value }) | Should -Be @('a.example', 'b.example')
     $m | Should -Be @('{list:other}')
   }
+  It 'reads a list from a configuration path (the approved Edge extensions, T14-18)' {
+    $in2 = @{ config = @{ devices = @{ browser = @{ extension_allowlist = @('aaaabbbbccccddddeeeeffffgggghhhh') } }; values = @{ edge_extension_blocklist = '*' } } }
+    $m = [System.Collections.Generic.List[string]]::new()
+    $item = { param($v) [ordered]@{ '@odata.type' = '#microsoft.graph.deviceManagementConfigurationStringSettingValue'; value = $v } }
+    $r = Resolve-ImValue ([ordered]@{ allow = @((& $item '{list:devices.browser.extension_allowlist}')); block = @((& $item '{list:edge_extension_blocklist}')) }) $in2 $m
+    @($r.allow | ForEach-Object { $_.value }) | Should -Be @('aaaabbbbccccddddeeeeffffgggghhhh')
+    @($r.block | ForEach-Object { $_.value }) | Should -Be @('*')
+    $m.Count | Should -Be 0
+  }
   It 'fills a text value worked out at run time' {
     $script:ImRuntimeValues = @{ '{text:edge_signin_pattern}' = (Get-ImSigninPattern @('B.example', 'a.example')) }
     $m = [System.Collections.Generic.List[string]]::new()

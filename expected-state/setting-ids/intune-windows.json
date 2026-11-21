@@ -3729,7 +3729,7 @@
                   "simpleSettingCollectionValue": [
                     {
                       "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue",
-                      "value": "{config:devices.browser.extension_allowlist}"
+                      "value": "{list:devices.browser.extension_allowlist}"
                     }
                   ]
                 }
@@ -3740,7 +3740,7 @@
       ]
     },
     "read": "GET /beta/deviceManagement/configurationPolicies/{policy:win-edge}/settings",
-    "check": "settingInstance[device_vendor_msft_policy_config_microsoft_edge~policy~microsoft_edge~extensions_extensioninstallblocklist] == device_vendor_msft_policy_config_microsoft_edge~policy~microsoft_edge~extensions_extensioninstallblocklist_1 AND settingInstance[device_vendor_msft_policy_config_microsoft_edge~policy~microsoft_edge~extensions_extensioninstallblocklist_extensioninstallblocklistdesc] == [\"*\"] AND settingInstance[device_vendor_msft_policy_config_microsoft_edge~policy~microsoft_edge~extensions_extensioninstallallowlist] == device_vendor_msft_policy_config_microsoft_edge~policy~microsoft_edge~extensions_extensioninstallallowlist_1 AND settingInstance[device_vendor_msft_policy_config_microsoft_edge~policy~microsoft_edge~extensions_extensioninstallallowlist_extensioninstallallowlistdesc] == [\"{config:devices.browser.extension_allowlist}\"]",
+    "check": "settingInstance[device_vendor_msft_policy_config_microsoft_edge~policy~microsoft_edge~extensions_extensioninstallblocklist] == device_vendor_msft_policy_config_microsoft_edge~policy~microsoft_edge~extensions_extensioninstallblocklist_1 AND settingInstance[device_vendor_msft_policy_config_microsoft_edge~policy~microsoft_edge~extensions_extensioninstallblocklist_extensioninstallblocklistdesc] == [\"*\"] AND settingInstance[device_vendor_msft_policy_config_microsoft_edge~policy~microsoft_edge~extensions_extensioninstallallowlist] == device_vendor_msft_policy_config_microsoft_edge~policy~microsoft_edge~extensions_extensioninstallallowlist_1 AND settingInstance[device_vendor_msft_policy_config_microsoft_edge~policy~microsoft_edge~extensions_extensioninstallallowlist_extensioninstallallowlistdesc] == [\"{list:devices.browser.extension_allowlist}\"]",
     "permissions": [
       "graph:DeviceManagementConfiguration.ReadWrite.All"
     ],
@@ -3750,7 +3750,7 @@
       "note": "S-02 is not done; resource type is the Microsoft365DSC/UTCM name expected to cover this object, not verified"
     },
     "verified": "settings-catalogue definition GET /beta/deviceManagement/configurationSettings/<id> returned 200 on the test tenant (2026-11-21); option ids copied from the definition",
-    "notes": "Plain settings-catalogue policy. Enhanced tier. Block list \"*\" blocks all; the allow list is a tenant choice with no configuration path yet: propose devices.browser.extension_allowlist (list of extension ids). An empty allow list is valid (blocks everything)."
+    "notes": "Plain settings-catalogue policy. Enhanced tier. Block list \"*\" blocks all; the allow list is devices.browser.extension_allowlist in the configuration, filled only by the owner approving a request (box extensions approve, T14-18). {list:x} expands to one value per approved id; an empty allow list leaves the allow-list setting out (Intune takes no empty collection), which blocks everything. The choice devices.browser_extensions=store leaves this setting out."
   },
   "WIN-070": {
     "status": "resolved",

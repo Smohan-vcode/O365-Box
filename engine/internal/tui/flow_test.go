@@ -301,7 +301,12 @@ func TestHomeAfterBuild(t *testing.T) {
 func TestNewScreensPlainAndFit(t *testing.T) {
 	for _, theme := range []string{"dark", "light", "plain"} {
 		for _, size := range [][2]int{{80, 24}, {120, 40}, {40, 12}} {
-			m := fullModel(t, theme, func(o *Options) { o.Home = sampleHome })
+			m := fullModel(t, theme, func(o *Options) {
+				o.Home = sampleHome
+				o.Requests = func() ([]ExtensionRequest, error) {
+					return []ExtensionRequest{{Number: 4, ExtensionID: "aaaabbbbccccddddeeeeffffgggghhhh", Label: "Example Notes", Requester: "staff-1", Reason: "client call notes"}}, nil
+				}
+			})
 			send(m, tea.WindowSizeMsg{Width: size[0], Height: size[1]})
 			where := theme + " welcome"
 			check := func() {
@@ -338,6 +343,64 @@ func TestNewScreensPlainAndFit(t *testing.T) {
 			where = theme + " audit"
 			check()
 		}
+	}
+}
+
+func TestHomeExtensionRequests(t *testing.T) {
+	waiting := []ExtensionRequest{
+		{Number: 4, ExtensionID: "aaaabbbbccccddddeeeeffffgggghhhh", Label: "Example Notes", Requester: "staff-1", Reason: "client call notes", AskEveryone: true},
+		{Number: 6, ExtensionID: "ppppoooonnnnmmmmllllkkkkjjjjiiii", Label: "Other helper", Requester: "staff-2", Reason: "translations"},
+	}
+	var decided []RequestDecision
+	m := fullModel(t, "dark", func(o *Options) {
+		o.Areas, o.AreaInfo = areas(t), nil
+		o.Home = sampleHome
+		o.Requests = func() ([]ExtensionRequest, error) { return waiting, nil }
+		o.DecideRequest = func(d RequestDecision) (string, error) {
+			decided = append(decided, d)
+			waiting = waiting[1:]
+			return "decided", nil
+		}
+	})
+	send(m, tea.WindowSizeMsg{Width: 120, Height: 40})
+	m.openHome()
+	v := stripANSI(m.View())
+	for _, want := range []string{"Requests waiting for you (2)", "#4 Example Notes", "staff-1 asks: client call notes (asks to install it for everyone)"} {
+		if !strings.Contains(v, want) {
+			t.Errorf("home lacks %q:\n%s", want, v)
+		}
+	}
+	// On an area the request keys do nothing.
+	send(m, runes("a"))
+	if len(decided) != 0 {
+		t.Fatal("a decided a request from an area row")
+	}
+	for range sampleHome() {
+		send(m, key(tea.KeyDown))
+	}
+	if m.curRequest() == nil || m.curRequest().Number != 4 {
+		t.Fatalf("cursor not on request 4: %d", m.homeCur)
+	}
+	send(m, runes("i"))
+	if len(decided) != 1 || !decided[0].Approve || !decided[0].Everyone || decided[0].Number != 4 {
+		t.Fatalf("decided %+v", decided)
+	}
+	// Turning down needs a reason; esc records nothing.
+	m.homeCur = len(m.home)
+	send(m, runes("x"), key(tea.KeyEsc))
+	if len(decided) != 1 || m.rejecting != 0 {
+		t.Fatal("esc recorded a rejection")
+	}
+	send(m, runes("x"), key(tea.KeyEnter))
+	if len(decided) != 1 || !m.isErr {
+		t.Fatal("rejected without a reason")
+	}
+	send(m, runes("not needed"), key(tea.KeyEnter))
+	if len(decided) != 2 || decided[1].Approve || decided[1].Reason != "not needed" || decided[1].Number != 6 {
+		t.Fatalf("decided %+v", decided)
+	}
+	if !strings.Contains(stripANSI(m.View()), "Requests waiting for you (0)") {
+		t.Errorf("card not refreshed:\n%s", stripANSI(m.View()))
 	}
 }
 

@@ -446,13 +446,18 @@ choices:
     help: Extensions can read everything on a web page, including company data.
     when: module devices
     options:
+      # Staff ask in the Admin site's ExtensionRequests list; each approval
+      # (box extensions approve, or the home screen) adds the id to the
+      # configuration's devices.browser.extension_allowlist (T14-18).
       - value: approved
         label: Only extensions the company approves
-        detail: None at first; add any you need from the home screen.
+        detail: None at first. Staff ask for one with a short form; you approve or turn down each request from the home screen.
         recommended: true
         cost: none
-        effects: {values: {values.edge_extension_allowlist: ""}}
+        effects: {values: {values.edge_extension_blocklist: "*", devices.browser.extension_allowlist: ""}}
       - value: store
         label: Anything from the Microsoft Edge store
         cost: none
-        effects: {exceptions: [MAC-030]}
+        # Only the extension block and allow lists are left out: SmartScreen
+        # and the other Edge settings of MAC-030 still apply.
+        effects: {exceptions: [WIN-069], values: {values.edge_extension_blocklist: "", devices.browser.extension_allowlist: ""}}

@@ -17,6 +17,20 @@ type Config struct {
 	Policy        Policy            `yaml:"policy"`
 	Choices       map[string]string `yaml:"choices"`
 	Integrations  Integrations      `yaml:"integrations"`
+	Devices       Devices           `yaml:"devices"`
+}
+
+// Devices holds device decisions the owner made that the device policies
+// read (SPEC §24, §25).
+type Devices struct {
+	Browser Browser `yaml:"browser"`
+}
+
+// Browser is the Microsoft Edge extension decisions: the extensions the
+// owner approved (box extensions approve) and those installed for everyone.
+type Browser struct {
+	ExtensionAllowlist []string `yaml:"extension_allowlist"`
+	ForcedExtensions   []string `yaml:"forced_extensions"`
 }
 
 type Tenant struct {

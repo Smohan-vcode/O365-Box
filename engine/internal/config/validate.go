@@ -75,6 +75,26 @@ func (v *validator) run() {
 	v.policy(groups)
 	v.jurisdictions()
 	v.choices()
+	v.devices()
+}
+
+// devices checks the Edge extension lists: every extension installed for
+// everyone must also be approved (in the allow list), and installing for
+// everyone needs the devices module. The schema checks the id form.
+func (v *validator) devices() {
+	b := v.c.Devices.Browser
+	allowed := map[string]bool{}
+	for _, id := range b.ExtensionAllowlist {
+		allowed[id] = true
+	}
+	for i, id := range b.ForcedExtensions {
+		if !allowed[id] {
+			v.add(fmt.Sprintf("devices.browser.forced_extensions[%d]", i), "extension %s is installed for everyone but not approved: add it to devices.browser.extension_allowlist (box extensions approve)", id)
+		}
+	}
+	if (len(b.ExtensionAllowlist) > 0 || len(b.ForcedExtensions) > 0) && !v.c.Modules.Devices {
+		v.add("devices.browser", "browser extension lists apply only with the devices module, which is off")
+	}
 }
 
 // choices checks every answer names a known choice and one of its options.

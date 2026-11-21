@@ -67,6 +67,62 @@ function Get-WinPlaceholderValues($In, [string[]] $Wanted) {
   return $v
 }
 
+function Expand-WinListValue($Node, $In, [System.Collections.Generic.List[string]] $Missing, [ref] $Emptied) {
+  # Copies $Node with every list item that is (or whose 'value' is) exactly
+  # {list:x} replaced by one item per entry of the answer (the configuration
+  # path or values.x, read as policy.intune-macos reads it). A list that
+  # becomes empty sets $Emptied. An answer the configuration does not give
+  # goes to $Missing.
+  if ($null -eq $Node -or $Node -is [string] -or $Node -is [ValueType]) { return $Node }
+  if ($Node -is [System.Collections.IDictionary]) {
+    $h = [ordered]@{}
+    foreach ($k in @($Node.Keys)) { $h[$k] = Expand-WinListValue $Node[$k] $In $Missing $Emptied }
+    return $h
+  }
+  if ($Node -is [System.Collections.IEnumerable]) {
+    $l = [System.Collections.Generic.List[object]]::new()
+    $had = $false
+    foreach ($x in $Node) {
+      $inner = if ($x -is [string]) { $x } elseif ($x -is [System.Collections.IDictionary] -and $x['value'] -is [string]) { $x['value'] } else { $null }
+      if ($inner -and $inner -match '^\{list:([^}]*)\}$') {
+        $had = $true
+        $c = Get-ImChoiceValue $In 'list' $Matches[1]
+        if (-not $c.found) { $Missing.Add($inner); $l.Add($x); continue }
+        foreach ($item in (ConvertTo-ImList $c.value)) {
+          if ($x -is [string]) { $l.Add($item) } else { $copy = ConvertTo-IntuneHashtable $x; $copy['value'] = $item; $l.Add($copy) }
+        }
+        continue
+      }
+      $l.Add((Expand-WinListValue $x $In $Missing $Emptied))
+    }
+    if ($had -and $l.Count -eq 0) { $Emptied.Value = $true }
+    return , $l.ToArray()
+  }
+  return $Node
+}
+
+function Expand-WinLists($Payload, $In, [System.Collections.Generic.List[string]] $Missing) {
+  # {list:x} placeholders in a payload (T14-18): the Edge extension allow
+  # and install lists come from the owner's approved extensions. A
+  # settings-catalogue setting whose list ends up empty is left out: Intune
+  # takes no empty collection, and no list means what an empty one does.
+  if ($Payload -isnot [System.Collections.IDictionary] -or ($Payload | ConvertTo-Json -Depth 64 -Compress) -notmatch '\{list:') { return $Payload }
+  $out = [ordered]@{}
+  foreach ($k in @($Payload.Keys)) {
+    $e = $false
+    if ($k -eq 'settings' -and $Payload[$k] -is [array]) {
+      $keep = [System.Collections.Generic.List[object]]::new()
+      foreach ($st in $Payload[$k]) {
+        $e = $false
+        $x = Expand-WinListValue $st $In $Missing ([ref]$e)
+        if (-not $e) { $keep.Add($x) }
+      }
+      $out[$k] = $keep.ToArray()
+    } else { $out[$k] = Expand-WinListValue $Payload[$k] $In $Missing ([ref]$e) }
+  }
+  return $out
+}
+
 $script:WinPlaceholderWhy = @{
   '{sid:role:device-local-administrator}' = 'the Entra role "Microsoft Entra Joined Device Local Administrator" is not activated in the tenant (no directoryRole object, so no SID); replacing the local Administrators group without it would remove every device administrator'
 }
@@ -102,6 +158,12 @@ function Get-WinModel($In) {
     # An audit form that lists only the settings (ASR rules) keeps the payload's policy.
     if ($p -is [System.Collections.IDictionary] -and $p.settings -is [array] -and -not $p.Contains('policy')) {
       $p.policy = ConvertTo-IntuneHashtable (Get-WinMapping)[$s.id].payload.policy
+    }
+    $lm = [System.Collections.Generic.List[string]]::new()
+    $p = Expand-WinLists $p $In $lm
+    if ($lm.Count) {
+      $m.skipped += @{ id = $s.id; name = $s.name; reason = "needs value(s) not in the configuration: $(@($lm | Select-Object -Unique) -join ', ')" }
+      continue
     }
     $r = Resolve-WinPlaceholders ($p | ConvertTo-Json -Depth 64 -Compress) $values
     if ($r.missing.Count) {

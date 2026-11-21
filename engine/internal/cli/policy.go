@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -108,7 +109,7 @@ func newPolicyCmd(g *globals) *cobra.Command {
 		},
 	}
 	cf.bind(coverage)
-	cmd.AddCommand(coverage)
+	cmd.AddCommand(coverage, newPolicyMappingsCmd(g))
 	return cmd
 }
 
@@ -179,6 +180,59 @@ func (f *resolveFlags) resolve(g *globals, cmd *cobra.Command) (string, *policy.
 		return "", nil, nil, err
 	}
 	return root, cat, res, nil
+}
+
+func newPolicyMappingsCmd(g *globals) *cobra.Command {
+	var check bool
+	c := &cobra.Command{Use: "mappings", Short: "Check setting mappings (T14-03) and render expected-state/baseline-coverage.yaml",
+		Args: cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			root, err := g.root()
+			if err != nil {
+				return err
+			}
+			cat, issues, err := loadCatalogue(root)
+			if err != nil {
+				return err
+			}
+			maps, file, err := policy.LoadMappings(filepath.Join(root, "expected-state", "setting-ids"))
+			if err != nil {
+				return err
+			}
+			issues = append(issues, cat.CheckMappings(maps, file)...)
+			cov, err := cat.CoverageMap(maps)
+			if err != nil {
+				return err
+			}
+			covPath := filepath.Join(root, "expected-state", "baseline-coverage.yaml")
+			if check {
+				cur, _ := os.ReadFile(covPath)
+				if string(cur) != string(cov) {
+					issues = append(issues, report.Issue{Check: "mappings", File: "expected-state/baseline-coverage.yaml",
+						Message: "out of date; run box policy mappings"})
+				}
+			} else if len(maps) > 0 {
+				if err := os.WriteFile(covPath, cov, 0o644); err != nil {
+					return err
+				}
+			}
+			counts := map[string]int{}
+			for _, m := range maps {
+				counts[m.Status]++
+			}
+			res := report.Result{Command: "policy mappings", OK: len(issues) == 0, Issues: issues,
+				Summary: fmt.Sprintf("%d mapping(s): %d resolved, %d gate, %d unresolved, %d not applied", len(maps),
+					counts["resolved"], counts["gate"], counts["unresolved"], counts["not-applied"])}
+			if err := res.Write(cmd.OutOrStdout(), g.asJSON); err != nil {
+				return err
+			}
+			if !res.OK {
+				return exitError{ExitFailure}
+			}
+			return nil
+		}}
+	c.Flags().BoolVar(&check, "check", false, "fail if a mapping is missing or malformed, or the coverage file is out of date")
+	return c
 }
 
 func selection(p config.Policy) policy.Selection {

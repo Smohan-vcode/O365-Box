@@ -37,6 +37,7 @@ type buildScreen struct {
 	ended   bool
 	frame   int
 	outline []string
+	home    bool // a home screen follows the build
 }
 
 func newBuildScreen(feed BuildFeed, outline []string) *buildScreen {
@@ -51,6 +52,9 @@ func (b *buildScreen) Help() string {
 func (b *buildScreen) Keys() []Key {
 	if b.feed != nil && !b.started {
 		return []Key{{"enter", "start the build"}}
+	}
+	if b.ended && b.home {
+		return []Key{{"enter", "home screen"}}
 	}
 	return nil
 }
@@ -199,7 +203,10 @@ func (b *buildScreen) View(width, height int, th Theme, _ *draft.Draft) string {
 	}
 	if b.ended && failed == 0 {
 		s.WriteString("\n" + th.OK.Render(wrap(fmt.Sprintf("%d change(s) made. A second run would change nothing.", changes), width)))
-	} else if b.last != "" {
+	}
+	if b.ended && b.home {
+		s.WriteString("\n" + th.Accent.Render("Press enter to open your home screen."))
+	} else if b.last != "" && (!b.ended || failed > 0) {
 		s.WriteString("\n" + th.Muted.Render(fit("› "+b.last, width, 1)))
 	}
 	return s.String()

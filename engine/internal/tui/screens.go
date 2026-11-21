@@ -7,7 +7,6 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/Smohan-vcode/O365-Box/engine/internal/choices"
 	"github.com/Smohan-vcode/O365-Box/engine/internal/draft"
 )
 
@@ -136,11 +135,23 @@ func (p *plannedScreen) View(width, _ int, th Theme, _ *draft.Draft) string {
 	return b.String()
 }
 
-// Steps returns the eight wizard steps (SPEC §18.4). With the choices
-// catalogue, Security and Structure ask its questions (T13-10).
-func Steps(cat *choices.Catalogue) []Screen {
-	steps := []Screen{
-		&choiceScreen{id: "start", title: "Start", key: "start.mode",
+// Steps returns the five questions of SPEC §25.3 and the Build: sign in;
+// what you run; how careful (the dial, with fine-tune for the choices of
+// defaults/choices.yaml); who works here; review and approve by area.
+// Company details and addresses come from discovery and the
+// recommendations (§18.3) and are changed from the home screen.
+func Steps(opt Options) []Screen {
+	const carefulHelp = "Security settings protect sign-in, email, sharing, meetings and devices. The recommended level suits most companies."
+	careful := Screen(&plannedScreen{id: "careful", title: "How careful", task: "T13-11", help: carefulHelp,
+		collects: []string{"One dial: Essential, Recommended or Strict", "Fine-tune: each individual choice"}})
+	if opt.Choices != nil && len(opt.Choices.Dial.Levels) > 0 {
+		careful = newCarefulScreen(opt.Choices, carefulHelp)
+	}
+	build := newBuildScreen(opt.Build, []string{"Your people, groups and emergency accounts", "Shared mailboxes, lists and automatic replies",
+		"Sites, libraries and the company registers", "Security policies, audit mode first", "A final report"})
+	build.home = opt.Home != nil
+	return []Screen{
+		&choiceScreen{id: "start", title: "Sign in", key: "start.mode",
 			question: "Do you already have Microsoft 365 for your company?",
 			help:     "We sign you in to your Microsoft 365 organisation and read what Microsoft already knows: your organisation's name and address, domains and licences. Nothing is changed until the Build step.\n\nWhy we ask: if you do not have Microsoft 365 yet, we show you how to sign up first.",
 			options: []option{
@@ -148,38 +159,12 @@ func Steps(cat *choices.Catalogue) []Screen {
 				{"signup", "No, help me sign up", "We explain which plan to choose and open Microsoft's sign-up page."},
 				{"other", "I'm setting this up for someone else", "You need that company's administrator sign-in."},
 			}},
-		&plannedScreen{id: "company", title: "Company", task: "T13-03, T13-05",
-			help:     "Your company's legal details appear on emails, documents and notices. Values Microsoft already knows are filled in for you to confirm.",
-			collects: []string{"Legal and trading name, entity wording", "Registered address, registration and tax numbers, telephone", "Domains", "Where the company is registered, and where it operates", "Email disclaimer, document footer and other legal notices"}},
-		&plannedScreen{id: "addresses", title: "Addresses", task: "T13-03",
-			help:     "Shared addresses such as info@ or support@ are mailboxes several people can read and reply from. They need no paid licence.",
-			collects: []string{"Your own address", "Shared mailboxes, aliases and lists, and who reads each", "Automatic replies", "Who manages your DNS, and its access token"}},
-		&plannedScreen{id: "security", title: "Security", task: "T13-04",
-			help:     "Security settings protect sign-in, email, sharing, meetings and devices. The recommended level suits most companies.",
-			collects: []string{"Security level: essential, recommended or strict", "Any setting you want to change, with a reason", "Emergency (break-glass) administrator accounts"}},
-		&plannedScreen{id: "structure", title: "Structure", task: "T13-06",
-			help:     "Your files live in sites and libraries. You can add folders and decide which groups can open what.",
-			collects: []string{"Modules to switch on", "Sites, libraries and folders", "Groups, and who can open what", "Your legal pack, if you have one"}},
-		&plannedScreen{id: "people", title: "People", task: "T13-03",
+		&runScreen{detected: opt.Detected},
+		careful,
+		&plannedScreen{id: "people", title: "Who works here", task: "T13-03",
 			help:     "Each person gets an account, a plan and the groups for their role. We show how many licences you have left.",
 			collects: []string{"Name, address, plan and roles for each person", "How each person gets their first sign-in pass: on screen or by email to a private address"}},
-		&plannedScreen{id: "review", title: "Review", task: "T13-07",
-			help:     "Check everything that will be built before anything changes.",
-			collects: []string{"The full plan, with every change", "Licence use, manual steps ahead and estimated time", "Your typed confirmation"}},
-		newBuildScreen(nil, []string{"Your people, groups and emergency accounts", "Shared mailboxes, lists and automatic replies",
-			"Sites, libraries and the company registers", "Security policies, audit mode first", "A final report"}),
+		newReviewScreen(opt),
+		build,
 	}
-	if cat != nil {
-		for i, st := range steps {
-			p, ok := st.(*plannedScreen)
-			if !ok || (p.id != "security" && p.id != "structure") {
-				continue
-			}
-			cs := newChoicesScreen(p.id, p.title, p.help, cat, p.collects)
-			if len(cs.questions) > 0 {
-				steps[i] = cs
-			}
-		}
-	}
-	return steps
 }

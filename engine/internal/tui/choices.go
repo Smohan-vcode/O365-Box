@@ -18,16 +18,8 @@ type choicesScreen struct {
 	questions       []*choices.Choice
 	also            []string // what the step's other screens (later tasks) collect
 	q, cursor       int
-}
-
-func newChoicesScreen(id, title, help string, cat *choices.Catalogue, also []string) *choicesScreen {
-	s := &choicesScreen{id: id, title: title, help: help, also: also}
-	for i := range cat.Choices {
-		if cat.Choices[i].Step == id {
-			s.questions = append(s.questions, &cat.Choices[i])
-		}
-	}
-	return s
+	ctx             choices.Context // the company's modules, for defaults
+	level           *choices.Level  // the careful dial's level; nil uses each choice's default
 }
 
 func (s *choicesScreen) ID() string    { return s.id }
@@ -57,7 +49,7 @@ func (s *choicesScreen) answer(d *draft.Draft, ch *choices.Choice) (string, bool
 	if v := d.String(key4(ch.ID)); v != "" {
 		return v, true
 	}
-	return ch.Default(choices.Context{}), false
+	return ch.DefaultAt(s.level, s.ctx), false
 }
 
 func (s *choicesScreen) sync(d *draft.Draft) {
@@ -128,11 +120,14 @@ func (s *choicesScreen) View(width, _ int, th Theme, d *draft.Draft) string {
 	ch := s.questions[s.q]
 	b.WriteString(th.Accent.Render(wrap(ch.Question, width)) + "\n\n")
 	chosen, _ := s.answer(d, ch)
-	def := ch.Default(choices.Context{})
+	def := ch.Default(s.ctx)
 	for i, o := range ch.Options {
 		var badges []string
 		if o.Value == def {
 			badges = append(badges, "★ recommended")
+		}
+		if o.Value == ch.Strict {
+			badges = append(badges, "stricter")
 		}
 		if o.Cost == "none" {
 			badges = append(badges, "free")

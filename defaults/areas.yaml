@@ -1,0 +1,55 @@
+# Areas: what an owner cares about, not which admin centre (SPEC §25.2).
+#
+# The Review screen shows one card per area, the proposal groups its
+# changes by area, and the home screen shows one status per area.
+#   id:     stable key (approvals and status are stored by it)
+#   title:  the card's heading
+#   plain:  what the area does, in plain words
+#   steps:  engine steps whose changes belong to the area; "policy.<centre>"
+#           also covers that centre's settings in policy/settings/<centre>.yaml
+# Engine data: no company values.
+areas:
+  - id: sign-in
+    title: Sign-in and accounts
+    plain: Staff need a second sign-in step, old sign-in methods are blocked, and the emergency accounts are kept safe outside the rules.
+    steps: [identity.break-glass, identity.users, identity.groups, identity.auth-methods, identity.directory-settings, identity.security-defaults, identity.conditional-access, policy.entra]
+
+  - id: email
+    title: Email
+    plain: Spam, phishing and look-alike senders are stopped, mail is not forwarded outside without you knowing, and your domain's mail records are set.
+    steps: [exchange.shared-mailboxes, exchange.lists, exchange.auto-replies, policy.exchange, policy.defender]
+
+  - id: files
+    title: Files and sharing
+    plain: Files are shared only with the people you choose, and sharing links expire.
+    steps: [sharepoint.tenant, sharepoint.sites, sharepoint.libraries, sharepoint.register, policy.sharepoint]
+
+  - id: meetings
+    title: Meetings and chat
+    plain: Guests wait in the lobby, and recordings and chat with outside people follow your rules.
+    steps: [policy.teams]
+
+  - id: devices
+    title: Computers and phones
+    plain: Laptops are encrypted, kept up to date and protected from viruses, and a lost phone can be wiped.
+    steps: [policy.intune-windows, policy.intune-macos, policy.intune-mobile]
+
+  - id: sensitive-info
+    title: Sensitive information
+    plain: Confidential files and email carry a label, leaks of personal data are caught, and an audit trail is kept.
+    steps: [policy.purview]
+
+  - id: apps
+    title: Apps and automation
+    plain: Office apps, AI features and automations stay within your rules.
+    steps: [policy.m365-admin, policy.m365-apps, policy.power-platform]
+
+  - id: web-address
+    title: Your web address
+    plain: Your domain is locked at the registrar so nobody can take over your email.
+    steps: [dns.domains, dns.records]
+
+  - id: cloud
+    title: Cloud
+    plain: Free safety settings for your Microsoft Azure subscription, if you use one.
+    steps: [azure.baseline]

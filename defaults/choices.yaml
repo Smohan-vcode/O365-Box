@@ -14,7 +14,34 @@
 #   gates:       manual steps the option adds (engine/gates.yaml, SPEC §22)
 # `when` limits a choice to companies where it applies (a module or a detected fact).
 # `recommended_when` overrides `recommended` for a condition.
+# `essential` / `strict` name the option the careful dial (below) picks at
+# that level; a choice without one keeps its default.
 # Engine data: no company values.
+
+# The careful dial (SPEC §25.3): one question that sets policy.tier and the
+# default of every choice. `pick` says which per-choice answer a level uses.
+# The owner can still fine-tune each choice afterwards.
+dial:
+  question: How careful should we be?
+  help: This sets how strict your security is. Every level protects sign-in, email, files and devices; stricter levels cost your staff a little more convenience. You can change it later from the home screen.
+  levels:
+    - value: essential
+      label: Essential
+      detail: The must-haves for every company, with the fewest interruptions for staff. Fewer forced sign-outs; attachments arrive while they are checked.
+      tier: core
+      pick: essential
+    - value: recommended
+      label: Recommended
+      detail: What we suggest for most companies. Strong protection for sign-in, email, files and devices, with sensible choices for your staff.
+      tier: core
+      pick: recommended
+      recommended: true
+    - value: strict
+      label: Strict
+      detail: For sensitive or regulated work. Adds the stricter settings, stronger phone passcodes and newest software only, and blocks sign-in with a code.
+      tier: enhanced
+      pick: strict
+
 choices:
 
   # ---------- Structure step: what the company runs ----------
@@ -111,6 +138,7 @@ choices:
   # ---------- Security step: how strict ----------
   - id: signin.device_code
     step: security
+    strict: block
     question: Allow sign-in with a code on another device?
     help: Some tools, including this setup tool when run without a browser, sign in by showing a code you enter on your phone. Attackers also misuse this.
     options:
@@ -174,6 +202,7 @@ choices:
 
   - id: devices.android_personal_passcode
     step: security
+    strict: high
     question: Passcode on staff's own Android phones
     help: Android lets companies require a passcode strength on personal phones, not an exact length.
     when: module devices
@@ -190,6 +219,7 @@ choices:
 
   - id: mail.safe_attachments
     step: security
+    essential: dynamic
     question: Suspicious email attachments
     help: Attachments are opened in a safe place before delivery.
     options:
@@ -206,6 +236,7 @@ choices:
 
   - id: session.idle_timeout
     step: security
+    essential: unmanaged_only
     question: Sign people out of web apps when idle?
     options:
       - value: one_hour
@@ -238,6 +269,7 @@ choices:
   # ---------- Security step: device values (suggested, the owner confirms) ----------
   - id: devices.windows_minimum
     step: security
+    strict: win11_24h2
     question: Oldest Windows version allowed on company PCs
     help: Older versions stop getting security fixes. PCs below this are marked not compliant and lose access until updated.
     when: module devices
@@ -274,6 +306,7 @@ choices:
 
   - id: devices.apple_android_minimum
     step: security
+    strict: latest
     question: Oldest Mac, iPhone and Android versions allowed
     help: Devices below these versions get a warning, then lose access to company data until updated.
     when: module devices

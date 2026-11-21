@@ -48,11 +48,16 @@ type Choice struct {
 	Detect   string   `yaml:"detect" json:"detect,omitempty"`
 	When     string   `yaml:"when" json:"when,omitempty"`
 	Options  []Option `yaml:"options" json:"options"`
+	// Essential and Strict name the option the careful dial picks at those
+	// levels (SPEC §25.3); empty keeps the choice's default.
+	Essential string `yaml:"essential" json:"essential,omitempty"`
+	Strict    string `yaml:"strict" json:"strict,omitempty"`
 }
 
 // Catalogue is the loaded file.
 type Catalogue struct {
 	Choices []Choice `yaml:"choices" json:"choices"`
+	Dial    Dial     `yaml:"dial" json:"dial"`
 	File    string   `yaml:"-" json:"-"`
 	byID    map[string]*Choice
 }
@@ -176,6 +181,15 @@ func (c *Catalogue) Validate(k Known) []report.Issue {
 		if recs != 1 {
 			add(p, fmt.Sprintf("exactly one option must be recommended (found %d)", recs))
 		}
+		if ch.Essential != "" && !vals[ch.Essential] {
+			add(p+".essential", fmt.Sprintf("essential names no option %q", ch.Essential))
+		}
+		if ch.Strict != "" && !vals[ch.Strict] {
+			add(p+".strict", fmt.Sprintf("strict names no option %q", ch.Strict))
+		}
+	}
+	for _, msg := range c.Dial.validate() {
+		add("dial", msg)
 	}
 	report.Sort(out)
 	return out

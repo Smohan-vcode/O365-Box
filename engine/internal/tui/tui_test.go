@@ -90,7 +90,7 @@ func TestQuitAndResumeAtSameScreen(t *testing.T) {
 		t.Errorf("want quit, got %T", msg)
 	}
 	m2 := newModel(t, path, "dark")
-	if m2.steps[m2.cur].ID() != "addresses" || m2.d.String("start.mode") != "existing" {
+	if m2.steps[m2.cur].ID() != "careful" || m2.d.String("start.mode") != "existing" {
 		t.Errorf("resumed at %s with %v", m2.steps[m2.cur].ID(), m2.d.Answers)
 	}
 	if !strings.Contains(m2.View(), "Welcome back") {
@@ -106,7 +106,7 @@ func TestCtrlCAlsoSaves(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "d")
 	m := newModel(t, path, "dark")
 	send(m, key(tea.KeyEnter), key(tea.KeyTab), key(tea.KeyCtrlC))
-	if m2 := newModel(t, path, "dark"); m2.steps[m2.cur].ID() != "company" {
+	if m2 := newModel(t, path, "dark"); m2.steps[m2.cur].ID() != "run" {
 		t.Errorf("resumed at %s", m2.steps[m2.cur].ID())
 	}
 }
@@ -142,7 +142,7 @@ func TestPassphraseWhenNoKeychain(t *testing.T) {
 		t.Fatalf("wrong passphrase: phase=%v %q", m2.phase, m2.status)
 	}
 	send(m2, runes("correct horse battery"), key(tea.KeyEnter))
-	if m2.phase != phaseWizard || m2.steps[m2.cur].ID() != "company" {
+	if m2.phase != phaseWizard || m2.steps[m2.cur].ID() != "run" {
 		t.Errorf("resume with passphrase: phase=%v at %s", m2.phase, m2.steps[m2.cur].ID())
 	}
 	// A keychain appearing later must not hide a passphrase draft.
@@ -156,7 +156,7 @@ func TestSignalsAreNotColourOnly(t *testing.T) {
 	m := newModel(t, filepath.Join(t.TempDir(), "d"), "dark")
 	send(m, key(tea.KeyEnter), key(tea.KeyTab))
 	v := m.View()
-	for _, want := range []string{"● Start", "◉ Company", "○ Addresses", "Step 2 of 8"} {
+	for _, want := range []string{"● Sign in", "◉ What you run", "○ How careful", "Step 2 of 6"} {
 		if !strings.Contains(v, want) {
 			t.Errorf("dark view lacks %q", want)
 		}
@@ -167,7 +167,7 @@ func TestSignalsAreNotColourOnly(t *testing.T) {
 	if strings.Contains(pv, "\x1b[") || strings.ContainsAny(pv, "│─●◉○") {
 		t.Errorf("plain view has colour or box drawing:\n%s", pv)
 	}
-	if !strings.Contains(pv, "[now] Company") || !strings.Contains(pv, "[done] Start") || !strings.Contains(pv, "What is this?") {
+	if !strings.Contains(pv, "[now] What you run") || !strings.Contains(pv, "[done] Sign in") || !strings.Contains(pv, "What is this?") {
 		t.Errorf("plain view lacks text markers or help:\n%s", pv)
 	}
 }

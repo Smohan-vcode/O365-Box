@@ -30,24 +30,28 @@ var logo = []string{
 var spinner = []string{"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"}
 
 // welcomeCentered is the first screen of a new onboarding: the logo and
-// the text, each centred on its own.
-func (m *Model) welcomeCentered(w int) string {
+// the text, each centred on its own. Short terminals skip the logo so the
+// two paths stay on screen.
+func (m *Model) welcomeCentered(w, h int) string {
 	th := m.th
 	var top strings.Builder
 	if th.Plain {
 		top.WriteString("COMPANY IN A BOX")
 	} else {
-		for i, l := range logo {
-			top.WriteString(th.Gradient(strings.TrimRight(l, " "), m.frame/2+i, true) + "\n")
+		if h >= 32 {
+			for i, l := range logo {
+				top.WriteString(th.Gradient(strings.TrimRight(l, " "), m.frame/2+i, true) + "\n")
+			}
+			top.WriteString("\n")
 		}
-		top.WriteString("\n" + th.Gradient("C O M P A N Y   I N   A   B O X", m.frame/2, true))
+		top.WriteString(th.Gradient("C O M P A N Y   I N   A   B O X", m.frame/2, true))
 	}
 	tw := min(w, 76)
 	var b strings.Builder
 	b.WriteString(wrap("Your whole company on Microsoft 365, set up and secured in one window.", tw) + "\n\n")
 	steps := []struct{ icon, text string }{
-		{"①", "Tell us about your company, your people and how strict to be."},
-		{"②", "Review the full plan. Nothing changes until you say so."},
+		{"①", "Answer five questions: what you run, how careful to be, who works here."},
+		{"②", "Approve the plan, area by area. Nothing changes until you say so."},
 		{"③", "Watch it build: mailboxes, sites, groups, policies. Coffee optional."},
 	}
 	if th.Plain {
@@ -56,12 +60,39 @@ func (m *Model) welcomeCentered(w int) string {
 	for _, s := range steps {
 		b.WriteString(wrapHang(th.Accent.Render(s.icon)+" "+s.text, tw, "", "   ") + "\n")
 	}
-	b.WriteString("\n" + th.Muted.Render(wrap("About 20 minutes. Your answers are saved as you go, encrypted on this computer.", tw)))
-	cta := "Press enter to begin"
-	if !th.Plain {
-		cta = th.CardOn.Render(th.Gradient("▶  Press enter to begin", m.frame, true))
+	b.WriteString("\n" + th.Muted.Render(wrap("About 15 minutes. Your answers are saved as you go, encrypted on this computer.", tw)))
+	return center(top.String(), w) + "\n\n" + center(b.String(), w) + "\n\n" + center(m.welcomePaths(w), w)
+}
+
+// welcomePaths are the two ways in: set up, or a read-only audit (§26).
+func (m *Model) welcomePaths(w int) string {
+	th := m.th
+	cw := min(60, w-4)
+	paths := []struct{ label, detail string }{
+		{"Set up and protect my company", "Build and secure Microsoft 365, step by step."},
+		{"Prepare for an audit", "Read-only: check what you have against the frameworks."},
 	}
-	return center(top.String(), w) + "\n\n" + center(b.String(), w) + "\n\n" + center(cta, w)
+	var rows []string
+	for i, p := range paths {
+		on := i == m.path
+		switch {
+		case th.Plain:
+			mark := "  "
+			if on {
+				mark = "> "
+			}
+			rows = append(rows, mark+p.label+" - "+p.detail)
+		case on:
+			rows = append(rows, th.CardOn.Width(cw).Render(th.Gradient("▶  "+p.label, m.frame, true)+"\n"+th.Muted.Render("   "+p.detail)))
+		default:
+			rows = append(rows, th.Card.Width(cw).Render(th.Step.Render("   "+p.label)+"\n"+th.Muted.Render("   "+p.detail)))
+		}
+	}
+	hint := "↑↓ choose · Press enter to begin"
+	if !th.Plain {
+		hint = th.Muted.Render("↑↓ choose · ") + th.Accent.Render("Press enter to begin")
+	}
+	return strings.Join(rows, "\n") + "\n" + hint
 }
 
 // center indents a block so its widest line sits in the middle.

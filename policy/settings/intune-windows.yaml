@@ -1,0 +1,828 @@
+# Intune, Windows: master settings.
+# mode: enforce | staged (audit or report-only first, then enforce) | report (evidence only)
+# value is the intended state in words; the setting resolution task (track T14) resolves each to the exact API setting and records it in expected-state/setting-ids.json.
+admin_centre: Intune, Windows
+settings:
+- id: WIN-001
+  platform: windows
+  name: 'Compliance: BitLocker encryption'
+  value: required
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-02
+- id: WIN-002
+  platform: windows
+  name: 'Compliance: Secure Boot'
+  value: required
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - CFG-01
+- id: WIN-003
+  platform: windows
+  name: 'Compliance: trusted platform module'
+  value: required
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-02
+- id: WIN-004
+  platform: windows
+  name: 'Compliance: code integrity'
+  value: required
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - CFG-01
+- id: WIN-005
+  platform: windows
+  name: 'Compliance: firewall'
+  value: required
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-05
+- id: WIN-006
+  platform: windows
+  name: 'Compliance: antivirus and antispyware'
+  value: required
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - MAL-01
+- id: WIN-007
+  platform: windows
+  name: 'Compliance: real-time protection and up-to-date security intelligence'
+  value: required
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - MAL-01
+- id: WIN-008
+  platform: windows
+  name: 'Compliance: minimum operating system build'
+  value: current supported release, set in deployment configuration
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-04
+- id: WIN-009
+  platform: windows
+  name: 'Compliance: password required to unlock'
+  value: required
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-03
+- id: WIN-010
+  platform: windows
+  name: 'Compliance: device risk score from endpoint protection'
+  value: medium or lower
+  tier: core
+  mode: enforce
+  capability: defender_business
+  requirements:
+  - MAL-02
+- id: WIN-011
+  platform: windows
+  name: 'Compliance: action for non-compliance'
+  value: notify at once; mark non-compliant after 3 days
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - IAM-08
+- id: WIN-012
+  platform: windows
+  name: 'BitLocker: require device encryption, silent enablement'
+  value: 'on'
+  tier: core
+  mode: staged
+  capability: intune_p1
+  requirements:
+  - DEV-02
+- id: WIN-013
+  platform: windows
+  name: 'BitLocker: encryption method, operating system and fixed drives'
+  value: XTS-AES 256
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-02
+- id: WIN-014
+  platform: windows
+  name: 'BitLocker: startup authentication'
+  value: TPM; TPM with PIN in the enhanced tier
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-02
+- id: WIN-015
+  platform: windows
+  name: 'BitLocker: recovery key escrow to the directory before encryption'
+  value: required
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-02
+- id: WIN-016
+  platform: windows
+  name: 'BitLocker: recovery key rotation after use'
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-02
+- id: WIN-017
+  platform: windows
+  name: 'BitLocker: removable drives, deny write unless encrypted'
+  value: 'on'
+  tier: enhanced
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-09
+- id: WIN-018
+  platform: windows
+  name: 'Firewall: domain, private and public profiles'
+  value: enabled
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-05
+- id: WIN-019
+  platform: windows
+  name: 'Firewall: default inbound action'
+  value: block
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-05
+- id: WIN-020
+  platform: windows
+  name: 'Firewall: default outbound action'
+  value: allow
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-05
+- id: WIN-021
+  platform: windows
+  name: 'Firewall: log dropped packets'
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-05
+  - LOG-01
+- id: WIN-022
+  platform: windows
+  name: 'Firewall: public profile, ignore local rules'
+  value: 'on'
+  tier: enhanced
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-05
+- id: WIN-023
+  platform: windows
+  name: 'Antivirus: real-time and behaviour monitoring'
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - MAL-01
+- id: WIN-024
+  platform: windows
+  name: 'Antivirus: cloud-delivered protection'
+  value: on; block level high; extended check 50 seconds
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - MAL-01
+- id: WIN-025
+  platform: windows
+  name: 'Antivirus: sample submission'
+  value: safe samples automatically
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - MAL-01
+- id: WIN-026
+  platform: windows
+  name: 'Antivirus: potentially unwanted applications'
+  value: block
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - MAL-01
+- id: WIN-027
+  platform: windows
+  name: 'Antivirus: network protection'
+  value: block
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - MAL-04
+- id: WIN-028
+  platform: windows
+  name: 'Antivirus: scan removable drives, archives, email and scripts'
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - MAL-01
+- id: WIN-029
+  platform: windows
+  name: 'Antivirus: security intelligence update interval'
+  value: 4 hours
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - MAL-01
+- id: WIN-030
+  platform: windows
+  name: 'Antivirus: scheduled quick scan'
+  value: daily
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - MAL-01
+- id: WIN-031
+  platform: windows
+  name: 'Antivirus: local administrator merge of exclusions'
+  value: disabled
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - MAL-01
+- id: WIN-032
+  platform: windows
+  name: Tamper protection
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: defender_business
+  requirements:
+  - MAL-01
+- id: WIN-033
+  platform: windows
+  name: 'Endpoint detection and response: onboarding'
+  value: automatic for all enrolled devices
+  tier: core
+  mode: enforce
+  capability: defender_business
+  requirements:
+  - MAL-02
+- id: WIN-034
+  platform: windows
+  name: 'Endpoint detection and response: block mode'
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: defender_business
+  requirements:
+  - MAL-02
+  - INC-03
+- id: WIN-035
+  platform: windows
+  name: Windows Hello for Business
+  value: enabled; PIN 6 or more; TPM required; biometrics allowed
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-03
+  - IAM-02
+- id: WIN-036
+  platform: windows
+  name: 'Local administrator password: backup to directory, 30-day rotation, 15 characters, reset after use'
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-06
+- id: WIN-037
+  platform: windows
+  name: Local administrators group membership
+  value: directory device administrators only
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-06
+- id: WIN-038
+  platform: windows
+  name: 'Autopilot profile: user account type'
+  value: standard user
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-06
+- id: WIN-039
+  platform: windows
+  name: 'Enrolment status page: block use until security policies and required apps are installed'
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-01
+- id: WIN-040
+  platform: windows
+  name: 'Enrolment restriction: personally owned Windows devices'
+  value: blocked
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-01
+- id: WIN-041
+  platform: windows
+  name: Credential Guard
+  value: enabled with lock
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - CFG-06
+- id: WIN-042
+  platform: windows
+  name: Local security authority protection
+  value: enabled
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - CFG-06
+- id: WIN-043
+  platform: windows
+  name: WDigest authentication
+  value: disabled
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - CFG-06
+- id: WIN-044
+  platform: windows
+  name: SMB version 1
+  value: disabled
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - CFG-01
+- id: WIN-045
+  platform: windows
+  name: Anonymous enumeration of accounts and shares
+  value: blocked
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - CFG-01
+- id: WIN-046
+  platform: windows
+  name: 'User Account Control: admin approval mode, secure desktop prompt, standard users denied elevation'
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-06
+  - CFG-01
+- id: WIN-047
+  platform: windows
+  name: Inactivity lock
+  value: 15 minutes; 5 minutes in the enhanced tier
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-03
+- id: WIN-048
+  platform: windows
+  name: Password required on wake
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-03
+- id: WIN-049
+  platform: windows
+  name: AutoPlay and AutoRun
+  value: off for all drives
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - CFG-01
+  - MAL-01
+- id: WIN-050
+  platform: windows
+  name: Remote Desktop inbound
+  value: disabled
+  tier: core
+  mode: staged
+  capability: intune_p1
+  requirements:
+  - CFG-07
+- id: WIN-051
+  platform: windows
+  name: Remote assistance, unsolicited
+  value: disabled
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - CFG-07
+- id: WIN-052
+  platform: windows
+  name: PowerShell script block logging
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - LOG-01
+  - CFG-01
+- id: WIN-053
+  platform: windows
+  name: Built-in guest account
+  value: disabled
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - CFG-01
+- id: WIN-054
+  platform: windows
+  name: Lock screen notifications and camera
+  value: hidden; disabled
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-03
+- id: WIN-055
+  platform: windows
+  name: Direct memory access devices while locked
+  value: blocked
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-02
+- id: WIN-056
+  platform: windows
+  name: Microsoft consumer accounts on the device
+  value: blocked
+  tier: enhanced
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - COL-05
+- id: WIN-057
+  platform: windows
+  name: Application control
+  value: audit mode; enforce in the enhanced tier
+  tier: enhanced
+  mode: staged
+  capability: intune_p1
+  requirements:
+  - CFG-08
+- id: WIN-058
+  platform: windows
+  name: 'Microsoft Store: private store only and automatic app updates'
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - CFG-08
+  - CFG-03
+- id: WIN-059
+  platform: windows
+  name: 'Update ring: quality update deferral'
+  value: pilot 0 days; all others 3 days
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - CFG-02
+- id: WIN-060
+  platform: windows
+  name: 'Update ring: quality update deadline'
+  value: 3 days plus 2 days grace
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - CFG-02
+- id: WIN-061
+  platform: windows
+  name: 'Update ring: feature update deferral'
+  value: 30 days
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - CFG-02
+- id: WIN-062
+  platform: windows
+  name: 'Update ring: automatic restart outside active hours'
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - CFG-02
+- id: WIN-063
+  platform: windows
+  name: Driver and firmware updates through the update service
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - CFG-02
+- id: WIN-064
+  platform: windows
+  name: Feature update policy
+  value: held at the current supported release
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-04
+  - CFG-02
+- id: WIN-065
+  platform: windows
+  name: 'Browser: reputation checking for sites and downloads; bypass blocked'
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - CFG-05
+  - MAL-04
+- id: WIN-066
+  platform: windows
+  name: 'Browser: potentially unwanted app blocking'
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - CFG-05
+- id: WIN-067
+  platform: windows
+  name: 'Browser: sign-in restricted to work accounts; sync of work data to personal profiles blocked'
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - CFG-05
+  - COL-05
+- id: WIN-068
+  platform: windows
+  name: 'Browser: minimum TLS version'
+  value: '1.2'
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DAT-09
+  - CFG-05
+- id: WIN-069
+  platform: windows
+  name: 'Browser: extensions'
+  value: block all except an allow list
+  tier: enhanced
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - CFG-05
+  - CFG-08
+- id: WIN-070
+  platform: windows
+  name: 'Browser: built-in password manager'
+  value: off where a company password manager is used
+  tier: enhanced
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - CFG-05
+- id: WIN-071
+  platform: windows
+  name: 'OneDrive: silently move Desktop, Documents and Pictures to company storage'
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - BCK-01
+- id: WIN-072
+  platform: windows
+  name: 'OneDrive: allow sync only for the company tenant; block personal accounts'
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - COL-05
+- id: WIN-073
+  platform: windows
+  name: 'OneDrive: Files On-Demand'
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - BCK-01
+- id: WIN-074
+  platform: windows
+  name: 'Attack surface reduction: Block executable content from email client and webmail'
+  value: audit for 14 days, then block
+  tier: core
+  mode: staged
+  capability: defender_business
+  requirements:
+  - MAL-03
+- id: WIN-075
+  platform: windows
+  name: 'Attack surface reduction: Block all Office applications from creating child processes'
+  value: audit for 14 days, then block
+  tier: core
+  mode: staged
+  capability: defender_business
+  requirements:
+  - MAL-03
+- id: WIN-076
+  platform: windows
+  name: 'Attack surface reduction: Block Office applications from creating executable content'
+  value: audit for 14 days, then block
+  tier: core
+  mode: staged
+  capability: defender_business
+  requirements:
+  - MAL-03
+- id: WIN-077
+  platform: windows
+  name: 'Attack surface reduction: Block Office applications from injecting code into other processes'
+  value: audit for 14 days, then block
+  tier: core
+  mode: staged
+  capability: defender_business
+  requirements:
+  - MAL-03
+- id: WIN-078
+  platform: windows
+  name: 'Attack surface reduction: Block JavaScript or VBScript from launching downloaded executable content'
+  value: audit for 14 days, then block
+  tier: core
+  mode: staged
+  capability: defender_business
+  requirements:
+  - MAL-03
+- id: WIN-079
+  platform: windows
+  name: 'Attack surface reduction: Block execution of potentially obfuscated scripts'
+  value: audit for 14 days, then block
+  tier: core
+  mode: staged
+  capability: defender_business
+  requirements:
+  - MAL-03
+- id: WIN-080
+  platform: windows
+  name: 'Attack surface reduction: Block Win32 API calls from Office macros'
+  value: audit for 14 days, then block
+  tier: core
+  mode: staged
+  capability: defender_business
+  requirements:
+  - MAL-03
+- id: WIN-081
+  platform: windows
+  name: 'Attack surface reduction: Block credential stealing from the local security authority subsystem'
+  value: audit for 14 days, then block
+  tier: core
+  mode: staged
+  capability: defender_business
+  requirements:
+  - MAL-03
+- id: WIN-082
+  platform: windows
+  name: 'Attack surface reduction: Block untrusted and unsigned processes that run from USB'
+  value: audit for 14 days, then block
+  tier: core
+  mode: staged
+  capability: defender_business
+  requirements:
+  - MAL-03
+- id: WIN-083
+  platform: windows
+  name: 'Attack surface reduction: Block Office communication application from creating child processes'
+  value: audit for 14 days, then block
+  tier: core
+  mode: staged
+  capability: defender_business
+  requirements:
+  - MAL-03
+- id: WIN-084
+  platform: windows
+  name: 'Attack surface reduction: Block Adobe Reader from creating child processes'
+  value: audit for 14 days, then block
+  tier: core
+  mode: staged
+  capability: defender_business
+  requirements:
+  - MAL-03
+- id: WIN-085
+  platform: windows
+  name: 'Attack surface reduction: Block persistence through WMI event subscription'
+  value: audit for 14 days, then block
+  tier: core
+  mode: staged
+  capability: defender_business
+  requirements:
+  - MAL-03
+- id: WIN-086
+  platform: windows
+  name: 'Attack surface reduction: Block abuse of exploited vulnerable signed drivers'
+  value: audit for 14 days, then block
+  tier: core
+  mode: staged
+  capability: defender_business
+  requirements:
+  - MAL-03
+- id: WIN-087
+  platform: windows
+  name: 'Attack surface reduction: Use advanced protection against ransomware'
+  value: audit for 14 days, then block
+  tier: core
+  mode: staged
+  capability: defender_business
+  requirements:
+  - MAL-03
+- id: WIN-088
+  platform: windows
+  name: 'Attack surface reduction: Block process creations originating from PSExec and WMI commands'
+  value: audit only
+  tier: core
+  mode: report
+  capability: defender_business
+  requirements:
+  - MAL-03
+- id: WIN-089
+  platform: windows
+  name: 'Attack surface reduction: Block executable files unless they meet a prevalence, age or trusted list criterion'
+  value: audit only
+  tier: core
+  mode: report
+  capability: defender_business
+  requirements:
+  - MAL-03
+- id: WIN-090
+  platform: windows
+  name: Controlled folder access
+  value: audit; enable in the enhanced tier
+  tier: enhanced
+  mode: staged
+  capability: defender_business
+  requirements:
+  - MAL-03
+  - BCK-01

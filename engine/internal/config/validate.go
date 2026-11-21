@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/Smohan-vcode/O365-Box/engine/internal/report"
 )
@@ -11,14 +12,25 @@ import (
 // Options carries engine data the semantic checks compare against. A nil
 // slice means "not available yet" and skips that check.
 type Options struct {
-	Roles         []string // defaults/roles.yaml role names
-	Settings      []string // baseline/catalogue.yaml setting ids
-	Jurisdictions []string // defaults/jurisdictions/*.yaml codes
+	Roles         []string       // defaults/roles.yaml role names
+	Policy        *PolicyCatalog // ids in policy/; nil skips the catalogue checks
+	Jurisdictions []string       // defaults/jurisdictions/*.yaml codes
+	Today         time.Time      // date exceptions are compared with; zero means now
 }
+
+// PolicyCatalog lists the ids the policy section may refer to.
+type PolicyCatalog struct {
+	Frameworks   []string // policy/frameworks/<id>.yaml
+	Settings     []string // policy/settings/*.yaml setting ids
+	Requirements []string // policy/requirements.yaml ids
+}
+
+// DateLayout is the form of policy.exceptions[].ends.
+const DateLayout = "2006-01-02"
 
 var levelRank = map[string]int{"visitor": 1, "member": 2, "owner": 3}
 
-// Validate runs the schema and every semantic check (SPEC §6, §7, §9, §20).
+// Validate runs the schema and every semantic check (SPEC §6, §7, §9, §20, policy/README.md).
 func Validate(d *Document, opt Options) ([]report.Issue, error) {
 	issues, err := schemaIssues(d)
 	if err != nil {
@@ -53,7 +65,7 @@ func (v *validator) run() {
 	v.mail(users, groups)
 	v.userRefs(groups)
 	v.structure(groups, roles)
-	v.baseline()
+	v.policy(groups)
 	v.jurisdictions()
 }
 
@@ -346,19 +358,64 @@ func loosened(site, lib map[string]string) []string {
 	return out
 }
 
-func (v *validator) baseline() {
-	if v.opt.Settings == nil {
-		return
-	}
-	known := map[string]bool{}
-	for _, s := range v.opt.Settings {
-		known[s] = true
-	}
-	for i, o := range v.c.Baseline.Overrides {
-		if !known[o.ID] {
-			v.add(fmt.Sprintf("baseline.overrides[%d].id", i), "setting %q is not in baseline/catalogue.yaml", o.ID)
+func (v *validator) policy(groups map[string]Group) {
+	p := v.c.Policy
+	if g := p.Rollout.PilotGroup; g != "" {
+		if gr, ok := groups[g]; !ok {
+			v.add("policy.rollout.pilot_group", "pilot group %q is not defined in groups", g)
+		} else if gr.Kind != "access" {
+			v.add("policy.rollout.pilot_group", "group %q is not an access group", g)
 		}
 	}
+	today := v.opt.Today
+	if today.IsZero() {
+		today = time.Now()
+	}
+	today = time.Date(today.Year(), today.Month(), today.Day(), 0, 0, 0, 0, time.UTC)
+	var fws, ids map[string]bool
+	if cat := v.opt.Policy; cat != nil {
+		fws = set(cat.Frameworks)
+		ids = set(cat.Settings)
+		for _, r := range cat.Requirements {
+			ids[r] = true
+		}
+		for i, f := range p.Frameworks {
+			if !fws[f] {
+				v.add(fmt.Sprintf("policy.frameworks[%d]", i), "framework %q is not in policy/frameworks", f)
+			}
+		}
+	}
+	seen := map[string]bool{}
+	for i, e := range p.Exceptions {
+		path := fmt.Sprintf("policy.exceptions[%d]", i)
+		if e.ID != "" {
+			if seen[e.ID] {
+				v.add(path+".id", "exception for %s appears twice", e.ID)
+			}
+			seen[e.ID] = true
+			if ids != nil && !ids[e.ID] {
+				v.add(path+".id", "%q is neither a setting nor a requirement in policy/", e.ID)
+			}
+		}
+		if e.Ends == "" {
+			continue
+		}
+		end, err := time.Parse(DateLayout, e.Ends)
+		switch {
+		case err != nil:
+			v.add(path+".ends", "%q is not a date (YYYY-MM-DD)", e.Ends)
+		case end.Before(today):
+			v.add(path+".ends", "exception for %s expired on %s; renew it with a new end date or remove it", e.ID, e.Ends)
+		}
+	}
+}
+
+func set(s []string) map[string]bool {
+	m := make(map[string]bool, len(s))
+	for _, x := range s {
+		m[x] = true
+	}
+	return m
 }
 
 func (v *validator) jurisdictions() {

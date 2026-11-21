@@ -1,0 +1,185 @@
+id: soc2
+title: SOC 2 Trust Services Criteria (2017, revised points of focus 2022)
+mapped_at: criterion
+note: Only the controls this catalogue addresses are listed. Controls not listed are not covered by tenant settings and need separate treatment.
+controls:
+- id: A1.2
+  requirements:
+  - BCK-01
+  - BCK-02
+  - BCK-04
+  - IAM-07
+- id: A1.3
+  requirements:
+  - BCK-02
+  - BCK-03
+- id: C1.1
+  requirements:
+  - DAT-01
+  - DAT-02
+  - DAT-03
+  - DAT-08
+  - DAT-10
+- id: C1.2
+  requirements:
+  - DAT-11
+- id: CC1.4
+  requirements:
+  - AWR-01
+  - AWR-02
+  - GOV-01
+- id: CC2.2
+  requirements:
+  - AWR-01
+  - AWR-02
+  - EML-06
+- id: CC2.3
+  requirements:
+  - INC-02
+- id: CC3.1
+  requirements:
+  - GOV-02
+- id: CC3.2
+  requirements:
+  - GOV-02
+- id: CC3.4
+  requirements:
+  - GOV-03
+- id: CC4.1
+  requirements:
+  - GOV-04
+- id: CC4.2
+  requirements:
+  - GOV-04
+- id: CC5.3
+  requirements:
+  - GOV-01
+  - GOV-03
+- id: CC6.1
+  requirements:
+  - APP-01
+  - CFG-06
+  - COL-01
+  - DAT-01
+  - DAT-06
+  - DEV-01
+  - DEV-02
+  - DEV-03
+  - DEV-06
+  - EML-05
+  - EML-08
+  - IAM-01
+  - IAM-02
+  - IAM-03
+  - IAM-04
+  - IAM-05
+  - IAM-06
+  - IAM-07
+  - IAM-08
+  - IAM-09
+  - IAM-10
+  - IAM-14
+  - IAM-17
+- id: CC6.2
+  requirements:
+  - IAM-11
+  - IAM-12
+  - IAM-13
+  - SUP-02
+- id: CC6.3
+  requirements:
+  - COL-06
+  - IAM-06
+  - IAM-10
+  - IAM-12
+  - IAM-13
+  - IAM-16
+- id: CC6.5
+  requirements:
+  - DAT-11
+  - DEV-08
+- id: CC6.6
+  requirements:
+  - CFG-07
+  - COL-03
+  - DEV-05
+  - EML-03
+  - MAL-04
+- id: CC6.7
+  requirements:
+  - APP-03
+  - COL-01
+  - COL-02
+  - COL-05
+  - DAT-02
+  - DAT-03
+  - DAT-04
+  - DAT-05
+  - DAT-06
+  - DAT-07
+  - DAT-08
+  - DAT-09
+  - DAT-12
+  - DAT-13
+  - DEV-02
+  - DEV-07
+  - DEV-09
+  - EML-03
+  - EML-04
+  - IAM-08
+- id: CC6.8
+  requirements:
+  - CFG-05
+  - CFG-08
+  - COL-04
+  - DEV-10
+  - EML-01
+  - EML-02
+  - EML-07
+  - MAL-01
+  - MAL-03
+  - MAL-05
+- id: CC7.1
+  requirements:
+  - CFG-01
+  - CFG-02
+  - CFG-03
+  - CFG-04
+  - DEV-04
+  - GOV-05
+- id: CC7.2
+  requirements:
+  - EML-01
+  - IAM-15
+  - LOG-01
+  - LOG-02
+  - LOG-03
+  - LOG-04
+  - MAL-02
+- id: CC7.3
+  requirements:
+  - EML-06
+  - INC-01
+  - LOG-02
+- id: CC7.4
+  requirements:
+  - INC-01
+  - INC-02
+  - INC-03
+  - MAL-02
+- id: CC8.1
+  requirements:
+  - CFG-01
+  - GOV-05
+- id: CC9.1
+  requirements:
+  - BCK-04
+- id: CC9.2
+  requirements:
+  - APP-01
+  - APP-02
+  - SUP-01
+  - SUP-02
+- id: P6.1
+  requirements:
+  - DAT-04

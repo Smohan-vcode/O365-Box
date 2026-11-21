@@ -1,0 +1,2286 @@
+# Master requirement catalogue. One requirement, many frameworks.
+# tier: core (always applied) | enhanced (applied when policy.tier is enhanced) | addon (needs a paid capability; reported, not applied)
+# type: technical (met by settings) | procedural (met by a written procedure and a recurring task) | mixed
+# Framework references are a working mapping. Validate each against the source text before relying on it in an audit.
+requirements:
+- id: IAM-01
+  domain: Identity and access
+  statement: Every user signs in with multi-factor authentication for every cloud service.
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - PR.AA-03
+    nis2:
+    - j
+    - i
+    iso27001_2022:
+    - A.5.17
+    - A.8.5
+    soc2:
+    - CC6.1
+    cis_v8:
+    - '6.3'
+    - '6.4'
+  settings:
+  - ENT-001
+  - ENT-011
+  - ENT-018
+  - ENT-019
+  - ENT-020
+  - ENT-021
+  evidence: collector.mfa_registration
+- id: IAM-02
+  domain: Identity and access
+  statement: Administrators sign in with phishing-resistant multi-factor authentication.
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - PR.AA-03
+    - PR.AA-05
+    nis2:
+    - j
+    - i
+    iso27001_2022:
+    - A.8.2
+    - A.8.5
+    soc2:
+    - CC6.1
+    cis_v8:
+    - '6.5'
+  settings:
+  - ENT-003
+  - ENT-013
+  - ENT-019
+  - WIN-035
+  - MAC-024
+  evidence: collector.ca_policies
+- id: IAM-03
+  domain: Identity and access
+  statement: Legacy and weak authentication protocols are blocked.
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - PR.AA-03
+    nis2:
+    - j
+    - g
+    iso27001_2022:
+    - A.8.5
+    soc2:
+    - CC6.1
+    cis_v8:
+    - '6.3'
+  settings:
+  - ENT-002
+  - ENT-012
+  - EXO-001
+  - EXO-019
+  - SPO-010
+  evidence: collector.ca_policies
+- id: IAM-04
+  domain: Identity and access
+  statement: Text message, voice call and email codes are not accepted as second factors.
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - PR.AA-03
+    nis2:
+    - j
+    iso27001_2022:
+    - A.5.17
+    soc2:
+    - CC6.1
+    cis_v8:
+    - '6.3'
+  settings:
+  - ENT-022
+  - ENT-023
+  - ENT-024
+  - ENT-025
+  evidence: collector.auth_methods
+- id: IAM-05
+  domain: Identity and access
+  statement: Passwords are checked against a banned list, protected by lockout and not forced to expire; self-service reset needs two methods.
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - PR.AA-01
+    nis2:
+    - i
+    - g
+    iso27001_2022:
+    - A.5.17
+    soc2:
+    - CC6.1
+    cis_v8:
+    - '5.2'
+  settings:
+  - ENT-026
+  - ENT-027
+  - ENT-028
+  - ENT-029
+  - ADM-004
+  evidence: collector.password_policy
+- id: IAM-06
+  domain: Identity and access
+  statement: Standing administrator rights are held only by emergency accounts and the pipeline identity; administrator accounts have no mailbox.
+  tier: core
+  type: mixed
+  frameworks:
+    nist_csf_2:
+    - PR.AA-05
+    nis2:
+    - i
+    iso27001_2022:
+    - A.8.2
+    - A.5.15
+    soc2:
+    - CC6.1
+    - CC6.3
+    cis_v8:
+    - '5.4'
+    - '6.8'
+  settings:
+  - ENT-035
+  - ENT-043
+  - ENT-044
+  - PVW-022
+  evidence: collector.admin_roles
+- id: IAM-07
+  domain: Identity and access
+  statement: Two emergency access accounts exist, are excluded from access policies, raise an alert on use and are tested twice a year.
+  tier: core
+  type: mixed
+  frameworks:
+    nist_csf_2:
+    - PR.AA-05
+    - RC.RP-01
+    nis2:
+    - i
+    - c
+    iso27001_2022:
+    - A.8.2
+    - A.5.29
+    soc2:
+    - CC6.1
+    - A1.2
+    cis_v8:
+    - '5.4'
+  settings:
+  - ENT-015
+  - ENT-043
+  - ENT-045
+  evidence: task.break_glass_test
+  procedures:
+  - control-task:break_glass_test
+- id: IAM-08
+  domain: Identity and access
+  statement: Company data is reachable only from a compliant device or a protected app.
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - PR.AA-05
+    - PR.PS-01
+    nis2:
+    - i
+    - g
+    iso27001_2022:
+    - A.8.1
+    - A.5.15
+    soc2:
+    - CC6.1
+    - CC6.7
+    cis_v8:
+    - '4.1'
+  settings:
+  - ENT-004
+  - ENT-005
+  - ENT-006
+  - ENT-014
+  - WIN-011
+  evidence: collector.ca_policies
+- id: IAM-09
+  domain: Identity and access
+  statement: 'Sessions are limited: administrators re-authenticate every eight hours and unmanaged browsers keep no persistent session.'
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - PR.AA-03
+    nis2:
+    - i
+    iso27001_2022:
+    - A.8.5
+    soc2:
+    - CC6.1
+    cis_v8:
+    - '4.3'
+  settings:
+  - ENT-007
+  - ENT-008
+  - SPO-009
+  - ADM-003
+  evidence: collector.ca_policies
+- id: IAM-10
+  domain: Identity and access
+  statement: Users cannot register applications or grant them access to company data; requests go to an administrator.
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - PR.AA-05
+    - GV.SC-07
+    nis2:
+    - d
+    - i
+    iso27001_2022:
+    - A.5.23
+    - A.8.19
+    soc2:
+    - CC6.1
+    - CC6.3
+    cis_v8:
+    - '2.5'
+  settings:
+  - ENT-030
+  - ENT-031
+  - ENT-032
+  - ENT-033
+  - SPO-015
+  - TMS-012
+  - ADM-012
+  evidence: collector.app_consents
+- id: IAM-11
+  domain: Identity and access
+  statement: Guests are invited only by administrators and see only what they are given.
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - PR.AA-05
+    nis2:
+    - i
+    - d
+    iso27001_2022:
+    - A.5.15
+    - A.5.19
+    soc2:
+    - CC6.2
+    cis_v8:
+    - '6.1'
+  settings:
+  - ENT-036
+  - ENT-037
+  - ENT-038
+  - TMS-003
+  evidence: collector.guests
+- id: IAM-12
+  domain: Identity and access
+  statement: Access is granted through groups and removed on the day a person leaves or changes role.
+  tier: core
+  type: mixed
+  frameworks:
+    nist_csf_2:
+    - PR.AA-01
+    - PR.AA-05
+    nis2:
+    - i
+    iso27001_2022:
+    - A.5.16
+    - A.5.18
+    - A.5.11
+    soc2:
+    - CC6.2
+    - CC6.3
+    cis_v8:
+    - '5.3'
+    - '6.2'
+  settings:
+  - ENT-021
+  - MOB-025
+  - EXO-011
+  - SPO-018
+  - PPL-005
+  - PPL-007
+  evidence: collector.checklists
+  procedures:
+  - list:People
+  - checklist:leaver
+- id: IAM-13
+  domain: Identity and access
+  statement: Users, administrator roles, guests and site permissions are reviewed every quarter.
+  tier: core
+  type: procedural
+  frameworks:
+    nist_csf_2:
+    - PR.AA-05
+    nis2:
+    - i
+    - f
+    iso27001_2022:
+    - A.5.18
+    soc2:
+    - CC6.2
+    - CC6.3
+    cis_v8:
+    - '5.1'
+  settings: []
+  evidence: task.access_review
+  procedures:
+  - control-task:access_review
+- id: IAM-14
+  domain: Identity and access
+  statement: Joining a device to the company directory requires multi-factor authentication and is limited to named users.
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - PR.AA-01
+    nis2:
+    - i
+    iso27001_2022:
+    - A.8.1
+    soc2:
+    - CC6.1
+    cis_v8:
+    - '1.1'
+  settings:
+  - ENT-010
+  - ENT-039
+  - ENT-041
+  evidence: collector.device_settings
+- id: IAM-15
+  domain: Identity and access
+  statement: Sign-ins and users assessed as risky are challenged or blocked automatically.
+  tier: addon
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - DE.CM-03
+    - PR.AA-03
+    nis2:
+    - j
+    iso27001_2022:
+    - A.8.16
+    soc2:
+    - CC7.2
+    cis_v8:
+    - '6.3'
+  settings:
+  - ENT-016
+  evidence: collector.ca_policies
+- id: IAM-16
+  domain: Identity and access
+  statement: Administrator roles are activated on request for a limited time.
+  tier: addon
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - PR.AA-05
+    nis2:
+    - i
+    iso27001_2022:
+    - A.8.2
+    soc2:
+    - CC6.3
+    cis_v8:
+    - '5.4'
+  settings:
+  - ENT-017
+  evidence: collector.admin_roles
+- id: IAM-17
+  domain: Identity and access
+  statement: Application identities hold no stored secrets where federation is possible, carry least privilege and are reviewed every quarter.
+  tier: core
+  type: mixed
+  frameworks:
+    nist_csf_2:
+    - PR.AA-05
+    nis2:
+    - i
+    - e
+    iso27001_2022:
+    - A.8.2
+    - A.5.17
+    soc2:
+    - CC6.1
+    cis_v8:
+    - '5.5'
+  settings:
+  - ENT-046
+  - ENT-047
+  evidence: collector.app_registrations
+- id: DEV-01
+  domain: Devices
+  statement: Every device that reaches company data is enrolled in device management or uses protected apps.
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - ID.AM-01
+    - PR.PS-01
+    nis2:
+    - i
+    - g
+    iso27001_2022:
+    - A.8.1
+    - A.5.9
+    soc2:
+    - CC6.1
+    cis_v8:
+    - '1.1'
+    - '4.1'
+  settings:
+  - ENT-004
+  - WIN-039
+  - WIN-040
+  - MOB-001
+  - MOB-002
+  evidence: collector.device_inventory
+- id: DEV-02
+  domain: Devices
+  statement: Storage on laptops, desktops and phones is encrypted and recovery keys are held by the company.
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - PR.DS-01
+    nis2:
+    - h
+    iso27001_2022:
+    - A.8.24
+    - A.8.1
+    soc2:
+    - CC6.1
+    - CC6.7
+    cis_v8:
+    - '3.6'
+  settings:
+  - WIN-001
+  - WIN-003
+  - WIN-012
+  - WIN-013
+  - WIN-014
+  - WIN-015
+  - WIN-016
+  - WIN-055
+  - MAC-001
+  - MAC-007
+  - MAC-008
+  - MOB-007
+  - MOB-016
+  evidence: collector.device_compliance
+- id: DEV-03
+  domain: Devices
+  statement: Devices lock after inactivity and require a password, PIN or biometric to unlock.
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - PR.AA-03
+    nis2:
+    - g
+    iso27001_2022:
+    - A.8.1
+    - A.8.5
+    soc2:
+    - CC6.1
+    cis_v8:
+    - '4.3'
+  settings:
+  - WIN-009
+  - WIN-035
+  - WIN-047
+  - WIN-048
+  - WIN-054
+  - MAC-006
+  - MAC-012
+  - MAC-013
+  - MAC-014
+  - MAC-024
+  - MOB-005
+  - MOB-006
+  - MOB-011
+  - MOB-024
+  evidence: collector.device_compliance
+- id: DEV-04
+  domain: Devices
+  statement: Only supported operating system versions are allowed.
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - PR.PS-02
+    nis2:
+    - e
+    - g
+    iso27001_2022:
+    - A.8.8
+    soc2:
+    - CC7.1
+    cis_v8:
+    - '2.2'
+  settings:
+  - WIN-008
+  - WIN-064
+  - MAC-005
+  - MOB-004
+  - MOB-022
+  evidence: collector.device_compliance
+- id: DEV-05
+  domain: Devices
+  statement: The host firewall is on for every network profile and blocks unsolicited inbound connections.
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - PR.IR-01
+    nis2:
+    - g
+    iso27001_2022:
+    - A.8.20
+    soc2:
+    - CC6.6
+    cis_v8:
+    - '4.5'
+  settings:
+  - WIN-005
+  - WIN-018
+  - WIN-019
+  - WIN-020
+  - WIN-021
+  - WIN-022
+  - MAC-003
+  - MAC-009
+  - MAC-010
+  evidence: collector.device_compliance
+- id: DEV-06
+  domain: Devices
+  statement: Users are not local administrators; local administrator passwords are unique per device and rotated.
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - PR.AA-05
+    nis2:
+    - i
+    iso27001_2022:
+    - A.8.2
+    soc2:
+    - CC6.1
+    cis_v8:
+    - '5.4'
+  settings:
+  - ENT-040
+  - ENT-042
+  - WIN-036
+  - WIN-037
+  - WIN-038
+  - WIN-046
+  - MAC-022
+  - MAC-023
+  evidence: collector.laps
+- id: DEV-07
+  domain: Devices
+  statement: On personal phones, company data stays inside protected apps and cannot be copied or saved outside them.
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - PR.DS-01
+    - PR.DS-10
+    nis2:
+    - i
+    - g
+    iso27001_2022:
+    - A.8.1
+    - A.6.7
+    soc2:
+    - CC6.7
+    cis_v8:
+    - '4.1'
+  settings:
+  - ENT-005
+  - MOB-001
+  - MOB-011
+  - MOB-012
+  - MOB-013
+  - MOB-014
+  - MOB-015
+  - MOB-016
+  - MOB-017
+  - MOB-018
+  - MOB-019
+  - MOB-020
+  - MOB-023
+  evidence: collector.app_protection
+- id: DEV-08
+  domain: Devices
+  statement: Lost devices and leavers' devices can be wiped; an inventory of devices is kept.
+  tier: core
+  type: mixed
+  frameworks:
+    nist_csf_2:
+    - ID.AM-01
+    - ID.AM-08
+    nis2:
+    - i
+    iso27001_2022:
+    - A.5.9
+    - A.5.11
+    - A.7.14
+    soc2:
+    - CC6.5
+    cis_v8:
+    - '1.1'
+    - '4.11'
+  settings:
+  - MOB-023
+  - MOB-025
+  - DEF-005
+  evidence: collector.device_inventory
+- id: DEV-09
+  domain: Devices
+  statement: Writing to removable storage is blocked unless the storage is encrypted.
+  tier: enhanced
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - PR.DS-01
+    nis2:
+    - h
+    - g
+    iso27001_2022:
+    - A.7.10
+    soc2:
+    - CC6.7
+    cis_v8:
+    - '3.9'
+  settings:
+  - WIN-017
+  evidence: collector.device_config
+- id: DEV-10
+  domain: Devices
+  statement: Jailbroken and rooted devices are blocked.
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - PR.PS-01
+    nis2:
+    - g
+    iso27001_2022:
+    - A.8.1
+    soc2:
+    - CC6.8
+    cis_v8:
+    - '4.1'
+  settings:
+  - MOB-003
+  - MOB-008
+  - MOB-021
+  evidence: collector.device_compliance
+- id: MAL-01
+  domain: Malware and endpoint detection
+  statement: Anti-malware runs in real time with cloud protection, updates itself and cannot be turned off by users.
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - DE.CM-09
+    - PR.PS-05
+    nis2:
+    - g
+    iso27001_2022:
+    - A.8.7
+    soc2:
+    - CC6.8
+    cis_v8:
+    - '10.1'
+    - '10.2'
+  settings:
+  - WIN-006
+  - WIN-007
+  - WIN-023
+  - WIN-024
+  - WIN-025
+  - WIN-026
+  - WIN-028
+  - WIN-029
+  - WIN-030
+  - WIN-031
+  - WIN-032
+  - WIN-049
+  - MAC-026
+  - MAC-027
+  - MAC-028
+  - DEF-002
+  evidence: collector.defender_health
+- id: MAL-02
+  domain: Malware and endpoint detection
+  statement: Endpoint detection and response covers every computer and remediates threats automatically.
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - DE.CM-09
+    - RS.MI-01
+    nis2:
+    - b
+    - g
+    iso27001_2022:
+    - A.8.16
+    - A.8.7
+    soc2:
+    - CC7.2
+    - CC7.4
+    cis_v8:
+    - '13.1'
+  settings:
+  - WIN-010
+  - WIN-033
+  - WIN-034
+  - MAC-025
+  - MOB-010
+  - DEF-001
+  evidence: collector.defender_health
+- id: MAL-03
+  domain: Malware and endpoint detection
+  statement: Attack surface reduction rules block the common malware delivery techniques.
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - PR.PS-05
+    nis2:
+    - g
+    - e
+    iso27001_2022:
+    - A.8.7
+    soc2:
+    - CC6.8
+    cis_v8:
+    - '10.5'
+  settings:
+  - WIN-074
+  - WIN-075
+  - WIN-076
+  - WIN-077
+  - WIN-078
+  - WIN-079
+  - WIN-080
+  - WIN-081
+  - WIN-082
+  - WIN-083
+  - WIN-084
+  - WIN-085
+  - WIN-086
+  - WIN-087
+  - WIN-088
+  - WIN-089
+  - WIN-090
+  evidence: collector.device_config
+- id: MAL-04
+  domain: Malware and endpoint detection
+  statement: Malicious and unsuitable websites are blocked on managed devices.
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - PR.IR-01
+    - DE.CM-01
+    nis2:
+    - g
+    iso27001_2022:
+    - A.8.23
+    soc2:
+    - CC6.6
+    cis_v8:
+    - '9.2'
+    - '9.3'
+  settings:
+  - WIN-027
+  - WIN-065
+  - MAC-029
+  - DEF-003
+  - DEF-004
+  - DEF-015
+  evidence: collector.defender_health
+- id: MAL-05
+  domain: Malware and endpoint detection
+  statement: Office macros from the internet are blocked and risky document features are restricted.
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - PR.PS-05
+    nis2:
+    - g
+    iso27001_2022:
+    - A.8.7
+    soc2:
+    - CC6.8
+    cis_v8:
+    - '9.6'
+    - '10.5'
+  settings:
+  - OFC-001
+  - OFC-002
+  - OFC-003
+  - OFC-004
+  - OFC-005
+  - OFC-006
+  - OFC-007
+  evidence: collector.office_policy
+- id: CFG-01
+  domain: Configuration and patching
+  statement: A hardened operating system baseline is applied and deviation is detected.
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - PR.PS-01
+    nis2:
+    - e
+    - g
+    iso27001_2022:
+    - A.8.9
+    soc2:
+    - CC7.1
+    - CC8.1
+    cis_v8:
+    - '4.1'
+  settings:
+  - WIN-002
+  - WIN-004
+  - WIN-044
+  - WIN-045
+  - WIN-046
+  - WIN-049
+  - WIN-052
+  - WIN-053
+  - MAC-002
+  - MAC-015
+  - SPO-015
+  evidence: collector.drift
+- id: CFG-02
+  domain: Configuration and patching
+  statement: Operating system security updates install automatically within seven days of release.
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - PR.PS-02
+    - ID.RA-01
+    nis2:
+    - e
+    iso27001_2022:
+    - A.8.8
+    soc2:
+    - CC7.1
+    cis_v8:
+    - '7.3'
+  settings:
+  - WIN-059
+  - WIN-060
+  - WIN-061
+  - WIN-062
+  - WIN-063
+  - WIN-064
+  - MAC-016
+  - MAC-017
+  evidence: collector.update_status
+- id: CFG-03
+  domain: Configuration and patching
+  statement: Office, browser and store applications update automatically.
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - PR.PS-02
+    nis2:
+    - e
+    iso27001_2022:
+    - A.8.8
+    soc2:
+    - CC7.1
+    cis_v8:
+    - '7.4'
+  settings:
+  - WIN-058
+  - OFC-010
+  evidence: collector.update_status
+- id: CFG-04
+  domain: Configuration and patching
+  statement: Software vulnerabilities are identified continuously and reviewed weekly.
+  tier: core
+  type: mixed
+  frameworks:
+    nist_csf_2:
+    - ID.RA-01
+    - ID.RA-05
+    nis2:
+    - e
+    - f
+    iso27001_2022:
+    - A.8.8
+    soc2:
+    - CC7.1
+    cis_v8:
+    - '7.1'
+    - '7.5'
+  settings:
+  - DEF-006
+  evidence: task.vulnerability_review
+  procedures:
+  - control-task:vulnerability_review
+- id: CFG-05
+  domain: Configuration and patching
+  statement: 'The managed browser is hardened: reputation checking on, bypass blocked, sign-in limited to work accounts.'
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - PR.PS-01
+    nis2:
+    - g
+    iso27001_2022:
+    - A.8.9
+    - A.8.23
+    soc2:
+    - CC6.8
+    cis_v8:
+    - '9.1'
+  settings:
+  - WIN-065
+  - WIN-066
+  - WIN-067
+  - WIN-068
+  - WIN-069
+  - WIN-070
+  - MAC-030
+  evidence: collector.device_config
+- id: CFG-06
+  domain: Configuration and patching
+  statement: 'Credential theft protections are on: protected credential storage, no reversible or cached plaintext credentials.'
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - PR.AA-01
+    - PR.PS-01
+    nis2:
+    - g
+    - i
+    iso27001_2022:
+    - A.8.5
+    - A.8.9
+    soc2:
+    - CC6.1
+    cis_v8:
+    - '4.1'
+  settings:
+  - WIN-041
+  - WIN-042
+  - WIN-043
+  evidence: collector.device_config
+- id: CFG-07
+  domain: Configuration and patching
+  statement: Inbound remote administration services are off unless approved.
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - PR.IR-01
+    nis2:
+    - g
+    - i
+    iso27001_2022:
+    - A.8.20
+    - A.8.9
+    soc2:
+    - CC6.6
+    cis_v8:
+    - '4.8'
+  settings:
+  - WIN-050
+  - WIN-051
+  - MAC-018
+  - MAC-019
+  evidence: collector.device_config
+- id: CFG-08
+  domain: Configuration and patching
+  statement: Only approved software can be installed; application control runs at least in audit.
+  tier: enhanced
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - PR.PS-05
+    nis2:
+    - g
+    - e
+    iso27001_2022:
+    - A.8.19
+    soc2:
+    - CC6.8
+    cis_v8:
+    - '2.5'
+  settings:
+  - WIN-057
+  - WIN-058
+  - WIN-069
+  - MAC-004
+  - MAC-011
+  - MOB-009
+  evidence: collector.device_config
+- id: EML-01
+  domain: Email
+  statement: Inbound mail is checked for phishing, impersonation and spoofing.
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - PR.DS-02
+    - DE.CM-01
+    nis2:
+    - g
+    - j
+    iso27001_2022:
+    - A.8.7
+    - A.5.14
+    soc2:
+    - CC6.8
+    - CC7.2
+    cis_v8:
+    - '9.7'
+  settings:
+  - OFC-008
+  - DEF-009
+  - DEF-010
+  - DEF-011
+  - DEF-012
+  - DEF-017
+  - DEF-021
+  - TMS-011
+  - ADM-005
+  evidence: collector.mail_protection
+- id: EML-02
+  domain: Email
+  statement: Attachments and links are scanned before delivery and at the time of click.
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - DE.CM-01
+    - PR.PS-05
+    nis2:
+    - g
+    iso27001_2022:
+    - A.8.7
+    - A.8.23
+    soc2:
+    - CC6.8
+    cis_v8:
+    - '9.6'
+    - '9.7'
+  settings:
+  - DEF-009
+  - DEF-010
+  - DEF-013
+  - DEF-014
+  - DEF-015
+  - DEF-016
+  evidence: collector.mail_protection
+- id: EML-03
+  domain: Email
+  statement: The company's domains publish SPF, DKIM, DMARC at reject and MTA-STS.
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - PR.DS-02
+    nis2:
+    - j
+    - h
+    iso27001_2022:
+    - A.5.14
+    - A.8.21
+    soc2:
+    - CC6.6
+    - CC6.7
+    cis_v8:
+    - '9.5'
+  settings:
+  - DEF-012
+  - EXO-003
+  - EXO-016
+  - EXO-017
+  evidence: collector.mail_auth
+- id: EML-04
+  domain: Email
+  statement: Automatic forwarding of mail to outside addresses is blocked.
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - PR.DS-02
+    - PR.DS-10
+    nis2:
+    - i
+    - g
+    iso27001_2022:
+    - A.5.14
+    - A.8.12
+    soc2:
+    - CC6.7
+    cis_v8:
+    - '3.3'
+  settings:
+  - DEF-018
+  - DEF-019
+  - EXO-004
+  - EXO-005
+  - PVW-018
+  - PVW-021
+  - PVW-026
+  evidence: collector.forwarding
+- id: EML-05
+  domain: Email
+  statement: Legacy mail protocols and unauthenticated direct sending are off.
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - PR.AA-03
+    nis2:
+    - j
+    - g
+    iso27001_2022:
+    - A.8.5
+    - A.8.21
+    soc2:
+    - CC6.1
+    cis_v8:
+    - '4.8'
+  settings:
+  - ENT-002
+  - EXO-001
+  - EXO-002
+  - EXO-003
+  - EXO-018
+  evidence: collector.mail_protocols
+- id: EML-06
+  domain: Email
+  statement: Mail from outside is marked, and users can report suspicious messages in one click.
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - PR.AT-01
+    - DE.AE-02
+    nis2:
+    - g
+    - b
+    iso27001_2022:
+    - A.6.8
+    - A.5.14
+    soc2:
+    - CC2.2
+    - CC7.3
+    cis_v8:
+    - '14.6'
+  settings:
+  - DEF-020
+  - EXO-007
+  - EXO-008
+  - TMS-009
+  evidence: collector.mail_protection
+- id: EML-07
+  domain: Email
+  statement: Mail add-ins and outside storage providers in mail are restricted.
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - PR.PS-05
+    nis2:
+    - d
+    - g
+    iso27001_2022:
+    - A.5.23
+    - A.8.19
+    soc2:
+    - CC6.8
+    cis_v8:
+    - '2.5'
+  settings:
+  - OFC-009
+  - EXO-012
+  - EXO-014
+  evidence: collector.mail_protocols
+- id: EML-08
+  domain: Email
+  statement: Shared mailboxes cannot be signed into; access is delegated through groups.
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - PR.AA-05
+    nis2:
+    - i
+    iso27001_2022:
+    - A.5.15
+    - A.5.16
+    soc2:
+    - CC6.1
+    cis_v8:
+    - '5.1'
+  settings:
+  - EXO-010
+  - EXO-011
+  evidence: collector.shared_mailboxes
+- id: COL-01
+  domain: Collaboration and sharing
+  statement: Files are shared outside only with named people; anonymous links are off and guest links expire.
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - PR.AA-05
+    - PR.DS-10
+    nis2:
+    - i
+    iso27001_2022:
+    - A.5.14
+    - A.8.3
+    soc2:
+    - CC6.1
+    - CC6.7
+    cis_v8:
+    - '3.3'
+  settings:
+  - DEF-014
+  - EXO-015
+  - SPO-001
+  - SPO-002
+  - SPO-003
+  - SPO-004
+  - SPO-005
+  - SPO-006
+  - SPO-007
+  - SPO-012
+  - SPO-016
+  - ADM-005
+  - ADM-006
+  - ADM-008
+  evidence: collector.sharing_settings
+- id: COL-02
+  domain: Collaboration and sharing
+  statement: From unmanaged devices, files can be viewed in the browser but not downloaded, printed or synchronised.
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - PR.AA-05
+    - PR.DS-10
+    nis2:
+    - i
+    - g
+    iso27001_2022:
+    - A.8.1
+    - A.6.7
+    soc2:
+    - CC6.7
+    cis_v8:
+    - '3.3'
+  settings:
+  - ENT-008
+  - ENT-009
+  - EXO-013
+  - SPO-008
+  evidence: collector.sharing_settings
+- id: COL-03
+  domain: Collaboration and sharing
+  statement: Meetings admit outsiders through a lobby; chat and calls with unmanaged outside accounts are off.
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - PR.AA-05
+    - PR.DS-02
+    nis2:
+    - j
+    iso27001_2022:
+    - A.5.14
+    - A.8.21
+    soc2:
+    - CC6.6
+    cis_v8:
+    - '12.3'
+  settings:
+  - TMS-001
+  - TMS-002
+  - TMS-003
+  - TMS-004
+  - TMS-005
+  - TMS-006
+  - TMS-007
+  - TMS-011
+  - TMS-013
+  evidence: collector.teams_settings
+- id: COL-04
+  domain: Collaboration and sharing
+  statement: Third-party apps and outside storage providers in collaboration tools are blocked unless approved.
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - PR.PS-05
+    - GV.SC-07
+    nis2:
+    - d
+    iso27001_2022:
+    - A.5.23
+    - A.8.19
+    soc2:
+    - CC6.8
+    cis_v8:
+    - '2.5'
+  settings:
+  - EXO-012
+  - TMS-010
+  - TMS-012
+  - ADM-007
+  evidence: collector.teams_settings
+- id: COL-05
+  domain: Collaboration and sharing
+  statement: Files synchronise only to managed devices and only to the company's own tenant.
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - PR.DS-01
+    - PR.DS-10
+    nis2:
+    - i
+    - g
+    iso27001_2022:
+    - A.8.1
+    - A.8.12
+    soc2:
+    - CC6.7
+    cis_v8:
+    - '3.3'
+  settings:
+  - WIN-056
+  - WIN-067
+  - WIN-072
+  - MAC-021
+  - MAC-031
+  - MOB-014
+  - SPO-011
+  evidence: collector.sharing_settings
+- id: COL-06
+  domain: Collaboration and sharing
+  statement: Creation of sites, teams and groups is limited to administrators.
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - ID.AM-07
+    - PR.AA-05
+    nis2:
+    - i
+    iso27001_2022:
+    - A.5.9
+    - A.5.15
+    soc2:
+    - CC6.3
+    cis_v8:
+    - '3.2'
+  settings:
+  - ENT-034
+  - SPO-014
+  - SPO-018
+  - TMS-014
+  - PPL-001
+  evidence: collector.sharing_settings
+- id: DAT-01
+  domain: Data protection
+  statement: Information carries one of four classification labels; a default applies and a label is mandatory.
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - ID.AM-07
+    - PR.DS-01
+    nis2:
+    - i
+    - a
+    iso27001_2022:
+    - A.5.12
+    - A.5.13
+    soc2:
+    - C1.1
+    - CC6.1
+    cis_v8:
+    - '3.7'
+  settings:
+  - OFC-013
+  - PVW-003
+  - PVW-004
+  - PVW-005
+  - PVW-007
+  - PVW-029
+  evidence: collector.labels
+- id: DAT-02
+  domain: Data protection
+  statement: Restricted information is encrypted and readable only by people in the company.
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - PR.DS-01
+    - PR.DS-02
+    nis2:
+    - h
+    iso27001_2022:
+    - A.8.24
+    - A.5.13
+    soc2:
+    - C1.1
+    - CC6.7
+    cis_v8:
+    - '3.11'
+  settings:
+  - PVW-006
+  - PVW-009
+  - PVW-010
+  - PVW-025
+  evidence: collector.labels
+- id: DAT-03
+  domain: Data protection
+  statement: Confidential and Restricted information leaving the company by mail or sharing is detected; Restricted is blocked.
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - PR.DS-10
+    - DE.CM-03
+    nis2:
+    - i
+    - g
+    iso27001_2022:
+    - A.8.12
+    - A.5.14
+    soc2:
+    - CC6.7
+    - C1.1
+    cis_v8:
+    - '3.13'
+  settings:
+  - MAC-020
+  - MOB-012
+  - EXO-008
+  - PVW-005
+  - PVW-010
+  - PVW-011
+  - PVW-016
+  - PVW-019
+  - PVW-020
+  - PPL-003
+  evidence: collector.dlp
+- id: DAT-04
+  domain: Data protection
+  statement: Personal data leaving the company is detected, and bulk transfers are blocked unless justified.
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - PR.DS-10
+    nis2:
+    - i
+    iso27001_2022:
+    - A.8.12
+    - A.5.34
+    soc2:
+    - CC6.7
+    - P6.1
+    cis_v8:
+    - '3.13'
+  settings:
+  - PVW-013
+  evidence: collector.dlp
+- id: DAT-05
+  domain: Data protection
+  statement: Payment card and bank account data leaving the company is blocked unless justified.
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - PR.DS-10
+    nis2:
+    - i
+    iso27001_2022:
+    - A.8.12
+    soc2:
+    - CC6.7
+    cis_v8:
+    - '3.13'
+  settings:
+  - PVW-012
+  evidence: collector.dlp
+- id: DAT-06
+  domain: Data protection
+  statement: Passwords, keys and other credentials leaving the company in mail or files are blocked.
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - PR.DS-10
+    - PR.AA-01
+    nis2:
+    - i
+    - h
+    iso27001_2022:
+    - A.8.12
+    - A.5.17
+    soc2:
+    - CC6.7
+    - CC6.1
+    cis_v8:
+    - '3.13'
+  settings:
+  - PVW-014
+  evidence: collector.dlp
+- id: DAT-07
+  domain: Data protection
+  statement: Company files sent to personal mail accounts are detected, justified by the sender and reported.
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - PR.DS-10
+    - DE.CM-03
+    nis2:
+    - i
+    - g
+    iso27001_2022:
+    - A.8.12
+    - A.5.14
+    soc2:
+    - CC6.7
+    cis_v8:
+    - '3.13'
+  settings:
+  - PVW-017
+  - PVW-018
+  evidence: collector.dlp
+- id: DAT-08
+  domain: Data protection
+  statement: Legal, finance, people, corporate and sales records cannot be shared outside from their sites.
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - PR.DS-10
+    - PR.AA-05
+    nis2:
+    - i
+    iso27001_2022:
+    - A.8.3
+    - A.8.12
+    soc2:
+    - CC6.7
+    - C1.1
+    cis_v8:
+    - '3.3'
+  settings:
+  - SPO-002
+  - PVW-008
+  - PVW-015
+  - PVW-016
+  evidence: collector.dlp
+- id: DAT-09
+  domain: Data protection
+  statement: Data in transit is encrypted with current protocols.
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - PR.DS-02
+    nis2:
+    - h
+    iso27001_2022:
+    - A.8.24
+    - A.8.21
+    soc2:
+    - CC6.7
+    cis_v8:
+    - '3.10'
+  settings:
+  - WIN-068
+  - EXO-017
+  - PVW-009
+  evidence: collector.mail_auth
+- id: DAT-10
+  domain: Data protection
+  statement: Labels follow sites and teams, setting their privacy and sharing limits.
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - PR.AA-05
+    - ID.AM-07
+    nis2:
+    - i
+    iso27001_2022:
+    - A.5.13
+    - A.8.3
+    soc2:
+    - C1.1
+    cis_v8:
+    - '3.7'
+  settings:
+  - PVW-008
+  evidence: collector.labels
+- id: DAT-11
+  domain: Data protection
+  statement: Records are kept and deleted according to the retention schedule, with legal hold available.
+  tier: addon
+  type: mixed
+  frameworks:
+    nist_csf_2:
+    - PR.DS-11
+    - ID.AM-08
+    nis2:
+    - a
+    - c
+    iso27001_2022:
+    - A.5.33
+    - A.8.10
+    soc2:
+    - C1.2
+    - CC6.5
+    cis_v8:
+    - '3.4'
+  settings:
+  - PVW-027
+  evidence: collector.retention
+- id: DAT-12
+  domain: Data protection
+  statement: Sensitive data is controlled on endpoints and in chat, and labelled automatically.
+  tier: addon
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - PR.DS-10
+    nis2:
+    - i
+    iso27001_2022:
+    - A.8.12
+    soc2:
+    - CC6.7
+    cis_v8:
+    - '3.13'
+  settings:
+  - DEF-023
+  - PVW-028
+  - PVW-029
+  - PVW-030
+  evidence: collector.dlp
+- id: DAT-13
+  domain: Data protection
+  statement: Automation flows can connect only approved business services and cannot send data to outside endpoints.
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - PR.DS-10
+    - GV.SC-07
+    nis2:
+    - d
+    - i
+    iso27001_2022:
+    - A.8.12
+    - A.5.23
+    soc2:
+    - CC6.7
+    cis_v8:
+    - '3.3'
+  settings:
+  - PPL-001
+  - PPL-002
+  - PPL-003
+  - PPL-004
+  - PPL-005
+  evidence: collector.power_platform
+- id: LOG-01
+  domain: Logging and monitoring
+  statement: Administrator, user and mailbox activity is recorded in the audit log.
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - DE.CM-03
+    - PR.PS-04
+    nis2:
+    - b
+    - f
+    iso27001_2022:
+    - A.8.15
+    soc2:
+    - CC7.2
+    cis_v8:
+    - '8.2'
+  settings:
+  - WIN-021
+  - WIN-052
+  - EXO-009
+  - TMS-008
+  - PVW-001
+  evidence: collector.audit_status
+- id: LOG-02
+  domain: Logging and monitoring
+  statement: Security alerts go to a monitored mailbox and are reviewed each working day.
+  tier: core
+  type: mixed
+  frameworks:
+    nist_csf_2:
+    - DE.AE-02
+    - DE.AE-06
+    nis2:
+    - b
+    iso27001_2022:
+    - A.8.16
+    - A.5.25
+    soc2:
+    - CC7.2
+    - CC7.3
+    cis_v8:
+    - '8.11'
+  settings:
+  - DEF-007
+  - DEF-019
+  - PVW-020
+  evidence: task.alert_review
+  procedures:
+  - control-task:alert_review
+- id: LOG-03
+  domain: Logging and monitoring
+  statement: Audit and sign-in records are kept for at least 180 days and exported weekly for longer keeping.
+  tier: core
+  type: mixed
+  frameworks:
+    nist_csf_2:
+    - PR.PS-04
+    nis2:
+    - b
+    - f
+    iso27001_2022:
+    - A.8.15
+    - A.5.28
+    soc2:
+    - CC7.2
+    cis_v8:
+    - '8.10'
+  settings:
+  - ENT-049
+  - PVW-002
+  evidence: collector.audit_logs
+- id: LOG-04
+  domain: Logging and monitoring
+  statement: 'High-risk administrative actions raise an alert: forwarding rules, role changes, audit or sharing settings changed.'
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - DE.CM-03
+    - DE.AE-02
+    nis2:
+    - b
+    iso27001_2022:
+    - A.8.16
+    soc2:
+    - CC7.2
+    cis_v8:
+    - '8.11'
+  settings:
+  - ENT-045
+  - SPO-017
+  - PVW-021
+  - PVW-022
+  - PVW-023
+  - PVW-024
+  - PVW-025
+  - PVW-026
+  evidence: collector.alert_policies
+- id: INC-01
+  domain: Incident response
+  statement: An incident response plan defines severity, roles, contacts and steps, and is exercised yearly.
+  tier: core
+  type: procedural
+  frameworks:
+    nist_csf_2:
+    - RS.MA-01
+    - RS.CO-02
+    - ID.IM-02
+    nis2:
+    - b
+    iso27001_2022:
+    - A.5.24
+    - A.5.26
+    soc2:
+    - CC7.3
+    - CC7.4
+    cis_v8:
+    - '17.1'
+    - '17.4'
+  settings:
+  - DEF-020
+  evidence: task.incident_exercise
+  procedures:
+  - policy document
+  - control-task:incident_exercise
+- id: INC-02
+  domain: Incident response
+  statement: Reportable incidents are notified within the regulatory deadlines, which are tracked per incident.
+  tier: core
+  type: procedural
+  frameworks:
+    nist_csf_2:
+    - RS.CO-02
+    - GV.OC-03
+    nis2:
+    - b
+    iso27001_2022:
+    - A.5.24
+    - A.5.5
+    soc2:
+    - CC7.4
+    - CC2.3
+    cis_v8:
+    - '17.2'
+  settings: []
+  evidence: task.incident_register
+  procedures:
+  - policy document
+  - control-task:incident_register
+- id: INC-03
+  domain: Incident response
+  statement: Detected threats are investigated and contained automatically where the platform supports it.
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - RS.MI-01
+    - RS.AN-03
+    nis2:
+    - b
+    iso27001_2022:
+    - A.5.26
+    soc2:
+    - CC7.4
+    cis_v8:
+    - '13.7'
+  settings:
+  - WIN-034
+  - DEF-001
+  evidence: collector.defender_health
+- id: BCK-01
+  domain: Backup and resilience
+  statement: Files keep version history and deleted items are recoverable; user folders are saved to company storage.
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - PR.DS-11
+    - RC.RP-03
+    nis2:
+    - c
+    iso27001_2022:
+    - A.8.13
+    soc2:
+    - A1.2
+    cis_v8:
+    - '11.2'
+  settings:
+  - WIN-071
+  - WIN-073
+  - WIN-090
+  - OFC-011
+  - MAC-031
+  - SPO-013
+  evidence: collector.sharing_settings
+- id: BCK-02
+  domain: Backup and resilience
+  statement: Mail and files can be restored from a backup held independently of the live service.
+  tier: addon
+  type: mixed
+  frameworks:
+    nist_csf_2:
+    - PR.DS-11
+    - RC.RP-03
+    nis2:
+    - c
+    iso27001_2022:
+    - A.8.13
+    - A.8.14
+    soc2:
+    - A1.2
+    - A1.3
+    cis_v8:
+    - '11.4'
+  settings:
+  - PVW-031
+  evidence: task.restore_test
+- id: BCK-03
+  domain: Backup and resilience
+  statement: Recovery of files, mail and administrator access is tested every year.
+  tier: core
+  type: procedural
+  frameworks:
+    nist_csf_2:
+    - RC.RP-03
+    - ID.IM-02
+    nis2:
+    - c
+    - f
+    iso27001_2022:
+    - A.5.30
+    - A.8.13
+    soc2:
+    - A1.3
+    cis_v8:
+    - '11.5'
+  settings: []
+  evidence: task.restore_test
+  procedures:
+  - policy document
+  - control-task:restore_test
+- id: BCK-04
+  domain: Backup and resilience
+  statement: A continuity plan covers loss of the tenant, the domain and the founder's account.
+  tier: core
+  type: procedural
+  frameworks:
+    nist_csf_2:
+    - GV.RM-01
+    - RC.RP-01
+    nis2:
+    - c
+    iso27001_2022:
+    - A.5.29
+    - A.5.30
+    soc2:
+    - A1.2
+    - CC9.1
+    cis_v8:
+    - '11.1'
+  settings: []
+  evidence: task.policy_review
+  procedures:
+  - policy document
+  - control-task:policy_review
+- id: APP-01
+  domain: Applications and AI
+  statement: Applications granted access to company data are listed and reviewed every month.
+  tier: core
+  type: mixed
+  frameworks:
+    nist_csf_2:
+    - ID.AM-02
+    - GV.SC-07
+    nis2:
+    - d
+    - i
+    iso27001_2022:
+    - A.5.23
+    - A.5.9
+    soc2:
+    - CC6.1
+    - CC9.2
+    cis_v8:
+    - '2.1'
+    - '2.3'
+  settings:
+  - ENT-031
+  - DEF-023
+  evidence: collector.app_consents
+  procedures:
+  - collector:app_consents
+- id: APP-02
+  domain: Applications and AI
+  statement: Users cannot buy or trial services against the tenant themselves.
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - GV.SC-05
+    - ID.AM-02
+    nis2:
+    - d
+    iso27001_2022:
+    - A.5.23
+    soc2:
+    - CC9.2
+    cis_v8:
+    - '2.5'
+  settings:
+  - ADM-001
+  - ADM-002
+  - ADM-012
+  evidence: collector.org_settings
+- id: APP-03
+  domain: Applications and AI
+  statement: AI features are limited to those the company has approved, and AI in automation tools is off by default.
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - GV.PO-01
+    - PR.DS-10
+    nis2:
+    - a
+    - d
+    iso27001_2022:
+    - A.5.10
+    - A.5.23
+    soc2:
+    - CC6.7
+    cis_v8:
+    - '3.3'
+  settings:
+  - ENT-048
+  - OFC-012
+  - PPL-006
+  - ADM-010
+  - ADM-011
+  evidence: collector.org_settings
+- id: GOV-01
+  domain: Governance
+  statement: An information security policy is approved by the owner, published and reviewed every year.
+  tier: core
+  type: procedural
+  frameworks:
+    nist_csf_2:
+    - GV.PO-01
+    - GV.PO-02
+    nis2:
+    - a
+    iso27001_2022:
+    - A.5.1
+    soc2:
+    - CC1.4
+    - CC5.3
+    cis_v8:
+    - '4.1'
+  settings: []
+  evidence: task.policy_review
+  procedures:
+  - policy document
+  - control-task:policy_review
+- id: GOV-02
+  domain: Governance
+  statement: Risks are assessed every year and after major change; treatment is recorded.
+  tier: core
+  type: procedural
+  frameworks:
+    nist_csf_2:
+    - GV.RM-01
+    - ID.RA-05
+    - ID.RA-06
+    nis2:
+    - a
+    iso27001_2022:
+    - A.5.7
+    - A.5.8
+    soc2:
+    - CC3.1
+    - CC3.2
+    cis_v8:
+    - '18.1'
+  settings: []
+  evidence: task.risk_assessment
+  procedures:
+  - policy document
+  - control-task:risk_assessment
+- id: GOV-03
+  domain: Governance
+  statement: Any departure from a requirement is recorded with a reason, an approver and an end date.
+  tier: core
+  type: mixed
+  frameworks:
+    nist_csf_2:
+    - GV.RM-03
+    - GV.PO-01
+    nis2:
+    - a
+    - f
+    iso27001_2022:
+    - A.5.36
+    soc2:
+    - CC3.4
+    - CC5.3
+    cis_v8:
+    - '4.1'
+  settings: []
+  evidence: collector.exceptions
+  procedures:
+  - list:Exceptions
+- id: GOV-04
+  domain: Governance
+  statement: Coverage of requirements and the tenant's security score are reported every month.
+  tier: core
+  type: mixed
+  frameworks:
+    nist_csf_2:
+    - GV.OV-03
+    - ID.IM-01
+    nis2:
+    - f
+    iso27001_2022:
+    - A.5.35
+    - A.5.36
+    soc2:
+    - CC4.1
+    - CC4.2
+    cis_v8:
+    - '4.1'
+  settings:
+  - ADM-014
+  evidence: collector.coverage
+  procedures:
+  - report:coverage
+- id: GOV-05
+  domain: Governance
+  statement: Tenant settings change only through a reviewed change, and unreviewed changes are detected.
+  tier: core
+  type: technical
+  frameworks:
+    nist_csf_2:
+    - PR.PS-01
+    - ID.RA-07
+    nis2:
+    - e
+    iso27001_2022:
+    - A.8.32
+    - A.8.9
+    soc2:
+    - CC8.1
+    - CC7.1
+    cis_v8:
+    - '4.1'
+  settings:
+  - DEF-008
+  - PVW-023
+  - PPL-007
+  - ADM-009
+  evidence: collector.pull_requests
+  procedures:
+  - pipeline:pull-request review
+  - drift monitors
+- id: AWR-01
+  domain: Awareness
+  statement: Everyone completes security awareness training on joining and every year.
+  tier: core
+  type: procedural
+  frameworks:
+    nist_csf_2:
+    - PR.AT-01
+    - PR.AT-02
+    nis2:
+    - g
+    iso27001_2022:
+    - A.6.3
+    soc2:
+    - CC1.4
+    - CC2.2
+    cis_v8:
+    - '14.1'
+  settings:
+  - DEF-022
+  evidence: task.awareness
+  procedures:
+  - policy document
+  - control-task:awareness
+- id: AWR-02
+  domain: Awareness
+  statement: Everyone acknowledges the acceptable use rules on joining and at each new version.
+  tier: core
+  type: mixed
+  frameworks:
+    nist_csf_2:
+    - PR.AT-01
+    - GV.RR-02
+    nis2:
+    - g
+    - i
+    iso27001_2022:
+    - A.5.10
+    - A.6.2
+    soc2:
+    - CC1.4
+    - CC2.2
+    cis_v8:
+    - '14.1'
+  settings: []
+  evidence: collector.acknowledgements
+  procedures:
+  - flow:F18
+  - list:Acknowledgements
+- id: SUP-01
+  domain: Suppliers
+  statement: Suppliers that hold company data are listed, assessed before use and reviewed every year.
+  tier: core
+  type: procedural
+  frameworks:
+    nist_csf_2:
+    - GV.SC-04
+    - GV.SC-07
+    nis2:
+    - d
+    iso27001_2022:
+    - A.5.19
+    - A.5.20
+    - A.5.22
+    soc2:
+    - CC9.2
+    cis_v8:
+    - '15.1'
+  settings: []
+  evidence: task.vendor_review
+  procedures:
+  - policy document
+  - control-task:vendor_review
+- id: SUP-02
+  domain: Suppliers
+  statement: Suppliers' people access company systems as named guests with an end date; no shared accounts.
+  tier: core
+  type: mixed
+  frameworks:
+    nist_csf_2:
+    - GV.SC-05
+    - PR.AA-05
+    nis2:
+    - d
+    - i
+    iso27001_2022:
+    - A.5.19
+    - A.5.16
+    soc2:
+    - CC6.2
+    - CC9.2
+    cis_v8:
+    - '15.7'
+  settings:
+  - ENT-036
+  - SPO-005
+  - ADM-013
+  evidence: collector.guests

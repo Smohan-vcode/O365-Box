@@ -296,12 +296,20 @@ structure:
     - name: Setup evidence
     - name: Automation logs
     - name: Configuration exports
-baseline:
-  preset: recommended
-  overrides:
-  - id: teams.meetings.anonymous_join
-    value: 'off'
-    reason: Meetings are internal only
+policy:
+  frameworks:
+  - soc2
+  - nist_csf_2
+  tier: core
+  rollout:
+    stage: audit
+    audit_days: 14
+    pilot_group: grp-admins
+  exceptions:
+  - id: TMS-005
+    reason: Workshops let anonymous customers start the meeting until the guest process is in place
+    reference: CHG-0001
+    ends: '2099-12-31'
 disclosures:
   email_external:
     enabled: true

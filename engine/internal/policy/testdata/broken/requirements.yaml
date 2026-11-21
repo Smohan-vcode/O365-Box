@@ -1,0 +1,18 @@
+# Fixture: a catalogue that breaks the rules.
+requirements:
+- id: AAA-01
+  domain: Test
+  statement: Has a setting.
+  tier: core
+  type: technical
+  frameworks: {fw: [C1]}
+  settings: [SET-001]
+  evidence: collector.test
+- id: AAA-02
+  domain: Test
+  statement: Technical but nothing enforces it.
+  tier: core
+  type: technical
+  frameworks: {fw: [C9]}
+  settings: []
+  evidence: collector.test

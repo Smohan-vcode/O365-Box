@@ -1,0 +1,205 @@
+id: nist_csf_2
+title: NIST Cybersecurity Framework 2.0
+mapped_at: category, with subcategory references on requirements
+controls:
+- id: GV.OC
+  title: Organizational context
+  requirements:
+  - INC-02
+- id: GV.RM
+  title: Risk management strategy
+  requirements:
+  - BCK-04
+  - GOV-02
+  - GOV-03
+- id: GV.RR
+  title: Roles, responsibilities and authorities
+  requirements:
+  - AWR-02
+- id: GV.PO
+  title: Policy
+  requirements:
+  - APP-03
+  - GOV-01
+  - GOV-03
+- id: GV.OV
+  title: Oversight
+  requirements:
+  - GOV-04
+- id: GV.SC
+  title: Cybersecurity supply chain risk management
+  requirements:
+  - APP-01
+  - APP-02
+  - COL-04
+  - DAT-13
+  - IAM-10
+  - SUP-01
+  - SUP-02
+- id: ID.AM
+  title: Asset management
+  requirements:
+  - APP-01
+  - APP-02
+  - COL-06
+  - DAT-01
+  - DAT-10
+  - DAT-11
+  - DEV-01
+  - DEV-08
+- id: ID.RA
+  title: Risk assessment
+  requirements:
+  - CFG-02
+  - CFG-04
+  - GOV-02
+  - GOV-05
+- id: ID.IM
+  title: Improvement
+  requirements:
+  - BCK-03
+  - GOV-04
+  - INC-01
+- id: PR.AA
+  title: Identity management, authentication and access control
+  requirements:
+  - CFG-06
+  - COL-01
+  - COL-02
+  - COL-03
+  - COL-06
+  - DAT-06
+  - DAT-08
+  - DAT-10
+  - DEV-03
+  - DEV-06
+  - EML-05
+  - EML-08
+  - IAM-01
+  - IAM-02
+  - IAM-03
+  - IAM-04
+  - IAM-05
+  - IAM-06
+  - IAM-07
+  - IAM-08
+  - IAM-09
+  - IAM-10
+  - IAM-11
+  - IAM-12
+  - IAM-13
+  - IAM-14
+  - IAM-15
+  - IAM-16
+  - IAM-17
+  - SUP-02
+- id: PR.AT
+  title: Awareness and training
+  requirements:
+  - AWR-01
+  - AWR-02
+  - EML-06
+- id: PR.DS
+  title: Data security
+  requirements:
+  - APP-03
+  - BCK-01
+  - BCK-02
+  - COL-01
+  - COL-02
+  - COL-03
+  - COL-05
+  - DAT-01
+  - DAT-02
+  - DAT-03
+  - DAT-04
+  - DAT-05
+  - DAT-06
+  - DAT-07
+  - DAT-08
+  - DAT-09
+  - DAT-11
+  - DAT-12
+  - DAT-13
+  - DEV-02
+  - DEV-07
+  - DEV-09
+  - EML-01
+  - EML-03
+  - EML-04
+- id: PR.PS
+  title: Platform security
+  requirements:
+  - CFG-01
+  - CFG-02
+  - CFG-03
+  - CFG-05
+  - CFG-06
+  - CFG-08
+  - COL-04
+  - DEV-01
+  - DEV-04
+  - DEV-10
+  - EML-02
+  - EML-07
+  - GOV-05
+  - IAM-08
+  - LOG-01
+  - LOG-03
+  - MAL-01
+  - MAL-03
+  - MAL-05
+- id: PR.IR
+  title: Technology infrastructure resilience
+  requirements:
+  - CFG-07
+  - DEV-05
+  - MAL-04
+- id: DE.CM
+  title: Continuous monitoring
+  requirements:
+  - DAT-03
+  - DAT-07
+  - EML-01
+  - EML-02
+  - IAM-15
+  - LOG-01
+  - LOG-04
+  - MAL-01
+  - MAL-02
+  - MAL-04
+- id: DE.AE
+  title: Adverse event analysis
+  requirements:
+  - EML-06
+  - LOG-02
+  - LOG-04
+- id: RS.MA
+  title: Incident management
+  requirements:
+  - INC-01
+- id: RS.AN
+  title: Incident analysis
+  requirements:
+  - INC-03
+- id: RS.CO
+  title: Incident response reporting and communication
+  requirements:
+  - INC-01
+  - INC-02
+- id: RS.MI
+  title: Incident mitigation
+  requirements:
+  - INC-03
+  - MAL-02
+- id: RC.RP
+  title: Incident recovery plan execution
+  requirements:
+  - BCK-01
+  - BCK-02
+  - BCK-03
+  - BCK-04
+  - IAM-07
+- id: RC.CO
+  title: Incident recovery communication
+  requirements: []

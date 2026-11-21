@@ -1,0 +1,2 @@
+capabilities:
+  free: {name: "Any tenant", included_in: [plan_a]}

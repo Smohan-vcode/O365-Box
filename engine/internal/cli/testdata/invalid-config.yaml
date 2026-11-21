@@ -18,4 +18,4 @@ structure:
   hub: {name: Hub, url: hub}
   sites:
     - {name: Admin, url: admin, external: "off", classification: Confidential, access: {someone: owner}}
-baseline: {preset: recommended}
+policy: {frameworks: [soc2], tier: core, rollout: {stage: audit, audit_days: 14, pilot_group: grp-admins}}

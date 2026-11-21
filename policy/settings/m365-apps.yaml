@@ -1,0 +1,122 @@
+# Microsoft 365 apps: master settings.
+# mode: enforce | staged (audit or report-only first, then enforce) | report (evidence only)
+# value is the intended state in words; the setting resolution task (track T14) resolves each to the exact API setting and records it in expected-state/setting-ids.json.
+admin_centre: Microsoft 365 apps
+settings:
+- id: OFC-001
+  platform: windows macos
+  name: Block macros from running in Office files from the internet
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: m365_apps
+  requirements:
+  - MAL-05
+- id: OFC-002
+  platform: windows macos
+  name: VBA macro notification
+  value: disable all except digitally signed macros
+  tier: enhanced
+  mode: enforce
+  capability: m365_apps
+  requirements:
+  - MAL-05
+- id: OFC-003
+  platform: windows macos
+  name: Protected View for files from the internet, unsafe locations and Outlook attachments
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: m365_apps
+  requirements:
+  - MAL-05
+- id: OFC-004
+  platform: windows macos
+  name: Dynamic Data Exchange server launch and lookup
+  value: disabled
+  tier: core
+  mode: enforce
+  capability: m365_apps
+  requirements:
+  - MAL-05
+- id: OFC-005
+  platform: windows macos
+  name: ActiveX controls
+  value: disabled without notification
+  tier: core
+  mode: enforce
+  capability: m365_apps
+  requirements:
+  - MAL-05
+- id: OFC-006
+  platform: windows macos
+  name: Trusted locations on the network
+  value: not allowed
+  tier: core
+  mode: enforce
+  capability: m365_apps
+  requirements:
+  - MAL-05
+- id: OFC-007
+  platform: windows macos
+  name: 'Legacy file formats: open and save'
+  value: blocked
+  tier: enhanced
+  mode: enforce
+  capability: m365_apps
+  requirements:
+  - MAL-05
+- id: OFC-008
+  platform: windows macos
+  name: 'Outlook: automatic download of external content'
+  value: blocked
+  tier: core
+  mode: enforce
+  capability: m365_apps
+  requirements:
+  - EML-01
+- id: OFC-009
+  platform: windows macos
+  name: 'Outlook: add-ins from the store'
+  value: blocked unless approved
+  tier: core
+  mode: enforce
+  capability: m365_apps
+  requirements:
+  - EML-07
+- id: OFC-010
+  platform: windows macos
+  name: Update channel and deadline
+  value: Monthly Enterprise; deadline 3 days
+  tier: core
+  mode: enforce
+  capability: m365_apps
+  requirements:
+  - CFG-03
+- id: OFC-011
+  platform: windows macos
+  name: Default save location
+  value: company storage
+  tier: core
+  mode: enforce
+  capability: m365_apps
+  requirements:
+  - BCK-01
+- id: OFC-012
+  platform: windows macos
+  name: Connected experiences that download online content or analyse content
+  value: as approved in the AI policy
+  tier: core
+  mode: enforce
+  capability: m365_apps
+  requirements:
+  - APP-03
+- id: OFC-013
+  platform: windows macos
+  name: Sensitivity label required before save or send
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: m365_apps
+  requirements:
+  - DAT-01

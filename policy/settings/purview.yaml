@@ -1,0 +1,297 @@
+# Microsoft Purview: master settings.
+# mode: enforce | staged (audit or report-only first, then enforce) | report (evidence only)
+# value is the intended state in words; the setting resolution task (track T14) resolves each to the exact API setting and records it in expected-state/setting-ids.json.
+admin_centre: Microsoft Purview
+settings:
+- id: PVW-001
+  platform: all
+  name: 'Audit: unified audit log'
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: purview_audit
+  requirements:
+  - LOG-01
+- id: PVW-002
+  platform: all
+  name: 'Audit: weekly export of administrator and sign-in activity'
+  value: to the evidence library
+  tier: core
+  mode: report
+  capability: purview_audit
+  requirements:
+  - LOG-03
+- id: PVW-003
+  platform: all
+  name: 'Label: Public'
+  value: no protection; footer marking
+  tier: core
+  mode: enforce
+  capability: purview_ip
+  requirements:
+  - DAT-01
+- id: PVW-004
+  platform: all
+  name: 'Label: Internal'
+  value: default for documents and mail; no marking
+  tier: core
+  mode: enforce
+  capability: purview_ip
+  requirements:
+  - DAT-01
+- id: PVW-005
+  platform: all
+  name: 'Label: Confidential, with sub-labels Sales, Legal, People'
+  value: header marking; external sharing subject to data loss prevention
+  tier: core
+  mode: enforce
+  capability: purview_ip
+  requirements:
+  - DAT-01
+  - DAT-03
+- id: PVW-006
+  platform: all
+  name: 'Label: Restricted'
+  value: encrypted to members of the organisation; header and watermark; mail cannot be forwarded
+  tier: core
+  mode: enforce
+  capability: purview_ip
+  requirements:
+  - DAT-02
+- id: PVW-007
+  platform: all
+  name: 'Label policy: default label Internal; label mandatory; justification to lower a label'
+  value: published to all users
+  tier: core
+  mode: staged
+  capability: purview_ip
+  requirements:
+  - DAT-01
+- id: PVW-008
+  platform: all
+  name: Labels for sites and groups
+  value: 'Internal: members only; Confidential: private, no guests; Restricted: private, no guests, unmanaged devices blocked'
+  tier: core
+  mode: enforce
+  capability: purview_ip
+  requirements:
+  - DAT-10
+  - DAT-08
+- id: PVW-009
+  platform: all
+  name: Message encryption template for outside recipients
+  value: available as Encrypt in Outlook
+  tier: core
+  mode: enforce
+  capability: purview_ip
+  requirements:
+  - DAT-02
+  - DAT-09
+- id: PVW-010
+  platform: all
+  name: DLP-01 Restricted label shared or mailed outside
+  value: block; no override; alert
+  tier: core
+  mode: staged
+  capability: purview_dlp_core
+  requirements:
+  - DAT-03
+  - DAT-02
+- id: PVW-011
+  platform: all
+  name: DLP-02 Confidential label shared or mailed outside
+  value: block with justified override; notify sender and alerts address
+  tier: core
+  mode: staged
+  capability: purview_dlp_core
+  requirements:
+  - DAT-03
+- id: PVW-012
+  platform: all
+  name: DLP-03 Payment card, bank account and IBAN numbers sent outside
+  value: policy tip at 1; block with override at 5
+  tier: core
+  mode: staged
+  capability: purview_dlp_core
+  requirements:
+  - DAT-05
+- id: PVW-013
+  platform: all
+  name: DLP-04 Personal data identifiers for the operating jurisdictions, sent outside
+  value: policy tip at 1; block with override at 10
+  tier: core
+  mode: staged
+  capability: purview_dlp_core
+  requirements:
+  - DAT-04
+- id: PVW-014
+  platform: all
+  name: DLP-05 Credentials and secrets sent outside
+  value: block; alert
+  tier: core
+  mode: staged
+  capability: purview_dlp_core
+  requirements:
+  - DAT-06
+- id: PVW-015
+  platform: all
+  name: DLP-06 Sharing outside from the legal, finance, people and corporate sites
+  value: block; alert
+  tier: core
+  mode: staged
+  capability: purview_dlp_core
+  requirements:
+  - DAT-08
+- id: PVW-016
+  platform: all
+  name: DLP-07 Sharing outside from the sales site
+  value: block with justified override; weekly report to owner
+  tier: core
+  mode: staged
+  capability: purview_dlp_core
+  requirements:
+  - DAT-08
+  - DAT-03
+- id: PVW-017
+  platform: all
+  name: DLP-08 Mail with attachments to consumer mail domains
+  value: require justification; copy incident report to the security mailbox
+  tier: core
+  mode: staged
+  capability: purview_dlp_core
+  requirements:
+  - DAT-07
+- id: PVW-018
+  platform: all
+  name: DLP-09 Mail from a user to an address matching their own name at a consumer domain
+  value: block with override; alert
+  tier: core
+  mode: staged
+  capability: purview_dlp_core
+  requirements:
+  - DAT-07
+  - EML-04
+- id: PVW-019
+  platform: all
+  name: DLP-10 Company marker terms, from the deployment's list, sent outside
+  value: policy tip; incident report
+  tier: core
+  mode: staged
+  capability: purview_dlp_core
+  requirements:
+  - DAT-03
+- id: PVW-020
+  platform: all
+  name: 'DLP: incident reports and alerts'
+  value: to the security mailbox; one alert per match
+  tier: core
+  mode: enforce
+  capability: purview_dlp_core
+  requirements:
+  - LOG-02
+  - DAT-03
+- id: PVW-021
+  platform: all
+  name: 'Alert: forwarding or redirect rule created'
+  value: on; to alerts address
+  tier: core
+  mode: enforce
+  capability: purview_audit
+  requirements:
+  - LOG-04
+  - EML-04
+- id: PVW-022
+  platform: all
+  name: 'Alert: administrator role granted'
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: purview_audit
+  requirements:
+  - LOG-04
+  - IAM-06
+- id: PVW-023
+  platform: all
+  name: 'Alert: audit logging turned off, or a protection policy changed or removed'
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: purview_audit
+  requirements:
+  - LOG-04
+  - GOV-05
+- id: PVW-024
+  platform: all
+  name: 'Alert: sharing policy changed; site administrator added'
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: purview_audit
+  requirements:
+  - LOG-04
+- id: PVW-025
+  platform: all
+  name: 'Alert: sensitivity label lowered or removed on a Restricted file'
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: purview_audit
+  requirements:
+  - LOG-04
+  - DAT-02
+- id: PVW-026
+  platform: all
+  name: 'Alert: mail flow rule or connector created or changed'
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: purview_audit
+  requirements:
+  - LOG-04
+  - EML-04
+- id: PVW-027
+  platform: all
+  name: Retention policies per record class, and legal hold
+  value: per the retention schedule
+  tier: addon
+  mode: enforce
+  capability: purview_retention
+  requirements:
+  - DAT-11
+- id: PVW-028
+  platform: all
+  name: Data loss prevention on endpoints and in Teams chat
+  value: mirror DLP-01 to DLP-06
+  tier: addon
+  mode: enforce
+  capability: purview_suite
+  requirements:
+  - DAT-12
+- id: PVW-029
+  platform: all
+  name: Automatic labelling and default labels on document libraries
+  value: Confidential on legal, finance, people, sales libraries
+  tier: addon
+  mode: enforce
+  capability: purview_suite
+  requirements:
+  - DAT-12
+  - DAT-01
+- id: PVW-030
+  platform: all
+  name: 'Insider risk: data leaving before departure'
+  value: 'on'
+  tier: addon
+  mode: enforce
+  capability: purview_suite
+  requirements:
+  - DAT-12
+- id: PVW-031
+  platform: all
+  name: Independent backup of mail and files
+  value: daily; tested yearly
+  tier: addon
+  mode: enforce
+  capability: backup_service
+  requirements:
+  - BCK-02

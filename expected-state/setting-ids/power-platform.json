@@ -1,0 +1,363 @@
+{
+  "PPL-001": {
+    "status": "gate",
+    "provider": "powerplatform",
+    "step": "policy.power-platform",
+    "method": "portal",
+    "apply": "gate: Power Platform admin centre > Settings (tenant settings) > Production/sandbox environment assignments, Trial environment assignments and Developer environment assignments: set each to 'Only specific admins'.",
+    "payload": null,
+    "read": "POST https://api.bap.microsoft.com/providers/Microsoft.BusinessAppPlatform/listTenantSettings?api-version=2020-10-01 (once registered); until then the owner confirms in the gate",
+    "check": "tenant settings: disableEnvironmentCreationByNonAdminUsers == true; disableTrialEnvironmentCreationByNonAdminUsers == true; powerPlatform.governance.disableDeveloperEnvironmentCreationByNonAdminUsers == true",
+    "permissions": [
+      "powerplatform:pipeline app registered as a Power Platform management application (pac admin application register --application-id {app:pipeline}); token audience https://service.powerapps.com/ for the BAP admin API"
+    ],
+    "roles": [
+      "Power Platform Administrator (for the one-time registration only; held by a person, not the app)"
+    ],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Tenant Configuration Management has no Power Platform resources known. Monitor with box drift once the API is reachable."
+    },
+    "verified": "not verified: host blocked (api.bap.microsoft.com, api.powerplatform.com and api.flow.microsoft.com are unreachable from this container), and the pipeline app is not registered as a Power Platform management application",
+    "notes": "Until the human step 'register the pipeline app as a Power Platform management application' is done, this is a gate. After it, the listed API applies it and the gate becomes a check. PowerShell equivalent: Set-TenantSettings (Microsoft.PowerApps.Administration.PowerShell), not in the pinned module set.",
+    "gate": {
+      "guide": "Power Platform admin centre > Settings (tenant settings) > Production/sandbox environment assignments, Trial environment assignments and Developer environment assignments: set each to 'Only specific admins'.",
+      "expected": "only administrators can create production, sandbox, trial and developer environments",
+      "check": "tenant settings: disableEnvironmentCreationByNonAdminUsers == true; disableTrialEnvironmentCreationByNonAdminUsers == true; powerPlatform.governance.disableDeveloperEnvironmentCreationByNonAdminUsers == true"
+    },
+    "api_when_registered": {
+      "method": "rest",
+      "apply": "POST https://api.bap.microsoft.com/providers/Microsoft.BusinessAppPlatform/scopes/admin/updateTenantSettings?api-version=2020-10-01",
+      "payload": {
+        "disableEnvironmentCreationByNonAdminUsers": true,
+        "disableTrialEnvironmentCreationByNonAdminUsers": true,
+        "powerPlatform": {
+          "governance": {
+            "disableDeveloperEnvironmentCreationByNonAdminUsers": true
+          }
+        }
+      },
+      "read": "POST https://api.bap.microsoft.com/providers/Microsoft.BusinessAppPlatform/listTenantSettings?api-version=2020-10-01",
+      "check": "same three properties == true"
+    }
+  },
+  "PPL-002": {
+    "status": "gate",
+    "provider": "powerplatform",
+    "step": "policy.power-platform",
+    "method": "portal",
+    "apply": "gate: Power Platform admin centre > Policies > Data policies > New policy 'Tenant data policy', scope all environments: move SharePoint, Office 365 Outlook, Approvals, Microsoft Forms, Microsoft Teams, Planner, Microsoft To Do and OneDrive for Business to Business.",
+    "payload": null,
+    "read": "GET https://api.bap.microsoft.com/providers/PowerPlatform.Governance/v2/policies?api-version=2018-11-01 (once registered); until then the owner confirms in the gate",
+    "check": "the tenant-wide policy's Confidential (Business) group holds exactly shared_sharepointonline, shared_office365, shared_approvals, shared_microsoftforms, shared_teams, shared_planner, shared_todo, shared_onedriveforbusiness",
+    "permissions": [
+      "powerplatform:pipeline app registered as a Power Platform management application (pac admin application register --application-id {app:pipeline}); token audience https://service.powerapps.com/ for the BAP admin API"
+    ],
+    "roles": [
+      "Power Platform Administrator (for the one-time registration only; held by a person, not the app)"
+    ],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Tenant Configuration Management has no Power Platform resources known. Monitor with box drift once the API is reachable."
+    },
+    "verified": "not verified: host blocked (api.bap.microsoft.com, api.powerplatform.com and api.flow.microsoft.com are unreachable from this container), and the pipeline app is not registered as a Power Platform management application",
+    "notes": "Until the human step 'register the pipeline app as a Power Platform management application' is done, this is a gate. After it, the listed API applies it and the gate becomes a check. The list equals expected-state/standard-connectors.yaml, so the engine's own flows stay inside the policy. PowerShell equivalent: New-DlpPolicy / Set-DlpPolicy (Microsoft.PowerApps.Administration.PowerShell).",
+    "gate": {
+      "guide": "Power Platform admin centre > Policies > Data policies > New policy 'Tenant data policy', scope all environments: move SharePoint, Office 365 Outlook, Approvals, Microsoft Forms, Microsoft Teams, Planner, Microsoft To Do and OneDrive for Business to Business.",
+      "expected": "exactly these eight connectors are in the Business group of the tenant-wide policy",
+      "check": "the tenant-wide policy's Confidential (Business) group holds exactly shared_sharepointonline, shared_office365, shared_approvals, shared_microsoftforms, shared_teams, shared_planner, shared_todo, shared_onedriveforbusiness"
+    },
+    "api_when_registered": {
+      "method": "rest",
+      "apply": "POST https://api.bap.microsoft.com/providers/PowerPlatform.Governance/v2/policies?api-version=2018-11-01 (PATCH .../v2/policies/{id} when it exists)",
+      "payload": {
+        "displayName": "Tenant data policy",
+        "environmentType": "AllEnvironments",
+        "defaultConnectorsClassification": "Blocked",
+        "connectorGroups": [
+          {
+            "classification": "Confidential",
+            "connectors": [
+              {
+                "id": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+              },
+              {
+                "id": "/providers/Microsoft.PowerApps/apis/shared_office365"
+              },
+              {
+                "id": "/providers/Microsoft.PowerApps/apis/shared_approvals"
+              },
+              {
+                "id": "/providers/Microsoft.PowerApps/apis/shared_microsoftforms"
+              },
+              {
+                "id": "/providers/Microsoft.PowerApps/apis/shared_teams"
+              },
+              {
+                "id": "/providers/Microsoft.PowerApps/apis/shared_planner"
+              },
+              {
+                "id": "/providers/Microsoft.PowerApps/apis/shared_todo"
+              },
+              {
+                "id": "/providers/Microsoft.PowerApps/apis/shared_onedriveforbusiness"
+              }
+            ]
+          },
+          {
+            "classification": "General",
+            "connectors": "{unblockable connectors not in the business list}"
+          },
+          {
+            "classification": "Blocked",
+            "connectors": "{every other connector, including shared_webcontents (HTTP) and HTTP with Microsoft Entra ID}"
+          }
+        ],
+        "customConnectorUrlPatternsDefinition": {
+          "rules": [
+            {
+              "order": 1,
+              "customConnectorRuleClassification": "Blocked",
+              "pattern": "*"
+            }
+          ]
+        }
+      },
+      "read": "GET https://api.bap.microsoft.com/providers/PowerPlatform.Governance/v2/policies?api-version=2018-11-01",
+      "check": "connectorGroups[classification == Confidential].connectors ids equal the list"
+    }
+  },
+  "PPL-003": {
+    "status": "unresolved",
+    "provider": "powerplatform",
+    "step": "policy.power-platform",
+    "method": "rest",
+    "apply": "POST https://api.bap.microsoft.com/providers/PowerPlatform.Governance/v2/policies?api-version=2018-11-01 (PATCH .../v2/policies/{id} when it exists)",
+    "payload": {
+      "displayName": "Tenant data policy",
+      "environmentType": "AllEnvironments",
+      "defaultConnectorsClassification": "Blocked",
+      "connectorGroups": [
+        {
+          "classification": "Confidential",
+          "connectors": [
+            {
+              "id": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+            },
+            {
+              "id": "/providers/Microsoft.PowerApps/apis/shared_office365"
+            },
+            {
+              "id": "/providers/Microsoft.PowerApps/apis/shared_approvals"
+            },
+            {
+              "id": "/providers/Microsoft.PowerApps/apis/shared_microsoftforms"
+            },
+            {
+              "id": "/providers/Microsoft.PowerApps/apis/shared_teams"
+            },
+            {
+              "id": "/providers/Microsoft.PowerApps/apis/shared_planner"
+            },
+            {
+              "id": "/providers/Microsoft.PowerApps/apis/shared_todo"
+            },
+            {
+              "id": "/providers/Microsoft.PowerApps/apis/shared_onedriveforbusiness"
+            }
+          ]
+        },
+        {
+          "classification": "General",
+          "connectors": "{unblockable connectors not in the business list}"
+        },
+        {
+          "classification": "Blocked",
+          "connectors": "{every other connector, including shared_webcontents (HTTP) and HTTP with Microsoft Entra ID}"
+        }
+      ],
+      "customConnectorUrlPatternsDefinition": {
+        "rules": [
+          {
+            "order": 1,
+            "customConnectorRuleClassification": "Blocked",
+            "pattern": "*"
+          }
+        ]
+      }
+    },
+    "read": "GET https://api.bap.microsoft.com/providers/PowerPlatform.Governance/v2/policies?api-version=2018-11-01",
+    "check": "defaultConnectorsClassification == Blocked; custom connector pattern '*' Blocked; HTTP connectors in Blocked",
+    "permissions": [
+      "powerplatform:pipeline app registered as a Power Platform management application (pac admin application register --application-id {app:pipeline}); token audience https://service.powerapps.com/ for the BAP admin API"
+    ],
+    "roles": [
+      "Power Platform Administrator (for the one-time registration only; held by a person, not the app)"
+    ],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Tenant Configuration Management has no Power Platform resources known. Monitor with box drift once the API is reachable."
+    },
+    "verified": "not verified: host blocked (api.bap.microsoft.com, api.powerplatform.com and api.flow.microsoft.com are unreachable from this container), and the pipeline app is not registered as a Power Platform management application",
+    "notes": "The product cannot block every other connector: Microsoft marks a set of connectors as unblockable (for example Excel Online (Business), Microsoft Teams-related and other first-party connectors); they can only be Business or Non-business. Available: default group for new connectors = Blocked; every blockable connector Blocked, including HTTP, HTTP with Microsoft Entra ID and all custom connectors (URL pattern '*'); unblockable connectors in Non-business, which stops them being combined with the business connectors in one flow. Decision needed: accept this as the setting's meaning. Also needs the management-app registration (human step) and an unblocked host.",
+    "gate": {
+      "guide": "Same policy as PPL-002: set 'Default group' to Blocked, block every connector that allows it, set custom connector pattern '*' to Block, leave unblockable connectors in Non-business.",
+      "expected": "default group Blocked; no blockable connector outside Business except in Blocked",
+      "check": "read the policy (API above) or the owner confirms in the gate"
+    }
+  },
+  "PPL-004": {
+    "status": "gate",
+    "provider": "powerplatform",
+    "step": "policy.power-platform",
+    "method": "portal",
+    "apply": "gate: Power Platform admin centre > Security > Identity and access > Tenant isolation: turn on, leave the allow list empty (blocks inbound and outbound).",
+    "payload": null,
+    "read": "GET https://api.bap.microsoft.com/providers/PowerPlatform.Governance/v1/tenants/{tenant:id}/tenantIsolationPolicy?api-version=2020-06-01 (once registered); until then the owner confirms in the gate",
+    "check": "tenantIsolationPolicy.properties.isDisabled == false and allowedTenants is empty",
+    "permissions": [
+      "powerplatform:pipeline app registered as a Power Platform management application (pac admin application register --application-id {app:pipeline}); token audience https://service.powerapps.com/ for the BAP admin API"
+    ],
+    "roles": [
+      "Power Platform Administrator (for the one-time registration only; held by a person, not the app)"
+    ],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Tenant Configuration Management has no Power Platform resources known. Monitor with box drift once the API is reachable."
+    },
+    "verified": "not verified: host blocked (api.bap.microsoft.com, api.powerplatform.com and api.flow.microsoft.com are unreachable from this container), and the pipeline app is not registered as a Power Platform management application",
+    "notes": "Until the human step 'register the pipeline app as a Power Platform management application' is done, this is a gate. After it, the listed API applies it and the gate becomes a check. PowerShell equivalent: Set-PowerAppTenantIsolationPolicy. Isolation covers connections that use Entra authentication.",
+    "gate": {
+      "guide": "Power Platform admin centre > Security > Identity and access > Tenant isolation: turn on, leave the allow list empty (blocks inbound and outbound).",
+      "expected": "tenant isolation on; no allowed tenants",
+      "check": "tenantIsolationPolicy.properties.isDisabled == false and allowedTenants is empty"
+    },
+    "api_when_registered": {
+      "method": "rest",
+      "apply": "PUT https://api.bap.microsoft.com/providers/PowerPlatform.Governance/v1/tenants/{tenant:id}/tenantIsolationPolicy?api-version=2020-06-01",
+      "payload": {
+        "properties": {
+          "tenantId": "{tenant:id}",
+          "isDisabled": false,
+          "allowedTenants": []
+        }
+      },
+      "read": "GET https://api.bap.microsoft.com/providers/PowerPlatform.Governance/v1/tenants/{tenant:id}/tenantIsolationPolicy?api-version=2020-06-01",
+      "check": "properties.isDisabled == false; properties.allowedTenants == []"
+    }
+  },
+  "PPL-005": {
+    "status": "gate",
+    "provider": "powerplatform",
+    "step": "policy.power-platform",
+    "method": "portal",
+    "apply": "gate: Power Platform admin centre > Settings: tenant setting 'Share with Everyone' for canvas apps off (disableShareWithEveryone).",
+    "payload": null,
+    "read": "POST https://api.bap.microsoft.com/providers/Microsoft.BusinessAppPlatform/listTenantSettings?api-version=2020-10-01 (once registered); until then the owner confirms in the gate",
+    "check": "tenant settings: powerPlatform.powerApps.disableShareWithEveryone == true",
+    "permissions": [
+      "powerplatform:pipeline app registered as a Power Platform management application (pac admin application register --application-id {app:pipeline}); token audience https://service.powerapps.com/ for the BAP admin API"
+    ],
+    "roles": [
+      "Power Platform Administrator (for the one-time registration only; held by a person, not the app)"
+    ],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Tenant Configuration Management has no Power Platform resources known. Monitor with box drift once the API is reachable."
+    },
+    "verified": "not verified: host blocked (api.bap.microsoft.com, api.powerplatform.com and api.flow.microsoft.com are unreachable from this container), and the pipeline app is not registered as a Power Platform management application",
+    "notes": "Until the human step 'register the pipeline app as a Power Platform management application' is done, this is a gate. After it, the listed API applies it and the gate becomes a check. Cloud flows cannot be shared with 'Everyone in the organisation'; only with named users or groups, so the apps switch delivers the value. Sharing limits per environment (Managed Environments) need premium licences and are not used.",
+    "gate": {
+      "guide": "Power Platform admin centre > Settings: tenant setting 'Share with Everyone' for canvas apps off (disableShareWithEveryone).",
+      "expected": "apps cannot be shared with Everyone; flows have no Everyone target",
+      "check": "tenant settings: powerPlatform.powerApps.disableShareWithEveryone == true"
+    },
+    "api_when_registered": {
+      "method": "rest",
+      "apply": "POST https://api.bap.microsoft.com/providers/Microsoft.BusinessAppPlatform/scopes/admin/updateTenantSettings?api-version=2020-10-01",
+      "payload": {
+        "powerPlatform": {
+          "powerApps": {
+            "disableShareWithEveryone": true
+          }
+        }
+      },
+      "read": "POST https://api.bap.microsoft.com/providers/Microsoft.BusinessAppPlatform/listTenantSettings?api-version=2020-10-01",
+      "check": "powerPlatform.powerApps.disableShareWithEveryone == true"
+    }
+  },
+  "PPL-006": {
+    "status": "unresolved",
+    "provider": "powerplatform",
+    "step": "policy.power-platform",
+    "method": "rest",
+    "apply": "POST https://api.bap.microsoft.com/providers/Microsoft.BusinessAppPlatform/scopes/admin/updateTenantSettings?api-version=2020-10-01",
+    "payload": {
+      "powerPlatform": {
+        "intelligence": {
+          "disableCopilot": true
+        }
+      }
+    },
+    "read": "POST https://api.bap.microsoft.com/providers/Microsoft.BusinessAppPlatform/listTenantSettings?api-version=2020-10-01",
+    "check": "powerPlatform.intelligence.disableCopilot == true",
+    "permissions": [
+      "powerplatform:pipeline app registered as a Power Platform management application (pac admin application register --application-id {app:pipeline}); token audience https://service.powerapps.com/ for the BAP admin API"
+    ],
+    "roles": [
+      "Power Platform Administrator (for the one-time registration only; held by a person, not the app)"
+    ],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Tenant Configuration Management has no Power Platform resources known. Monitor with box drift once the API is reachable."
+    },
+    "verified": "not verified: host blocked (api.bap.microsoft.com, api.powerplatform.com and api.flow.microsoft.com are unreachable from this container), and the pipeline app is not registered as a Power Platform management application",
+    "notes": "No single tenant switch turns off every AI feature in Power Apps, Power Automate and AI Builder. Available: tenant setting powerPlatform.intelligence.disableCopilot (Copilot in Power Apps); per-environment 'Move data across regions' / generative AI features off (environment settings, Dataverse environments only); AI Builder has no tenant off switch (it is limited by credits, which the base plan does not include). Decision needed: accept the switches above as 'off', or reword. Property names are from the BAP tenant settings schema and could not be read here (host blocked)."
+  },
+  "PPL-007": {
+    "status": "gate",
+    "provider": "powerplatform",
+    "step": "policy.power-platform",
+    "method": "portal",
+    "apply": "gate: Power Automate > each production flow > Share: owner = the flow owner account (tenant.flow_owner), co-owner = the owner role's access group.",
+    "payload": null,
+    "read": "GET https://api.flow.microsoft.com/providers/Microsoft.ProcessSimple/scopes/admin/environments/{env:default}/flows/{flow}/permissions?api-version=2016-11-01 (once registered); until then the owner confirms in the gate",
+    "check": "each engine flow's permissions list the flow owner as Owner and the owner role group as CanEdit (co-owner)",
+    "permissions": [
+      "powerplatform:pipeline app registered as a Power Platform management application (pac admin application register --application-id {app:pipeline}); token audience https://service.powerapps.com/ for the BAP admin API"
+    ],
+    "roles": [
+      "Power Platform Administrator (for the one-time registration only; held by a person, not the app)"
+    ],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Tenant Configuration Management has no Power Platform resources known. Monitor with box drift once the API is reachable."
+    },
+    "verified": "not verified: host blocked (api.bap.microsoft.com, api.powerplatform.com and api.flow.microsoft.com are unreachable from this container), and the pipeline app is not registered as a Power Platform management application",
+    "notes": "Until the human step 'register the pipeline app as a Power Platform management application' is done, this is a gate. After it, the listed API applies it and the gate becomes a check. PowerShell equivalent: Set-AdminFlowOwnerRole. For flows inside a Dataverse solution, ownership is the workflow record's owner plus sharing in Dataverse; S-03 decides which form the engine's flows take. Belongs with the flow deployment (T5) on the powerplatform provider.",
+    "gate": {
+      "guide": "Power Automate > each production flow > Share: owner = the flow owner account (tenant.flow_owner), co-owner = the owner role's access group.",
+      "expected": "every engine flow is owned by the flow owner account and co-owned by the owner role group",
+      "check": "each engine flow's permissions list the flow owner as Owner and the owner role group as CanEdit (co-owner)"
+    },
+    "api_when_registered": {
+      "method": "rest",
+      "apply": "POST https://api.flow.microsoft.com/providers/Microsoft.ProcessSimple/scopes/admin/environments/{env:default}/flows/{flow}/modifyPermissions?api-version=2016-11-01",
+      "payload": {
+        "put": [
+          {
+            "properties": {
+              "principal": {
+                "id": "{group:owner-role}",
+                "type": "Group"
+              },
+              "roleName": "CanEdit"
+            }
+          }
+        ]
+      },
+      "read": "GET https://api.flow.microsoft.com/providers/Microsoft.ProcessSimple/scopes/admin/environments/{env:default}/flows/{flow}/permissions?api-version=2016-11-01",
+      "check": "permissions include {user:flow_owner} Owner and {group:owner-role} CanEdit"
+    }
+  }
+}

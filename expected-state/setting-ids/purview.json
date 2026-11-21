@@ -1,0 +1,1418 @@
+{
+  "PVW-001": {
+    "status": "resolved",
+    "provider": "exchange",
+    "step": "policy.purview",
+    "method": "cmdlet",
+    "apply": "Set-AdminAuditLogConfig -UnifiedAuditLogIngestionEnabled $true (Exchange Online PowerShell, app-only)",
+    "payload": {
+      "Set-AdminAuditLogConfig": {
+        "UnifiedAuditLogIngestionEnabled": true
+      }
+    },
+    "read": "Get-AdminAuditLogConfig | Select-Object UnifiedAuditLogIngestionEnabled (read from Security & Compliance PowerShell is authoritative)",
+    "check": "UnifiedAuditLogIngestionEnabled == true",
+    "permissions": [
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [
+      "Exchange Administrator"
+    ],
+    "tcm": {
+      "resource": "microsoft.exchange.adminauditlogconfig",
+      "note": "S-02 not done; candidate resource name, unconfirmed"
+    },
+    "verified": "Set-AdminAuditLogConfig -UnifiedAuditLogIngestionEnabled exists in the Exchange Online session; Get-AdminAuditLogConfig returned false on the test tenant; Search-UnifiedAuditLog ran app-only and returned 0 rows for the last 7 days.",
+    "notes": "Microsoft notes that the value read through Exchange Online PowerShell can be stale; the authoritative read is Get-AdminAuditLogConfig in Security & Compliance PowerShell, which needs the IPPS connection (see other PVW entries). Can take up to 60 minutes to take effect."
+  },
+  "PVW-002": {
+    "status": "resolved",
+    "provider": "identity",
+    "step": "policy.purview",
+    "method": "graph",
+    "apply": "weekly job: GET /v1.0/auditLogs/directoryAudits?$filter=activityDateTime ge <last run> and GET /v1.0/auditLogs/signIns?$filter=createdDateTime ge <last run>; optional Exchange and SharePoint admin activity: Search-UnifiedAuditLog -StartDate <last run> -EndDate <now> -RecordType ExchangeAdmin,SharePoint -SessionCommand ReturnLargeSet; write the export as a file to the Compliance site's evidence library (PUT /v1.0/sites/{site:compliance}/drive/root:/<evidence path>:/content)",
+    "payload": {
+      "export": [
+        "directoryAudits",
+        "signIns",
+        "optional unified audit ExchangeAdmin and SharePoint records"
+      ],
+      "destination": "{library:evidence}",
+      "schedule": "weekly"
+    },
+    "read": "GET /v1.0/sites/{site:compliance}/drive/root:/<evidence path>:/children",
+    "check": "one export file per week, covering the week with no gap",
+    "permissions": [
+      "graph:AuditLog.Read.All",
+      "graph:Sites.FullControl.All",
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [
+      "Exchange Administrator"
+    ],
+    "tcm": {
+      "resource": null,
+      "note": "report setting: evidence collection, not tenant state"
+    },
+    "verified": "GET /v1.0/auditLogs/directoryAudits and /v1.0/auditLogs/signIns returned 200 app-only on the test tenant; Search-UnifiedAuditLog ran app-only.",
+    "notes": "Mode report: evidence only. Sign-in logs through the API need Entra ID P1 (in the plan). The Graph audit log query API (/security/auditLog/queries) would need AuditLogsQuery.Read.All, which is not granted (403) and not needed for this design. Retention of Audit (Standard) is 180 days, so the weekly export is the long-term copy."
+  },
+  "PVW-003": {
+    "status": "resolved",
+    "provider": "exchange",
+    "step": "policy.purview",
+    "method": "cmdlet",
+    "apply": "after Connect-IPPSSession (certificate, app-only): New-Label -Name Public -DisplayName Public -Tooltip <text> -ContentType 'File, Email' -ApplyContentMarkingFooterEnabled $true -ApplyContentMarkingFooterText 'Public' (Set-Label when it exists)",
+    "payload": {
+      "New-Label": {
+        "Name": "Public",
+        "DisplayName": "Public",
+        "ContentType": "File, Email",
+        "Priority": 0,
+        "ApplyContentMarkingFooterEnabled": true,
+        "ApplyContentMarkingFooterText": "Public"
+      }
+    },
+    "read": "Get-Label -Identity Public | Select-Object Name, ContentType, EncryptionEnabled, LabelActions, Priority",
+    "check": "label exists; EncryptionEnabled == false; footer marking action with text 'Public'",
+    "permissions": [
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [
+      "Compliance Administrator"
+    ],
+    "tcm": {
+      "resource": "microsoft.securityandcompliance.label",
+      "note": "S-02 not done; candidate resource name, unconfirmed"
+    },
+    "verified": "not verified: Security & Compliance PowerShell app-only did not connect on the test tenant. With ExchangeOnlineManagement 3.6.0, Connect-IPPSSession has no -AccessToken parameter; Connect-IPPSSession -Certificate -AppId -Organization and Connect-ExchangeOnline -AccessToken -ConnectionUri https://ps.compliance.protection.outlook.com/powershell-liveid/ both fail with 'Could not find the organization container'. The pipeline app holds no Compliance Administrator role, so cmdlet and parameter existence could not be checked",
+    "notes": "Label texts are engine data. Labels must be published by the label policy (PVW-007) to be usable."
+  },
+  "PVW-004": {
+    "status": "resolved",
+    "provider": "exchange",
+    "step": "policy.purview",
+    "method": "cmdlet",
+    "apply": "after Connect-IPPSSession (certificate, app-only): New-Label -Name Internal -DisplayName Internal -ContentType 'File, Email, Site, UnifiedGroup' (no marking, no encryption)",
+    "payload": {
+      "New-Label": {
+        "Name": "Internal",
+        "DisplayName": "Internal",
+        "ContentType": "File, Email, Site, UnifiedGroup",
+        "Priority": 1
+      }
+    },
+    "read": "Get-Label -Identity Internal",
+    "check": "label exists; no marking; EncryptionEnabled == false",
+    "permissions": [
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [
+      "Compliance Administrator"
+    ],
+    "tcm": {
+      "resource": "microsoft.securityandcompliance.label",
+      "note": "S-02 not done; candidate resource name, unconfirmed"
+    },
+    "verified": "not verified: Security & Compliance PowerShell app-only did not connect on the test tenant. With ExchangeOnlineManagement 3.6.0, Connect-IPPSSession has no -AccessToken parameter; Connect-IPPSSession -Certificate -AppId -Organization and Connect-ExchangeOnline -AccessToken -ConnectionUri https://ps.compliance.protection.outlook.com/powershell-liveid/ both fail with 'Could not find the organization container'. The pipeline app holds no Compliance Administrator role, so cmdlet and parameter existence could not be checked",
+    "notes": "'Default for documents and mail' is set on the label policy (PVW-007: defaultlabelid / outlookdefaultlabel). Site and group scope is for PVW-008."
+  },
+  "PVW-005": {
+    "status": "resolved",
+    "provider": "exchange",
+    "step": "policy.purview",
+    "method": "cmdlet",
+    "apply": "after Connect-IPPSSession (certificate, app-only): New-Label -Name Confidential ... ; then New-Label -ParentId <Confidential id> for Sales, Legal and People (each with the same header marking)",
+    "payload": {
+      "New-Label(parent)": {
+        "Name": "Confidential",
+        "DisplayName": "Confidential",
+        "ContentType": "File, Email, Site, UnifiedGroup",
+        "Priority": 2,
+        "ApplyContentMarkingHeaderEnabled": true,
+        "ApplyContentMarkingHeaderText": "Confidential"
+      },
+      "New-Label(sub-labels)": [
+        {
+          "Name": "Confidential-Sales",
+          "DisplayName": "Sales",
+          "ParentId": "{label:Confidential}",
+          "ContentType": "File, Email",
+          "ApplyContentMarkingHeaderEnabled": true,
+          "ApplyContentMarkingHeaderText": "Confidential - Sales"
+        },
+        {
+          "Name": "Confidential-Legal",
+          "DisplayName": "Legal",
+          "ParentId": "{label:Confidential}",
+          "ContentType": "File, Email",
+          "ApplyContentMarkingHeaderEnabled": true,
+          "ApplyContentMarkingHeaderText": "Confidential - Legal"
+        },
+        {
+          "Name": "Confidential-People",
+          "DisplayName": "People",
+          "ParentId": "{label:Confidential}",
+          "ContentType": "File, Email",
+          "ApplyContentMarkingHeaderEnabled": true,
+          "ApplyContentMarkingHeaderText": "Confidential - People"
+        }
+      ]
+    },
+    "read": "Get-Label | Where-Object { $_.Name -like 'Confidential*' } | Select-Object Name, ParentId, LabelActions",
+    "check": "parent and three sub-labels exist; each has a header marking; no encryption",
+    "permissions": [
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [
+      "Compliance Administrator"
+    ],
+    "tcm": {
+      "resource": "microsoft.securityandcompliance.label",
+      "note": "S-02 not done; candidate resource name, unconfirmed"
+    },
+    "verified": "not verified: Security & Compliance PowerShell app-only did not connect on the test tenant. With ExchangeOnlineManagement 3.6.0, Connect-IPPSSession has no -AccessToken parameter; Connect-IPPSSession -Certificate -AppId -Organization and Connect-ExchangeOnline -AccessToken -ConnectionUri https://ps.compliance.protection.outlook.com/powershell-liveid/ both fail with 'Could not find the organization container'. The pipeline app holds no Compliance Administrator role, so cmdlet and parameter existence could not be checked",
+    "notes": "'External sharing subject to data loss prevention' is PVW-011 (DLP-02), which matches this label and its sub-labels."
+  },
+  "PVW-006": {
+    "status": "resolved",
+    "provider": "exchange",
+    "step": "policy.purview",
+    "method": "cmdlet",
+    "apply": "after Connect-IPPSSession (certificate, app-only): New-Label -Name Restricted with admin-defined encryption to the organisation, header and watermark",
+    "payload": {
+      "New-Label": {
+        "Name": "Restricted",
+        "DisplayName": "Restricted",
+        "ContentType": "File, Email, Site, UnifiedGroup",
+        "Priority": 3,
+        "EncryptionEnabled": true,
+        "EncryptionProtectionType": "Template",
+        "EncryptionRightsDefinitions": "{domain:primary}:VIEW,VIEWRIGHTSDATA,DOCEDIT,EDIT,PRINT,EXTRACT,REPLY,REPLYALL,OBJMODEL;{domain:initial}:VIEW,VIEWRIGHTSDATA,DOCEDIT,EDIT,PRINT,EXTRACT,REPLY,REPLYALL,OBJMODEL",
+        "EncryptionContentExpiredOnDateInDaysOrNever": "Never",
+        "EncryptionOfflineAccessDays": 7,
+        "ApplyContentMarkingHeaderEnabled": true,
+        "ApplyContentMarkingHeaderText": "Restricted",
+        "ApplyWaterMarkingEnabled": true,
+        "ApplyWaterMarkingText": "Restricted"
+      }
+    },
+    "read": "Get-Label -Identity Restricted | Select-Object EncryptionEnabled, EncryptionRightsDefinitions, LabelActions",
+    "check": "EncryptionEnabled == true; rights granted only to the organisation's domains and without FORWARD; header and watermark actions present",
+    "permissions": [
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [
+      "Compliance Administrator"
+    ],
+    "tcm": {
+      "resource": "microsoft.securityandcompliance.label",
+      "note": "S-02 not done; candidate resource name, unconfirmed"
+    },
+    "verified": "not verified: Security & Compliance PowerShell app-only did not connect on the test tenant. With ExchangeOnlineManagement 3.6.0, Connect-IPPSSession has no -AccessToken parameter; Connect-IPPSSession -Certificate -AppId -Organization and Connect-ExchangeOnline -AccessToken -ConnectionUri https://ps.compliance.protection.outlook.com/powershell-liveid/ both fail with 'Could not find the organization container'. The pipeline app holds no Compliance Administrator role, so cmdlet and parameter existence could not be checked",
+    "notes": "Rights listed omit FORWARD, so recipients cannot forward labelled mail (Outlook enforces it); EncryptionDoNotForward applies only to user-defined protection and is not used. A rights entry for a domain covers every user of the tenant that domain belongs to."
+  },
+  "PVW-007": {
+    "status": "resolved",
+    "provider": "exchange",
+    "step": "policy.purview",
+    "method": "cmdlet",
+    "apply": "after Connect-IPPSSession (certificate, app-only): New-LabelPolicy (Set-LabelPolicy when it exists) publishing all labels with default Internal, mandatory labelling and downgrade justification",
+    "payload": {
+      "New-LabelPolicy": {
+        "Name": "Default label policy",
+        "Labels": [
+          "Public",
+          "Internal",
+          "Confidential",
+          "Confidential-Sales",
+          "Confidential-Legal",
+          "Confidential-People",
+          "Restricted"
+        ],
+        "ExchangeLocation": "All",
+        "Settings": {
+          "defaultlabelid": "{label:Internal}",
+          "mandatory": "true",
+          "requiredowngradejustification": "true"
+        },
+        "AdvancedSettings": {
+          "OutlookDefaultLabel": "{label:Internal}"
+        }
+      }
+    },
+    "read": "Get-LabelPolicy -Identity 'Default label policy' | Select-Object Labels, ExchangeLocation, Settings, DistributionStatus",
+    "check": "Labels lists all seven; ExchangeLocation == All; Settings has defaultlabelid = Internal id, mandatory = true, requiredowngradejustification = true; DistributionStatus == Success",
+    "permissions": [
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [
+      "Compliance Administrator"
+    ],
+    "tcm": {
+      "resource": "microsoft.securityandcompliance.labelpolicy",
+      "note": "S-02 not done; candidate resource name, unconfirmed"
+    },
+    "verified": "not verified: Security & Compliance PowerShell app-only did not connect on the test tenant. With ExchangeOnlineManagement 3.6.0, Connect-IPPSSession has no -AccessToken parameter; Connect-IPPSSession -Certificate -AppId -Organization and Connect-ExchangeOnline -AccessToken -ConnectionUri https://ps.compliance.protection.outlook.com/powershell-liveid/ both fail with 'Could not find the organization container'. The pipeline app holds no Compliance Administrator role, so cmdlet and parameter existence could not be checked",
+    "notes": "Label policies have no audit mode. The staged form publishes the same policy to the pilot group (rollout.pilot_group) for audit_days, then widens ExchangeLocation to All. Office clients (OFC-013) enforce mandatory labelling from this policy. Settings vs AdvancedSettings key names to be confirmed when the IPPS connection works.",
+    "payload_audit": {
+      "New-LabelPolicy": {
+        "Name": "Default label policy",
+        "Labels": [
+          "Public",
+          "Internal",
+          "Confidential",
+          "Confidential-Sales",
+          "Confidential-Legal",
+          "Confidential-People",
+          "Restricted"
+        ],
+        "ExchangeLocation": "{group:pilot_group}",
+        "Settings": {
+          "defaultlabelid": "{label:Internal}",
+          "mandatory": "true",
+          "requiredowngradejustification": "true"
+        },
+        "AdvancedSettings": {
+          "OutlookDefaultLabel": "{label:Internal}"
+        }
+      }
+    }
+  },
+  "PVW-008": {
+    "status": "resolved",
+    "provider": "exchange",
+    "step": "policy.purview",
+    "method": "cmdlet",
+    "apply": "after Connect-IPPSSession (certificate, app-only): Set-Label on Internal, Confidential and Restricted with site and group protection; prerequisites: Entra Group.Unified setting EnableMIPLabels = true (PATCH /v1.0/groupSettings/{id}), Execute-AzureADLabelSync, and Set-PnPTenant -EnableAIPIntegration $true",
+    "payload": {
+      "Set-Label(Internal)": {
+        "SiteAndGroupProtectionEnabled": true,
+        "SiteAndGroupProtectionPrivacy": "Private",
+        "SiteAndGroupProtectionAllowAccessToGuestUsers": false
+      },
+      "Set-Label(Confidential)": {
+        "SiteAndGroupProtectionEnabled": true,
+        "SiteAndGroupProtectionPrivacy": "Private",
+        "SiteAndGroupProtectionAllowAccessToGuestUsers": false,
+        "SiteExternalSharingControlType": "Disabled"
+      },
+      "Set-Label(Restricted)": {
+        "SiteAndGroupProtectionEnabled": true,
+        "SiteAndGroupProtectionPrivacy": "Private",
+        "SiteAndGroupProtectionAllowAccessToGuestUsers": false,
+        "SiteExternalSharingControlType": "Disabled",
+        "SiteAndGroupProtectionBlockAccess": true
+      },
+      "groupSettings(Group.Unified)": {
+        "EnableMIPLabels": "true"
+      },
+      "Set-PnPTenant": {
+        "EnableAIPIntegration": true
+      }
+    },
+    "read": "Get-Label | Select-Object Name, SiteAndGroupSettings; GET /v1.0/groupSettings; Get-PnPTenant (EnableAIPIntegration)",
+    "check": "the three labels carry the stated privacy, guest and unmanaged-device values; Group.Unified EnableMIPLabels == true; EnableAIPIntegration == true",
+    "permissions": [
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [
+      "Compliance Administrator"
+    ],
+    "tcm": {
+      "resource": "microsoft.securityandcompliance.label",
+      "note": "S-02 not done; candidate resource name, unconfirmed"
+    },
+    "verified": "not verified: Security & Compliance PowerShell app-only did not connect on the test tenant. With ExchangeOnlineManagement 3.6.0, Connect-IPPSSession has no -AccessToken parameter; Connect-IPPSSession -Certificate -AppId -Organization and Connect-ExchangeOnline -AccessToken -ConnectionUri https://ps.compliance.protection.outlook.com/powershell-liveid/ both fail with 'Could not find the organization container'. The pipeline app holds no Compliance Administrator role, so cmdlet and parameter existence could not be checked",
+    "notes": "'Internal: members only' is read as private membership (privacy Private, no guests). 'Unmanaged devices blocked' uses SiteAndGroupProtectionBlockAccess, which needs the Conditional Access app-enforced restrictions policy (ENT-009). Group.Unified write needs graph Directory.ReadWrite.All (not granted; proposed). Set-PnPTenant -EnableAIPIntegration exists in PnP 2.12.0 (verified offline)."
+  },
+  "PVW-009": {
+    "status": "resolved",
+    "provider": "exchange",
+    "step": "policy.purview",
+    "method": "cmdlet",
+    "apply": "Set-IRMConfiguration -AzureRMSLicensingEnabled $true -SimplifiedClientAccessEnabled $true (Exchange Online PowerShell); the 'Encrypt' template is provided by Microsoft Purview Message Encryption",
+    "payload": {
+      "Set-IRMConfiguration": {
+        "AzureRMSLicensingEnabled": true,
+        "SimplifiedClientAccessEnabled": true
+      }
+    },
+    "read": "Get-IRMConfiguration | Select-Object AzureRMSLicensingEnabled, SimplifiedClientAccessEnabled; Get-RMSTemplate | Select-Object Name; Get-OMEConfiguration",
+    "check": "AzureRMSLicensingEnabled == true; SimplifiedClientAccessEnabled == true; Get-RMSTemplate lists 'Encrypt'; OME default configuration exists",
+    "permissions": [
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [
+      "Exchange Administrator"
+    ],
+    "tcm": {
+      "resource": "microsoft.exchange.irmconfiguration",
+      "note": "S-02 not done; candidate resource name, unconfirmed"
+    },
+    "verified": "read OK app-only on the test tenant: both IRM values already true, templates Encrypt and Do Not Forward present, OME configuration present.",
+    "notes": "Outside recipients open encrypted mail through the OME portal (one-time passcode or their own account). No change needed today; the step keeps it."
+  },
+  "PVW-010": {
+    "status": "resolved",
+    "provider": "exchange",
+    "step": "policy.purview",
+    "method": "cmdlet",
+    "apply": "after Connect-IPPSSession (certificate, app-only): New-DlpCompliancePolicy (Set- when it exists) then New-DlpComplianceRule for each rule",
+    "payload": {
+      "New-DlpCompliancePolicy": {
+        "Name": "DLP-01 Restricted outside",
+        "Mode": "Enable",
+        "ExchangeLocation": "All",
+        "SharePointLocation": "All",
+        "OneDriveLocation": "All"
+      },
+      "New-DlpComplianceRule": [
+        {
+          "Name": "DLP-01 block",
+          "ContentContainsSensitiveInformation": {
+            "operator": "And",
+            "groups": [
+              {
+                "operator": "Or",
+                "name": "Default",
+                "labels": [
+                  {
+                    "name": "{label:Restricted}",
+                    "type": "Sensitivity"
+                  }
+                ]
+              }
+            ]
+          },
+          "AccessScope": "NotInOrganization",
+          "BlockAccess": true,
+          "BlockAccessScope": "PerUser",
+          "NotifyUser": [
+            "Owner",
+            "LastModifier",
+            "SiteAdmin"
+          ],
+          "NotifyAllowOverride": null,
+          "GenerateAlert": "{mailbox:alerts}",
+          "GenerateIncidentReport": "{mailbox:security}",
+          "IncidentReportContent": "All",
+          "ReportSeverityLevel": "High"
+        }
+      ]
+    },
+    "read": "Get-DlpCompliancePolicy -Identity 'DLP-01 Restricted outside' | Select-Object Mode, DistributionStatus, *Location; Get-DlpComplianceRule -Policy 'DLP-01 Restricted outside'",
+    "check": "Mode == Enable (stage enforce) or TestWithNotifications (stage audit); DistributionStatus == Success; rule blocks with no override and alerts",
+    "permissions": [
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [
+      "Compliance Administrator"
+    ],
+    "tcm": {
+      "resource": "microsoft.securityandcompliance.dlpcompliancepolicy",
+      "note": "S-02 not done; candidate resource name, unconfirmed"
+    },
+    "verified": "not verified: Security & Compliance PowerShell app-only did not connect on the test tenant. With ExchangeOnlineManagement 3.6.0, Connect-IPPSSession has no -AccessToken parameter; Connect-IPPSSession -Certificate -AppId -Organization and Connect-ExchangeOnline -AccessToken -ConnectionUri https://ps.compliance.protection.outlook.com/powershell-liveid/ both fail with 'Could not find the organization container'. The pipeline app holds no Compliance Administrator role, so cmdlet and parameter existence could not be checked",
+    "notes": "Restricted is also encrypted (PVW-006), so outside recipients could not open it anyway; the rule stops the attempt and alerts. Staged: policy Mode TestWithNotifications (simulation with policy tips, no blocking) for audit_days, reviewed at gate G-08, then Mode Enable.",
+    "payload_audit": {
+      "New-DlpCompliancePolicy": {
+        "Name": "DLP-01 Restricted outside",
+        "Mode": "TestWithNotifications",
+        "ExchangeLocation": "All",
+        "SharePointLocation": "All",
+        "OneDriveLocation": "All"
+      }
+    }
+  },
+  "PVW-011": {
+    "status": "resolved",
+    "provider": "exchange",
+    "step": "policy.purview",
+    "method": "cmdlet",
+    "apply": "after Connect-IPPSSession (certificate, app-only): New-DlpCompliancePolicy (Set- when it exists) then New-DlpComplianceRule for each rule",
+    "payload": {
+      "New-DlpCompliancePolicy": {
+        "Name": "DLP-02 Confidential outside",
+        "Mode": "Enable",
+        "ExchangeLocation": "All",
+        "SharePointLocation": "All",
+        "OneDriveLocation": "All"
+      },
+      "New-DlpComplianceRule": [
+        {
+          "Name": "DLP-02 override",
+          "ContentContainsSensitiveInformation": {
+            "operator": "And",
+            "groups": [
+              {
+                "operator": "Or",
+                "name": "Default",
+                "labels": [
+                  {
+                    "name": "{label:Confidential}",
+                    "type": "Sensitivity"
+                  },
+                  {
+                    "name": "{label:Confidential-Sales}",
+                    "type": "Sensitivity"
+                  },
+                  {
+                    "name": "{label:Confidential-Legal}",
+                    "type": "Sensitivity"
+                  },
+                  {
+                    "name": "{label:Confidential-People}",
+                    "type": "Sensitivity"
+                  }
+                ]
+              }
+            ]
+          },
+          "AccessScope": "NotInOrganization",
+          "BlockAccess": true,
+          "BlockAccessScope": "PerUser",
+          "NotifyUser": [
+            "Owner",
+            "LastModifier"
+          ],
+          "NotifyAllowOverride": "WithJustification",
+          "GenerateAlert": "{mailbox:alerts}",
+          "GenerateIncidentReport": "{mailbox:security}",
+          "IncidentReportContent": "All",
+          "ReportSeverityLevel": "Medium"
+        }
+      ]
+    },
+    "read": "Get-DlpCompliancePolicy -Identity 'DLP-02 Confidential outside' | Select-Object Mode, DistributionStatus, *Location; Get-DlpComplianceRule -Policy 'DLP-02 Confidential outside'",
+    "check": "Mode == Enable (stage enforce) or TestWithNotifications (stage audit); DistributionStatus == Success; rule blocks with justified override; notifies sender; alerts",
+    "permissions": [
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [
+      "Compliance Administrator"
+    ],
+    "tcm": {
+      "resource": "microsoft.securityandcompliance.dlpcompliancepolicy",
+      "note": "S-02 not done; candidate resource name, unconfirmed"
+    },
+    "verified": "not verified: Security & Compliance PowerShell app-only did not connect on the test tenant. With ExchangeOnlineManagement 3.6.0, Connect-IPPSSession has no -AccessToken parameter; Connect-IPPSSession -Certificate -AppId -Organization and Connect-ExchangeOnline -AccessToken -ConnectionUri https://ps.compliance.protection.outlook.com/powershell-liveid/ both fail with 'Could not find the organization container'. The pipeline app holds no Compliance Administrator role, so cmdlet and parameter existence could not be checked",
+    "notes": "'Notify sender and alerts address': NotifyUser (sender/owner) plus GenerateAlert to the alerts address. Staged: policy Mode TestWithNotifications (simulation with policy tips, no blocking) for audit_days, reviewed at gate G-08, then Mode Enable.",
+    "payload_audit": {
+      "New-DlpCompliancePolicy": {
+        "Name": "DLP-02 Confidential outside",
+        "Mode": "TestWithNotifications",
+        "ExchangeLocation": "All",
+        "SharePointLocation": "All",
+        "OneDriveLocation": "All"
+      }
+    }
+  },
+  "PVW-012": {
+    "status": "resolved",
+    "provider": "exchange",
+    "step": "policy.purview",
+    "method": "cmdlet",
+    "apply": "after Connect-IPPSSession (certificate, app-only): New-DlpCompliancePolicy (Set- when it exists) then New-DlpComplianceRule for each rule",
+    "payload": {
+      "New-DlpCompliancePolicy": {
+        "Name": "DLP-03 Financial identifiers outside",
+        "Mode": "Enable",
+        "ExchangeLocation": "All",
+        "SharePointLocation": "All",
+        "OneDriveLocation": "All"
+      },
+      "New-DlpComplianceRule": [
+        {
+          "Name": "DLP-03 tip",
+          "ContentContainsSensitiveInformation": {
+            "operator": "And",
+            "groups": [
+              {
+                "operator": "Or",
+                "name": "Default",
+                "sensitivetypes": [
+                  {
+                    "name": "Credit Card Number",
+                    "minCount": 1,
+                    "confidencelevel": "High",
+                    "maxCount": 4
+                  },
+                  {
+                    "name": "International Banking Account Number (IBAN)",
+                    "minCount": 1,
+                    "confidencelevel": "High",
+                    "maxCount": 4
+                  },
+                  {
+                    "name": "{jurisdictions:bank_account_sits}",
+                    "minCount": 1,
+                    "confidencelevel": "High",
+                    "maxCount": 4
+                  }
+                ]
+              }
+            ]
+          },
+          "AccessScope": "NotInOrganization",
+          "NotifyUser": [
+            "LastModifier",
+            "Owner"
+          ],
+          "NotifyPolicyTipCustomText": "<engine text>",
+          "GenerateIncidentReport": "{mailbox:security}"
+        },
+        {
+          "Name": "DLP-03 block",
+          "ContentContainsSensitiveInformation": {
+            "operator": "And",
+            "groups": [
+              {
+                "operator": "Or",
+                "name": "Default",
+                "sensitivetypes": [
+                  {
+                    "name": "Credit Card Number",
+                    "minCount": 5,
+                    "confidencelevel": "High"
+                  },
+                  {
+                    "name": "International Banking Account Number (IBAN)",
+                    "minCount": 5,
+                    "confidencelevel": "High"
+                  },
+                  {
+                    "name": "{jurisdictions:bank_account_sits}",
+                    "minCount": 5,
+                    "confidencelevel": "High"
+                  }
+                ]
+              }
+            ]
+          },
+          "AccessScope": "NotInOrganization",
+          "BlockAccess": true,
+          "BlockAccessScope": "PerUser",
+          "NotifyUser": [
+            "LastModifier",
+            "Owner"
+          ],
+          "NotifyAllowOverride": "WithJustification",
+          "GenerateAlert": "{mailbox:alerts}",
+          "GenerateIncidentReport": "{mailbox:security}"
+        }
+      ]
+    },
+    "read": "Get-DlpCompliancePolicy -Identity 'DLP-03 Financial identifiers outside' | Select-Object Mode, DistributionStatus, *Location; Get-DlpComplianceRule -Policy 'DLP-03 Financial identifiers outside'",
+    "check": "Mode == Enable (stage enforce) or TestWithNotifications (stage audit); DistributionStatus == Success; tip rule 1-4 instances; block-with-override rule at 5 or more",
+    "permissions": [
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [
+      "Compliance Administrator"
+    ],
+    "tcm": {
+      "resource": "microsoft.securityandcompliance.dlpcompliancepolicy",
+      "note": "S-02 not done; candidate resource name, unconfirmed"
+    },
+    "verified": "not verified: Security & Compliance PowerShell app-only did not connect on the test tenant. With ExchangeOnlineManagement 3.6.0, Connect-IPPSSession has no -AccessToken parameter; Connect-IPPSSession -Certificate -AppId -Organization and Connect-ExchangeOnline -AccessToken -ConnectionUri https://ps.compliance.protection.outlook.com/powershell-liveid/ both fail with 'Could not find the organization container'. The pipeline app holds no Compliance Administrator role, so cmdlet and parameter existence could not be checked",
+    "notes": "Bank account numbers are jurisdiction-specific built-in types (for example 'U.S. Bank Account Number'); the resolver picks them from jurisdictions.operating. The type list per jurisdiction is catalogue data still to be written (T14-11). Staged: policy Mode TestWithNotifications (simulation with policy tips, no blocking) for audit_days, reviewed at gate G-08, then Mode Enable.",
+    "payload_audit": {
+      "New-DlpCompliancePolicy": {
+        "Name": "DLP-03 Financial identifiers outside",
+        "Mode": "TestWithNotifications",
+        "ExchangeLocation": "All",
+        "SharePointLocation": "All",
+        "OneDriveLocation": "All"
+      }
+    }
+  },
+  "PVW-013": {
+    "status": "resolved",
+    "provider": "exchange",
+    "step": "policy.purview",
+    "method": "cmdlet",
+    "apply": "after Connect-IPPSSession (certificate, app-only): New-DlpCompliancePolicy (Set- when it exists) then New-DlpComplianceRule for each rule",
+    "payload": {
+      "New-DlpCompliancePolicy": {
+        "Name": "DLP-04 Personal data outside",
+        "Mode": "Enable",
+        "ExchangeLocation": "All",
+        "SharePointLocation": "All",
+        "OneDriveLocation": "All"
+      },
+      "New-DlpComplianceRule": [
+        {
+          "Name": "DLP-04 tip",
+          "ContentContainsSensitiveInformation": {
+            "operator": "And",
+            "groups": [
+              {
+                "operator": "Or",
+                "name": "Default",
+                "sensitivetypes": [
+                  {
+                    "name": "{jurisdictions:personal_data_sits}",
+                    "minCount": 1,
+                    "confidencelevel": "High",
+                    "maxCount": 9
+                  }
+                ]
+              }
+            ]
+          },
+          "AccessScope": "NotInOrganization",
+          "NotifyUser": [
+            "LastModifier",
+            "Owner"
+          ],
+          "GenerateIncidentReport": "{mailbox:security}"
+        },
+        {
+          "Name": "DLP-04 block",
+          "ContentContainsSensitiveInformation": {
+            "operator": "And",
+            "groups": [
+              {
+                "operator": "Or",
+                "name": "Default",
+                "sensitivetypes": [
+                  {
+                    "name": "{jurisdictions:personal_data_sits}",
+                    "minCount": 10,
+                    "confidencelevel": "High"
+                  }
+                ]
+              }
+            ]
+          },
+          "AccessScope": "NotInOrganization",
+          "BlockAccess": true,
+          "BlockAccessScope": "PerUser",
+          "NotifyAllowOverride": "WithJustification",
+          "GenerateAlert": "{mailbox:alerts}",
+          "GenerateIncidentReport": "{mailbox:security}"
+        }
+      ]
+    },
+    "read": "Get-DlpCompliancePolicy -Identity 'DLP-04 Personal data outside' | Select-Object Mode, DistributionStatus, *Location; Get-DlpComplianceRule -Policy 'DLP-04 Personal data outside'",
+    "check": "Mode == Enable (stage enforce) or TestWithNotifications (stage audit); DistributionStatus == Success; tip rule 1-9 instances; block-with-override rule at 10 or more",
+    "permissions": [
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [
+      "Compliance Administrator"
+    ],
+    "tcm": {
+      "resource": "microsoft.securityandcompliance.dlpcompliancepolicy",
+      "note": "S-02 not done; candidate resource name, unconfirmed"
+    },
+    "verified": "not verified: Security & Compliance PowerShell app-only did not connect on the test tenant. With ExchangeOnlineManagement 3.6.0, Connect-IPPSSession has no -AccessToken parameter; Connect-IPPSSession -Certificate -AppId -Organization and Connect-ExchangeOnline -AccessToken -ConnectionUri https://ps.compliance.protection.outlook.com/powershell-liveid/ both fail with 'Could not find the organization container'. The pipeline app holds no Compliance Administrator role, so cmdlet and parameter existence could not be checked",
+    "notes": "Personal data types come from the operating jurisdictions (for example national identity, passport, tax and health numbers per country); mapping is catalogue data (T14-11). Staged: policy Mode TestWithNotifications (simulation with policy tips, no blocking) for audit_days, reviewed at gate G-08, then Mode Enable.",
+    "payload_audit": {
+      "New-DlpCompliancePolicy": {
+        "Name": "DLP-04 Personal data outside",
+        "Mode": "TestWithNotifications",
+        "ExchangeLocation": "All",
+        "SharePointLocation": "All",
+        "OneDriveLocation": "All"
+      }
+    }
+  },
+  "PVW-014": {
+    "status": "resolved",
+    "provider": "exchange",
+    "step": "policy.purview",
+    "method": "cmdlet",
+    "apply": "after Connect-IPPSSession (certificate, app-only): New-DlpCompliancePolicy (Set- when it exists) then New-DlpComplianceRule for each rule",
+    "payload": {
+      "New-DlpCompliancePolicy": {
+        "Name": "DLP-05 Credentials outside",
+        "Mode": "Enable",
+        "ExchangeLocation": "All",
+        "SharePointLocation": "All",
+        "OneDriveLocation": "All"
+      },
+      "New-DlpComplianceRule": [
+        {
+          "Name": "DLP-05 block",
+          "ContentContainsSensitiveInformation": {
+            "operator": "And",
+            "groups": [
+              {
+                "operator": "Or",
+                "name": "Default",
+                "sensitivetypes": [
+                  {
+                    "name": "All credential types",
+                    "minCount": 1,
+                    "confidencelevel": "High"
+                  }
+                ]
+              }
+            ]
+          },
+          "AccessScope": "NotInOrganization",
+          "BlockAccess": true,
+          "BlockAccessScope": "PerUser",
+          "NotifyAllowOverride": null,
+          "GenerateAlert": "{mailbox:alerts}",
+          "GenerateIncidentReport": "{mailbox:security}",
+          "ReportSeverityLevel": "High"
+        }
+      ]
+    },
+    "read": "Get-DlpCompliancePolicy -Identity 'DLP-05 Credentials outside' | Select-Object Mode, DistributionStatus, *Location; Get-DlpComplianceRule -Policy 'DLP-05 Credentials outside'",
+    "check": "Mode == Enable (stage enforce) or TestWithNotifications (stage audit); DistributionStatus == Success; block with no override; alert",
+    "permissions": [
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [
+      "Compliance Administrator"
+    ],
+    "tcm": {
+      "resource": "microsoft.securityandcompliance.dlpcompliancepolicy",
+      "note": "S-02 not done; candidate resource name, unconfirmed"
+    },
+    "verified": "not verified: Security & Compliance PowerShell app-only did not connect on the test tenant. With ExchangeOnlineManagement 3.6.0, Connect-IPPSSession has no -AccessToken parameter; Connect-IPPSSession -Certificate -AppId -Organization and Connect-ExchangeOnline -AccessToken -ConnectionUri https://ps.compliance.protection.outlook.com/powershell-liveid/ both fail with 'Could not find the organization container'. The pipeline app holds no Compliance Administrator role, so cmdlet and parameter existence could not be checked",
+    "notes": "'All credential types' is Microsoft's bundled credential type (passwords, keys, tokens, connection strings); its exact name to be confirmed with Get-DlpSensitiveInformationType once IPPS connects. Staged: policy Mode TestWithNotifications (simulation with policy tips, no blocking) for audit_days, reviewed at gate G-08, then Mode Enable.",
+    "payload_audit": {
+      "New-DlpCompliancePolicy": {
+        "Name": "DLP-05 Credentials outside",
+        "Mode": "TestWithNotifications",
+        "ExchangeLocation": "All",
+        "SharePointLocation": "All",
+        "OneDriveLocation": "All"
+      }
+    }
+  },
+  "PVW-015": {
+    "status": "resolved",
+    "provider": "exchange",
+    "step": "policy.purview",
+    "method": "cmdlet",
+    "apply": "after Connect-IPPSSession (certificate, app-only): New-DlpCompliancePolicy (Set- when it exists) then New-DlpComplianceRule for each rule",
+    "payload": {
+      "New-DlpCompliancePolicy": {
+        "Name": "DLP-06 Protected sites outside",
+        "Mode": "Enable",
+        "SharePointLocation": [
+          "{site:legal}",
+          "{site:finance}",
+          "{site:people}",
+          "{site:corporate}"
+        ]
+      },
+      "New-DlpComplianceRule": [
+        {
+          "Name": "DLP-06 block",
+          "AccessScope": "NotInOrganization",
+          "BlockAccess": true,
+          "BlockAccessScope": "PerUser",
+          "GenerateAlert": "{mailbox:alerts}",
+          "GenerateIncidentReport": "{mailbox:security}"
+        }
+      ]
+    },
+    "read": "Get-DlpCompliancePolicy -Identity 'DLP-06 Protected sites outside' | Select-Object Mode, DistributionStatus, *Location; Get-DlpComplianceRule -Policy 'DLP-06 Protected sites outside'",
+    "check": "Mode == Enable (stage enforce) or TestWithNotifications (stage audit); DistributionStatus == Success; block; alert",
+    "permissions": [
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [
+      "Compliance Administrator"
+    ],
+    "tcm": {
+      "resource": "microsoft.securityandcompliance.dlpcompliancepolicy",
+      "note": "S-02 not done; candidate resource name, unconfirmed"
+    },
+    "verified": "not verified: Security & Compliance PowerShell app-only did not connect on the test tenant. With ExchangeOnlineManagement 3.6.0, Connect-IPPSSession has no -AccessToken parameter; Connect-IPPSSession -Certificate -AppId -Organization and Connect-ExchangeOnline -AccessToken -ConnectionUri https://ps.compliance.protection.outlook.com/powershell-liveid/ both fail with 'Could not find the organization container'. The pipeline app holds no Compliance Administrator role, so cmdlet and parameter existence could not be checked",
+    "notes": "Sites come from configuration structure.sites (urls legal, finance, people, corporate by default). A rule whose only condition is 'shared outside' is valid in the portal; to be confirmed in PowerShell when IPPS connects. Site sharing is already off for these sites (SPO-002); this is the second line. Staged: policy Mode TestWithNotifications (simulation with policy tips, no blocking) for audit_days, reviewed at gate G-08, then Mode Enable.",
+    "payload_audit": {
+      "New-DlpCompliancePolicy": {
+        "Name": "DLP-06 Protected sites outside",
+        "Mode": "TestWithNotifications",
+        "SharePointLocation": [
+          "{site:legal}",
+          "{site:finance}",
+          "{site:people}",
+          "{site:corporate}"
+        ]
+      }
+    }
+  },
+  "PVW-016": {
+    "status": "resolved",
+    "provider": "exchange",
+    "step": "policy.purview",
+    "method": "cmdlet",
+    "apply": "after Connect-IPPSSession (certificate, app-only): New-DlpCompliancePolicy (Set- when it exists) then New-DlpComplianceRule for each rule",
+    "payload": {
+      "New-DlpCompliancePolicy": {
+        "Name": "DLP-07 Sales site outside",
+        "Mode": "Enable",
+        "SharePointLocation": [
+          "{site:sales}"
+        ]
+      },
+      "New-DlpComplianceRule": [
+        {
+          "Name": "DLP-07 override",
+          "AccessScope": "NotInOrganization",
+          "BlockAccess": true,
+          "BlockAccessScope": "PerUser",
+          "NotifyUser": [
+            "Owner",
+            "LastModifier"
+          ],
+          "NotifyAllowOverride": "WithJustification",
+          "GenerateIncidentReport": "{mailbox:security}"
+        }
+      ]
+    },
+    "read": "Get-DlpCompliancePolicy -Identity 'DLP-07 Sales site outside' | Select-Object Mode, DistributionStatus, *Location; Get-DlpComplianceRule -Policy 'DLP-07 Sales site outside'",
+    "check": "Mode == Enable (stage enforce) or TestWithNotifications (stage audit); DistributionStatus == Success; block with justified override",
+    "permissions": [
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [
+      "Compliance Administrator"
+    ],
+    "tcm": {
+      "resource": "microsoft.securityandcompliance.dlpcompliancepolicy",
+      "note": "S-02 not done; candidate resource name, unconfirmed"
+    },
+    "verified": "not verified: Security & Compliance PowerShell app-only did not connect on the test tenant. With ExchangeOnlineManagement 3.6.0, Connect-IPPSSession has no -AccessToken parameter; Connect-IPPSSession -Certificate -AppId -Organization and Connect-ExchangeOnline -AccessToken -ConnectionUri https://ps.compliance.protection.outlook.com/powershell-liveid/ both fail with 'Could not find the organization container'. The pipeline app holds no Compliance Administrator role, so cmdlet and parameter existence could not be checked",
+    "notes": "'Weekly report to owner' has no DLP setting: the engine's weekly evidence job exports the policy's matches (Export-ActivityExplorerData or the DLP incident reports in the security mailbox) and mails the summary to the site owner. Export-ActivityExplorerData existence not verified (no IPPS connection). Staged: policy Mode TestWithNotifications (simulation with policy tips, no blocking) for audit_days, reviewed at gate G-08, then Mode Enable.",
+    "payload_audit": {
+      "New-DlpCompliancePolicy": {
+        "Name": "DLP-07 Sales site outside",
+        "Mode": "TestWithNotifications",
+        "SharePointLocation": [
+          "{site:sales}"
+        ]
+      }
+    }
+  },
+  "PVW-017": {
+    "status": "resolved",
+    "provider": "exchange",
+    "step": "policy.purview",
+    "method": "cmdlet",
+    "apply": "after Connect-IPPSSession (certificate, app-only): New-DlpCompliancePolicy (Set- when it exists) then New-DlpComplianceRule for each rule",
+    "payload": {
+      "New-DlpCompliancePolicy": {
+        "Name": "DLP-08 Attachments to consumer mail",
+        "Mode": "Enable",
+        "ExchangeLocation": "All"
+      },
+      "New-DlpComplianceRule": [
+        {
+          "Name": "DLP-08 justify",
+          "RecipientDomainIs": "{config:policy.consumer_mail_domains}",
+          "DocumentSizeOver": "0B (attachment present; condition to confirm)",
+          "BlockAccess": true,
+          "NotifyUser": [
+            "SiteAdmin"
+          ],
+          "NotifyAllowOverride": "WithJustification",
+          "GenerateIncidentReport": "{mailbox:security}",
+          "IncidentReportContent": "All"
+        }
+      ]
+    },
+    "read": "Get-DlpCompliancePolicy -Identity 'DLP-08 Attachments to consumer mail' | Select-Object Mode, DistributionStatus, *Location; Get-DlpComplianceRule -Policy 'DLP-08 Attachments to consumer mail'",
+    "check": "Mode == Enable (stage enforce) or TestWithNotifications (stage audit); DistributionStatus == Success; mail to a consumer domain with an attachment asks for a justification; incident report to the security mailbox",
+    "permissions": [
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [
+      "Compliance Administrator"
+    ],
+    "tcm": {
+      "resource": "microsoft.securityandcompliance.dlpcompliancepolicy",
+      "note": "S-02 not done; candidate resource name, unconfirmed"
+    },
+    "verified": "not verified: Security & Compliance PowerShell app-only did not connect on the test tenant. With ExchangeOnlineManagement 3.6.0, Connect-IPPSSession has no -AccessToken parameter; Connect-IPPSSession -Certificate -AppId -Organization and Connect-ExchangeOnline -AccessToken -ConnectionUri https://ps.compliance.protection.outlook.com/powershell-liveid/ both fail with 'Could not find the organization container'. The pipeline app holds no Compliance Administrator role, so cmdlet and parameter existence could not be checked",
+    "notes": "Uses policy.consumer_mail_domains (SPEC 20.1). The 'has an attachment' condition for Exchange DLP rules is not confirmed (DocumentSizeOver vs a dedicated attachment predicate); recorded for T14-11 to settle once IPPS connects. Staged: policy Mode TestWithNotifications (simulation with policy tips, no blocking) for audit_days, reviewed at gate G-08, then Mode Enable.",
+    "payload_audit": {
+      "New-DlpCompliancePolicy": {
+        "Name": "DLP-08 Attachments to consumer mail",
+        "Mode": "TestWithNotifications",
+        "ExchangeLocation": "All"
+      }
+    }
+  },
+  "PVW-018": {
+    "status": "resolved",
+    "provider": "exchange",
+    "step": "policy.purview",
+    "method": "cmdlet",
+    "apply": "after Connect-IPPSSession (certificate, app-only): New-DlpCompliancePolicy (Set- when it exists) then New-DlpComplianceRule for each rule",
+    "payload": {
+      "New-DlpCompliancePolicy": {
+        "Name": "DLP-09 Mail to own consumer address",
+        "Mode": "Enable",
+        "ExchangeLocation": "All"
+      },
+      "New-DlpComplianceRule": [
+        {
+          "Name": "DLP-09 <user>",
+          "From": "{user:<each user>}",
+          "AnyOfRecipientAddressMatchesPatterns": "^({given}|{family}|{given}.?{family}|{family}.?{given})[._-]?[0-9]*@({consumer domains})$ (generated per user from configuration users)",
+          "BlockAccess": true,
+          "NotifyAllowOverride": "WithJustification",
+          "GenerateAlert": "{mailbox:alerts}",
+          "GenerateIncidentReport": "{mailbox:security}"
+        }
+      ]
+    },
+    "read": "Get-DlpCompliancePolicy -Identity 'DLP-09 Mail to own consumer address' | Select-Object Mode, DistributionStatus, *Location; Get-DlpComplianceRule -Policy 'DLP-09 Mail to own consumer address'",
+    "check": "Mode == Enable (stage enforce) or TestWithNotifications (stage audit); DistributionStatus == Success; one rule per user blocks with override and alerts",
+    "permissions": [
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [
+      "Compliance Administrator"
+    ],
+    "tcm": {
+      "resource": "microsoft.securityandcompliance.dlpcompliancepolicy",
+      "note": "S-02 not done; candidate resource name, unconfirmed"
+    },
+    "verified": "not verified: Security & Compliance PowerShell app-only did not connect on the test tenant. With ExchangeOnlineManagement 3.6.0, Connect-IPPSSession has no -AccessToken parameter; Connect-IPPSSession -Certificate -AppId -Organization and Connect-ExchangeOnline -AccessToken -ConnectionUri https://ps.compliance.protection.outlook.com/powershell-liveid/ both fail with 'Could not find the organization container'. The pipeline app holds no Compliance Administrator role, so cmdlet and parameter existence could not be checked",
+    "notes": "DLP cannot compare a sender's name with the recipient address at run time, so the engine generates one rule (or condition group) per user from the configuration's users and policy.consumer_mail_domains. Names are company data: the patterns are built at plan time and never written to the repository. Limits on rules per policy apply to large companies. Staged: policy Mode TestWithNotifications (simulation with policy tips, no blocking) for audit_days, reviewed at gate G-08, then Mode Enable.",
+    "payload_audit": {
+      "New-DlpCompliancePolicy": {
+        "Name": "DLP-09 Mail to own consumer address",
+        "Mode": "TestWithNotifications",
+        "ExchangeLocation": "All"
+      }
+    }
+  },
+  "PVW-019": {
+    "status": "resolved",
+    "provider": "exchange",
+    "step": "policy.purview",
+    "method": "cmdlet",
+    "apply": "after Connect-IPPSSession (certificate, app-only): New-DlpCompliancePolicy (Set- when it exists) then New-DlpComplianceRule for each rule",
+    "payload": {
+      "New-DlpCompliancePolicy": {
+        "Name": "DLP-10 Company marker terms outside",
+        "Mode": "Enable",
+        "ExchangeLocation": "All",
+        "SharePointLocation": "All",
+        "OneDriveLocation": "All"
+      },
+      "New-DlpComplianceRule": [
+        {
+          "Name": "DLP-10 tip",
+          "ContentContainsSensitiveInformation": {
+            "operator": "And",
+            "groups": [
+              {
+                "operator": "Or",
+                "name": "Default",
+                "sensitivetypes": [
+                  {
+                    "name": "{sit:company-marker-terms}",
+                    "minCount": 1,
+                    "confidencelevel": "High"
+                  }
+                ]
+              }
+            ]
+          },
+          "AccessScope": "NotInOrganization",
+          "NotifyUser": [
+            "LastModifier",
+            "Owner"
+          ],
+          "GenerateIncidentReport": "{mailbox:security}"
+        }
+      ]
+    },
+    "read": "Get-DlpCompliancePolicy -Identity 'DLP-10 Company marker terms outside' | Select-Object Mode, DistributionStatus, *Location; Get-DlpComplianceRule -Policy 'DLP-10 Company marker terms outside'",
+    "check": "Mode == Enable (stage enforce) or TestWithNotifications (stage audit); DistributionStatus == Success; policy tip and incident report",
+    "permissions": [
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [
+      "Compliance Administrator"
+    ],
+    "tcm": {
+      "resource": "microsoft.securityandcompliance.dlpcompliancepolicy",
+      "note": "S-02 not done; candidate resource name, unconfirmed"
+    },
+    "verified": "not verified: Security & Compliance PowerShell app-only did not connect on the test tenant. With ExchangeOnlineManagement 3.6.0, Connect-IPPSSession has no -AccessToken parameter; Connect-IPPSSession -Certificate -AppId -Organization and Connect-ExchangeOnline -AccessToken -ConnectionUri https://ps.compliance.protection.outlook.com/powershell-liveid/ both fail with 'Could not find the organization container'. The pipeline app holds no Compliance Administrator role, so cmdlet and parameter existence could not be checked",
+    "notes": "Keyword type built from Dictionary company.marker_terms: New-DlpKeywordDictionary -Name 'Company marker terms' -FileData <terms>, then a custom type referencing it through New-DlpSensitiveInformationTypeRulePackage. Skipped while the list is empty (T14-11). Staged: policy Mode TestWithNotifications (simulation with policy tips, no blocking) for audit_days, reviewed at gate G-08, then Mode Enable.",
+    "payload_audit": {
+      "New-DlpCompliancePolicy": {
+        "Name": "DLP-10 Company marker terms outside",
+        "Mode": "TestWithNotifications",
+        "ExchangeLocation": "All",
+        "SharePointLocation": "All",
+        "OneDriveLocation": "All"
+      }
+    }
+  },
+  "PVW-020": {
+    "status": "resolved",
+    "provider": "exchange",
+    "step": "policy.purview",
+    "method": "cmdlet",
+    "apply": "after Connect-IPPSSession (certificate, app-only): on every DLP rule above: -GenerateIncidentReport {mailbox:security} -IncidentReportContent All -GenerateAlert {mailbox:security} -AlertProperties @{AggregationType='None'}",
+    "payload": {
+      "New-DlpComplianceRule(all rules)": {
+        "GenerateIncidentReport": "{mailbox:security}",
+        "IncidentReportContent": "All",
+        "GenerateAlert": "{mailbox:security}",
+        "AlertProperties": {
+          "AggregationType": "None"
+        }
+      }
+    },
+    "read": "Get-DlpComplianceRule | Select-Object Name, GenerateIncidentReport, GenerateAlert, AlertProperties",
+    "check": "every DLP rule reports to the security mailbox and raises one alert per match",
+    "permissions": [
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [
+      "Compliance Administrator"
+    ],
+    "tcm": {
+      "resource": "microsoft.securityandcompliance.dlpcompliancerule",
+      "note": "S-02 not done; candidate resource name, unconfirmed"
+    },
+    "verified": "not verified: Security & Compliance PowerShell app-only did not connect on the test tenant. With ExchangeOnlineManagement 3.6.0, Connect-IPPSSession has no -AccessToken parameter; Connect-IPPSSession -Certificate -AppId -Organization and Connect-ExchangeOnline -AccessToken -ConnectionUri https://ps.compliance.protection.outlook.com/powershell-liveid/ both fail with 'Could not find the organization container'. The pipeline app holds no Compliance Administrator role, so cmdlet and parameter existence could not be checked",
+    "notes": "Conflicts in the catalogue to settle: PVW-010/011/014 say 'alert' to the alerts address, PVW-020 says the security mailbox, and T14-11 says incident reports go to the alerts address. The payloads above follow each setting's words; T14-11 must pick one. Single-event alerts are what the plan includes (aggregated alerts need E5)."
+  },
+  "PVW-021": {
+    "status": "resolved",
+    "provider": "exchange",
+    "step": "policy.purview",
+    "method": "cmdlet",
+    "apply": "after Connect-IPPSSession (certificate, app-only): New-ProtectionAlert (Set-ProtectionAlert when it exists)",
+    "payload": {
+      "New-ProtectionAlert": {
+        "Name": "Forwarding or redirect rule created",
+        "Category": "ThreatManagement",
+        "ThreatType": "Activity",
+        "Operation": [
+          "New-InboxRule",
+          "Set-InboxRule",
+          "UpdateInboxRules",
+          "Set-Mailbox"
+        ],
+        "NotifyUser": "{mailbox:alerts}",
+        "AggregationType": "None",
+        "Severity": "Medium"
+      }
+    },
+    "read": "Get-ProtectionAlert -Identity 'Forwarding or redirect rule created' | Select-Object Name, Disabled, Operation, NotifyUser, AggregationType",
+    "check": "alert exists; Disabled == false; Operation lists New-InboxRule, Set-InboxRule, UpdateInboxRules, Set-Mailbox; NotifyUser == alerts address",
+    "permissions": [
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [
+      "Compliance Administrator"
+    ],
+    "tcm": {
+      "resource": "microsoft.securityandcompliance.protectionalert",
+      "note": "S-02 not done; candidate resource name, unconfirmed"
+    },
+    "verified": "not verified: Security & Compliance PowerShell app-only did not connect on the test tenant. With ExchangeOnlineManagement 3.6.0, Connect-IPPSSession has no -AccessToken parameter; Connect-IPPSSession -Certificate -AppId -Organization and Connect-ExchangeOnline -AccessToken -ConnectionUri https://ps.compliance.protection.outlook.com/powershell-liveid/ both fail with 'Could not find the organization container'. The pipeline app holds no Compliance Administrator role, so cmdlet and parameter existence could not be checked",
+    "notes": "Microsoft's built-in alert 'Creation of forwarding/redirect rule' covers this; the step either sets NotifyUser on the built-in (Set-ProtectionAlert -Identity <built-in> -NotifyUser {mailbox:alerts}) or creates the custom alert shown. Set-Mailbox is included for ForwardingSmtpAddress; a filter on the forwarding parameters is to be confirmed. Operation names follow the unified audit log."
+  },
+  "PVW-022": {
+    "status": "resolved",
+    "provider": "exchange",
+    "step": "policy.purview",
+    "method": "cmdlet",
+    "apply": "after Connect-IPPSSession (certificate, app-only): New-ProtectionAlert (Set-ProtectionAlert when it exists)",
+    "payload": {
+      "New-ProtectionAlert": {
+        "Name": "Administrator role granted",
+        "Category": "AccessGovernance",
+        "ThreatType": "Activity",
+        "Operation": [
+          "Add member to role."
+        ],
+        "NotifyUser": "{mailbox:alerts}",
+        "AggregationType": "None",
+        "Severity": "Medium"
+      }
+    },
+    "read": "Get-ProtectionAlert -Identity 'Administrator role granted' | Select-Object Name, Disabled, Operation, NotifyUser, AggregationType",
+    "check": "alert exists; Disabled == false; Operation lists Add member to role.; NotifyUser == alerts address",
+    "permissions": [
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [
+      "Compliance Administrator"
+    ],
+    "tcm": {
+      "resource": "microsoft.securityandcompliance.protectionalert",
+      "note": "S-02 not done; candidate resource name, unconfirmed"
+    },
+    "verified": "not verified: Security & Compliance PowerShell app-only did not connect on the test tenant. With ExchangeOnlineManagement 3.6.0, Connect-IPPSSession has no -AccessToken parameter; Connect-IPPSSession -Certificate -AppId -Organization and Connect-ExchangeOnline -AccessToken -ConnectionUri https://ps.compliance.protection.outlook.com/powershell-liveid/ both fail with 'Could not find the organization container'. The pipeline app holds no Compliance Administrator role, so cmdlet and parameter existence could not be checked",
+    "notes": "Entra activity 'Add member to role.' from the unified audit log. Microsoft's built-in 'Elevation of Exchange admin privilege' covers Exchange role groups only."
+  },
+  "PVW-023": {
+    "status": "resolved",
+    "provider": "exchange",
+    "step": "policy.purview",
+    "method": "cmdlet",
+    "apply": "after Connect-IPPSSession (certificate, app-only): New-ProtectionAlert (Set-ProtectionAlert when it exists)",
+    "payload": {
+      "New-ProtectionAlert": {
+        "Name": "Audit off or protection policy changed",
+        "Category": "AccessGovernance",
+        "ThreatType": "Activity",
+        "Operation": [
+          "Set-AdminAuditLogConfig",
+          "Set-DlpCompliancePolicy",
+          "Remove-DlpCompliancePolicy",
+          "Set-DlpComplianceRule",
+          "Remove-DlpComplianceRule",
+          "Set-Label",
+          "Remove-Label",
+          "Set-LabelPolicy",
+          "Remove-LabelPolicy",
+          "Set-ProtectionAlert",
+          "Remove-ProtectionAlert",
+          "Set-HostedOutboundSpamFilterPolicy",
+          "Set-TransportConfig"
+        ],
+        "NotifyUser": "{mailbox:alerts}",
+        "AggregationType": "None",
+        "Severity": "Medium"
+      }
+    },
+    "read": "Get-ProtectionAlert -Identity 'Audit off or protection policy changed' | Select-Object Name, Disabled, Operation, NotifyUser, AggregationType",
+    "check": "alert exists; Disabled == false; Operation lists Set-AdminAuditLogConfig, Set-DlpCompliancePolicy, Remove-DlpCompliancePolicy, Set-DlpComplianceRule, Remove-DlpComplianceRule, Set-Label, Remove-Label, Set-LabelPolicy, Remove-LabelPolicy, Set-ProtectionAlert, Remove-ProtectionAlert, Set-HostedOutboundSpamFilterPolicy, Set-TransportConfig; NotifyUser == alerts address",
+    "permissions": [
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [
+      "Compliance Administrator"
+    ],
+    "tcm": {
+      "resource": "microsoft.securityandcompliance.protectionalert",
+      "note": "S-02 not done; candidate resource name, unconfirmed"
+    },
+    "verified": "not verified: Security & Compliance PowerShell app-only did not connect on the test tenant. With ExchangeOnlineManagement 3.6.0, Connect-IPPSSession has no -AccessToken parameter; Connect-IPPSSession -Certificate -AppId -Organization and Connect-ExchangeOnline -AccessToken -ConnectionUri https://ps.compliance.protection.outlook.com/powershell-liveid/ both fail with 'Could not find the organization container'. The pipeline app holds no Compliance Administrator role, so cmdlet and parameter existence could not be checked",
+    "notes": "Operation names are the cmdlet names recorded under the SecurityComplianceCenterEXOCmdlet and ExchangeAdmin record types; the exact list to be confirmed by reading the audit log once IPPS connects."
+  },
+  "PVW-024": {
+    "status": "resolved",
+    "provider": "exchange",
+    "step": "policy.purview",
+    "method": "cmdlet",
+    "apply": "after Connect-IPPSSession (certificate, app-only): New-ProtectionAlert (Set-ProtectionAlert when it exists)",
+    "payload": {
+      "New-ProtectionAlert": {
+        "Name": "Sharing policy changed or site admin added",
+        "Category": "ThreatManagement",
+        "ThreatType": "Activity",
+        "Operation": [
+          "SharingPolicyChanged",
+          "SiteCollectionAdminAdded"
+        ],
+        "NotifyUser": "{mailbox:alerts}",
+        "AggregationType": "None",
+        "Severity": "Medium"
+      }
+    },
+    "read": "Get-ProtectionAlert -Identity 'Sharing policy changed or site admin added' | Select-Object Name, Disabled, Operation, NotifyUser, AggregationType",
+    "check": "alert exists; Disabled == false; Operation lists SharingPolicyChanged, SiteCollectionAdminAdded; NotifyUser == alerts address",
+    "permissions": [
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [
+      "Compliance Administrator"
+    ],
+    "tcm": {
+      "resource": "microsoft.securityandcompliance.protectionalert",
+      "note": "S-02 not done; candidate resource name, unconfirmed"
+    },
+    "verified": "not verified: Security & Compliance PowerShell app-only did not connect on the test tenant. With ExchangeOnlineManagement 3.6.0, Connect-IPPSSession has no -AccessToken parameter; Connect-IPPSSession -Certificate -AppId -Organization and Connect-ExchangeOnline -AccessToken -ConnectionUri https://ps.compliance.protection.outlook.com/powershell-liveid/ both fail with 'Could not find the organization container'. The pipeline app holds no Compliance Administrator role, so cmdlet and parameter existence could not be checked",
+    "notes": "SharePoint audit operations."
+  },
+  "PVW-025": {
+    "status": "resolved",
+    "provider": "exchange",
+    "step": "policy.purview",
+    "method": "cmdlet",
+    "apply": "after Connect-IPPSSession (certificate, app-only): New-ProtectionAlert (Set-ProtectionAlert when it exists)",
+    "payload": {
+      "New-ProtectionAlert": {
+        "Name": "Restricted label lowered or removed",
+        "Category": "ThreatManagement",
+        "ThreatType": "Activity",
+        "Operation": [
+          "FileSensitivityLabelChanged",
+          "FileSensitivityLabelRemoved",
+          "SensitivityLabelRemoved",
+          "SensitivityLabelUpdated"
+        ],
+        "NotifyUser": "{mailbox:alerts}",
+        "AggregationType": "None",
+        "Severity": "Medium",
+        "Filter": "{old label == {label:Restricted}} (syntax to confirm)"
+      }
+    },
+    "read": "Get-ProtectionAlert -Identity 'Restricted label lowered or removed' | Select-Object Name, Disabled, Operation, NotifyUser, AggregationType",
+    "check": "alert exists; Disabled == false; Operation lists FileSensitivityLabelChanged, FileSensitivityLabelRemoved, SensitivityLabelRemoved, SensitivityLabelUpdated; NotifyUser == alerts address",
+    "permissions": [
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [
+      "Compliance Administrator"
+    ],
+    "tcm": {
+      "resource": "microsoft.securityandcompliance.protectionalert",
+      "note": "S-02 not done; candidate resource name, unconfirmed"
+    },
+    "verified": "not verified: Security & Compliance PowerShell app-only did not connect on the test tenant. With ExchangeOnlineManagement 3.6.0, Connect-IPPSSession has no -AccessToken parameter; Connect-IPPSSession -Certificate -AppId -Organization and Connect-ExchangeOnline -AccessToken -ConnectionUri https://ps.compliance.protection.outlook.com/powershell-liveid/ both fail with 'Could not find the organization container'. The pipeline app holds no Compliance Administrator role, so cmdlet and parameter existence could not be checked",
+    "notes": "Restricting the alert to files that were Restricted needs a filter on the old label id (Filter on the audit record's label fields). Whether New-ProtectionAlert -Filter accepts the label property could not be checked (no IPPS connection); without it the alert fires on every label downgrade or removal, which is wider than the setting. Downgrade also needs justification (PVW-007)."
+  },
+  "PVW-026": {
+    "status": "resolved",
+    "provider": "exchange",
+    "step": "policy.purview",
+    "method": "cmdlet",
+    "apply": "after Connect-IPPSSession (certificate, app-only): New-ProtectionAlert (Set-ProtectionAlert when it exists)",
+    "payload": {
+      "New-ProtectionAlert": {
+        "Name": "Mail flow rule or connector changed",
+        "Category": "MailFlow",
+        "ThreatType": "Activity",
+        "Operation": [
+          "New-TransportRule",
+          "Set-TransportRule",
+          "Remove-TransportRule",
+          "Enable-TransportRule",
+          "Disable-TransportRule",
+          "New-InboundConnector",
+          "Set-InboundConnector",
+          "Remove-InboundConnector",
+          "New-OutboundConnector",
+          "Set-OutboundConnector",
+          "Remove-OutboundConnector"
+        ],
+        "NotifyUser": "{mailbox:alerts}",
+        "AggregationType": "None",
+        "Severity": "Medium"
+      }
+    },
+    "read": "Get-ProtectionAlert -Identity 'Mail flow rule or connector changed' | Select-Object Name, Disabled, Operation, NotifyUser, AggregationType",
+    "check": "alert exists; Disabled == false; Operation lists New-TransportRule, Set-TransportRule, Remove-TransportRule, Enable-TransportRule, Disable-TransportRule, New-InboundConnector, Set-InboundConnector, Remove-InboundConnector, New-OutboundConnector, Set-OutboundConnector, Remove-OutboundConnector; NotifyUser == alerts address",
+    "permissions": [
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [
+      "Compliance Administrator"
+    ],
+    "tcm": {
+      "resource": "microsoft.securityandcompliance.protectionalert",
+      "note": "S-02 not done; candidate resource name, unconfirmed"
+    },
+    "verified": "not verified: Security & Compliance PowerShell app-only did not connect on the test tenant. With ExchangeOnlineManagement 3.6.0, Connect-IPPSSession has no -AccessToken parameter; Connect-IPPSSession -Certificate -AppId -Organization and Connect-ExchangeOnline -AccessToken -ConnectionUri https://ps.compliance.protection.outlook.com/powershell-liveid/ both fail with 'Could not find the organization container'. The pipeline app holds no Compliance Administrator role, so cmdlet and parameter existence could not be checked",
+    "notes": "ExchangeAdmin audit operations."
+  },
+  "PVW-027": {
+    "status": "not-applied",
+    "provider": null,
+    "step": "policy.purview",
+    "method": null,
+    "apply": null,
+    "payload": null,
+    "read": null,
+    "check": null,
+    "permissions": [],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "not applied"
+    },
+    "verified": "not verified: add-on capability, never applied (SPEC 20.3)",
+    "notes": "Add-on. Would be New-RetentionCompliancePolicy / New-RetentionComplianceRule and holds (Security & Compliance PowerShell). See upgrades/retention.md.",
+    "capability": "purview_retention"
+  },
+  "PVW-028": {
+    "status": "not-applied",
+    "provider": null,
+    "step": "policy.purview",
+    "method": null,
+    "apply": null,
+    "payload": null,
+    "read": null,
+    "check": null,
+    "permissions": [],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "not applied"
+    },
+    "verified": "not verified: add-on capability, never applied (SPEC 20.3)",
+    "notes": "Add-on. Would be New-DlpCompliancePolicy -EndpointDlpLocation All -TeamsLocation All mirroring DLP-01 to DLP-06.",
+    "capability": "purview_suite"
+  },
+  "PVW-029": {
+    "status": "not-applied",
+    "provider": null,
+    "step": "policy.purview",
+    "method": null,
+    "apply": null,
+    "payload": null,
+    "read": null,
+    "check": null,
+    "permissions": [],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "not applied"
+    },
+    "verified": "not verified: add-on capability, never applied (SPEC 20.3)",
+    "notes": "Add-on. Would be New-AutoSensitivityLabelPolicy / New-AutoSensitivityLabelRule and Set-PnPList -DefaultSensitivityLabelForLibrary (parameter exists in PnP 2.12.0).",
+    "capability": "purview_suite"
+  },
+  "PVW-030": {
+    "status": "not-applied",
+    "provider": null,
+    "step": "policy.purview",
+    "method": null,
+    "apply": null,
+    "payload": null,
+    "read": null,
+    "check": null,
+    "permissions": [],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "not applied"
+    },
+    "verified": "not verified: add-on capability, never applied (SPEC 20.3)",
+    "notes": "Add-on. Insider risk management (data theft by departing users) has no PowerShell write API; portal only.",
+    "capability": "purview_suite"
+  },
+  "PVW-031": {
+    "status": "not-applied",
+    "provider": null,
+    "step": "policy.purview",
+    "method": null,
+    "apply": null,
+    "payload": null,
+    "read": null,
+    "check": null,
+    "permissions": [],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "not applied"
+    },
+    "verified": "not verified: add-on capability, never applied (SPEC 20.3)",
+    "notes": "Add-on. Microsoft 365 Backup (pay-as-you-go, Graph /solutions/backupRestore) or a third-party service.",
+    "capability": "backup_service"
+  }
+}

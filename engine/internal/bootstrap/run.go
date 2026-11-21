@@ -34,18 +34,20 @@ var RoleTemplates = map[string]string{
 	"SharePoint Administrator": "f28a1f50-f6e7-4571-818b-6a12f2af6b6c",
 	"User Administrator":       "fe930be7-5e62-47db-91af-98c3a49a38b1",
 	"Teams Administrator":      "69091246-20e8-4a56-aa4d-066075b2a7a8",
+	"Compliance Administrator": "17315797-102d-40b4-93e0-432062caca18",
+	"Security Administrator":   "194ae4cb-b126-40b2-bd5b-6091b380977d",
 }
 
 // PipelineAppName is the display name of the pipeline app registration.
 const PipelineAppName = "Company in a Box pipeline"
 
-// Permissions is expected-state/app-permissions.yaml.
+// Permissions are the grants of a union of bundles (expected-state/app-permissions.yaml).
 type Permissions struct {
-	Graph      []string `yaml:"graph"`
-	Exchange   []string `yaml:"exchange"`
-	SharePoint []string `yaml:"sharepoint"`
-	EntraRoles []string `yaml:"entra_roles"`
-	Never      []string `yaml:"never"`
+	Graph      []string `yaml:"graph" json:"graph"`
+	Exchange   []string `yaml:"exchange" json:"exchange"`
+	SharePoint []string `yaml:"sharepoint" json:"sharepoint"`
+	EntraRoles []string `yaml:"entra_roles" json:"entra_roles"`
+	Never      []string `yaml:"never" json:"never"`
 }
 
 // ByResource returns the app permissions per resource key.

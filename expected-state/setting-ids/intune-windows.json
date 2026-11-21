@@ -1780,7 +1780,7 @@
     "check": "Owner confirmation recorded as an Events item; per-device evidence: Get-MpComputerStatus on a device shows AMRunningMode \"EDR Block Mode\" only when another antivirus is primary, so with Defender Antivirus active the confirmation is the check",
     "permissions": [],
     "roles": [
-      "Security Administrator (person, at the gate)"
+      "Security Administrator"
     ],
     "tcm": {
       "resource": null,
@@ -1977,7 +1977,7 @@
     "check": "settingInstance[device_vendor_msft_laps_policies_backupdirectory] == device_vendor_msft_laps_policies_backupdirectory_1 AND settingInstance[device_vendor_msft_laps_policies_passwordagedays_aad] == 30 AND settingInstance[device_vendor_msft_laps_policies_passwordlength] == 15 AND settingInstance[device_vendor_msft_laps_policies_passwordcomplexity] == device_vendor_msft_laps_policies_passwordcomplexity_4 AND settingInstance[device_vendor_msft_laps_policies_postauthenticationactions] == device_vendor_msft_laps_policies_postauthenticationactions_1 AND settingInstance[device_vendor_msft_laps_policies_postauthenticationresetdelay] == 24",
     "permissions": [
       "graph:DeviceManagementConfiguration.ReadWrite.All",
-      "graph:Policy.ReadWrite.DeviceConfiguration (prerequisite; not in app-permissions.yaml)"
+      "graph:Policy.ReadWrite.DeviceConfiguration"
     ],
     "roles": [],
     "tcm": {

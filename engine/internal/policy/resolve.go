@@ -12,14 +12,17 @@ type Selection struct {
 	Tier       string      `json:"tier"`  // core | enhanced
 	Stage      string      `json:"stage"` // audit | enforce
 	Exceptions []Exception `json:"exceptions"`
-	// Set from the company's choices (SPEC §24): settings a choice leaves
-	// out (with "choice=value" as the reason) and the variant to apply.
+	// Set from the company's choices and modules (SPEC §24): settings left
+	// out with the reason ("choice id=value", "module devices is off") and
+	// the variant to apply.
 	LeftOut  map[string]string `json:"left_out,omitempty"`
 	Variants map[string]string `json:"variants,omitempty"`
 	// Choices are the answers in effect; Defaulted the ones taken from
 	// the recommended option because the configuration does not answer them.
 	Choices   map[string]string `json:"choices,omitempty"`
 	Defaulted []string          `json:"defaulted_choices,omitempty"`
+	// ChoiceBundles are the permission bundles choices need, with the choice.
+	ChoiceBundles map[string]string `json:"choice_bundles,omitempty"`
 }
 
 // Exception removes one setting, or every setting that serves only
@@ -175,7 +178,7 @@ func (c *Catalogue) Resolve(sel Selection, plan string, caps map[string]bool) (*
 				continue
 			}
 			if why, ok := sel.LeftOut[s.ID]; ok {
-				skip("choice " + why)
+				skip(why)
 				continue
 			}
 			if e, ok := exSetting[s.ID]; ok {

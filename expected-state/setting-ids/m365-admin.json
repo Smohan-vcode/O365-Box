@@ -14,7 +14,7 @@
     "read": "GET /beta/admin/appsAndServices",
     "check": "settings.isOfficeStoreEnabled == false; settings.isAppAndServicesTrialEnabled == false",
     "permissions": [
-      "graph:OrgSettings-AppsAndServices.ReadWrite.All (not granted: proposed)"
+      "graph:OrgSettings-AppsAndServices.ReadWrite.All"
     ],
     "roles": [],
     "tcm": {
@@ -61,7 +61,7 @@
     "read": "GET /policies/activityBasedTimeoutPolicies",
     "check": "an organisation-default policy with WebSessionIdleTimeout 01:00:00",
     "permissions": [
-      "graph:Policy.ReadWrite.ApplicationConfiguration (SC-21)"
+      "graph:Policy.ReadWrite.ApplicationConfiguration"
     ],
     "roles": [],
     "tcm": {
@@ -88,7 +88,7 @@
     "read": "GET /domains?$select=id,passwordValidityPeriodInDays",
     "check": "every domain: passwordValidityPeriodInDays == 2147483647",
     "permissions": [
-      "graph:Domain.ReadWrite.All (not granted: proposed)"
+      "graph:Domain.ReadWrite.All"
     ],
     "roles": [],
     "tcm": {
@@ -116,7 +116,7 @@
     "read": "GET /beta/admin/forms",
     "check": "settings.isExternalSendFormEnabled == false; isExternalShareCollaborationEnabled == false; isExternalShareResultEnabled == false; isExternalShareTemplateEnabled == false; isInOrgFormsPhishingScanEnabled == true",
     "permissions": [
-      "graph:OrgSettings-Forms.ReadWrite.All (not granted: proposed)"
+      "graph:OrgSettings-Forms.ReadWrite.All"
     ],
     "roles": [],
     "tcm": {
@@ -175,7 +175,7 @@
     "read": "GET /servicePrincipals?$filter=appId eq 'c1f33bc0-bdb4-4248-ba9b-096807ddb43e'&$select=accountEnabled",
     "check": "exactly one service principal; accountEnabled == false",
     "permissions": [
-      "graph:Application.ReadWrite.All (not granted: proposed; high privilege)"
+      "graph:Application.ReadWrite.All"
     ],
     "roles": [],
     "tcm": {
@@ -277,7 +277,7 @@
     "read": "GET /admin/people/itemInsights; Get-DefaultTenantMyAnalyticsFeatureConfig",
     "check": "",
     "permissions": [
-      "graph:PeopleSettings.ReadWrite.All (not granted: proposed)",
+      "graph:PeopleSettings.ReadWrite.All",
       "exchange:Exchange.ManageAsApp"
     ],
     "roles": [],

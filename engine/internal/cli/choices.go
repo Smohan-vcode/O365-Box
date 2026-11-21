@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"github.com/Smohan-vcode/O365-Box/engine/internal/bootstrap"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -123,7 +124,7 @@ func newChoicesCmd(g *globals) *cobra.Command {
 			}
 			if g.asJSON {
 				return writeJSON(cmd.OutOrStdout(), map[string]any{"answers": r.Answers, "defaulted": r.Defaulted,
-					"left_out": r.LeftOut, "variants": r.Variants, "modules": keys(r.Modules), "bundles": keys(r.Bundles), "gates": keys(r.Gates)})
+					"left_out": r.LeftOut, "variants": r.Variants, "modules": keys(r.Modules), "bundles": r.Bundles, "gates": keys(r.Gates)})
 			}
 			w := tabwriter.NewWriter(cmd.OutOrStdout(), 0, 2, 2, ' ', 0)
 			fmt.Fprintln(w, "CHOICE\tSTEP\tANSWER\tOPTIONS")
@@ -144,11 +145,45 @@ func newChoicesCmd(g *globals) *cobra.Command {
 				return err
 			}
 			fmt.Fprintf(cmd.OutOrStdout(), "\nleft out %d setting(s), %d variant(s); bundles: %s; gates: %s\n",
-				len(r.LeftOut), len(r.Variants), strings.Join(keys(r.Bundles), ", "), strings.Join(keys(r.Gates), ", "))
+				len(r.LeftOut), len(r.Variants), strings.Join(sortedKeys(r.Bundles), ", "), strings.Join(keys(r.Gates), ", "))
 			return nil
 		}}
 	list.Flags().StringVar(&cfgPath, "config", "", "configuration document whose answers to show")
 	cmd.AddCommand(list)
+
+	var permCfg string
+	perms := &cobra.Command{
+		Use: "permissions", Short: "List the permission bundles the configuration needs, and why (SPEC §24.3)",
+		Args: cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			root, err := g.root()
+			if err != nil {
+				return err
+			}
+			if permCfg == "" {
+				return usageError("--config is required")
+			}
+			doc, err := config.Load(permCfg)
+			if err != nil {
+				return err
+			}
+			gr, err := neededGrants(root, &doc.Config)
+			if err != nil {
+				return err
+			}
+			if g.asJSON {
+				return writeJSON(cmd.OutOrStdout(), gr)
+			}
+			for _, n := range gr.Needs {
+				fmt.Fprintln(cmd.OutOrStdout(), "  "+n.describe())
+			}
+			p := gr.Permissions
+			fmt.Fprintf(cmd.OutOrStdout(), "✓ %d bundle(s): %d Graph, %d Exchange, %d SharePoint permission(s), %d Entra role(s)\n",
+				len(gr.Needs), len(p.Graph), len(p.Exchange), len(p.SharePoint), len(p.EntraRoles))
+			return nil
+		}}
+	perms.Flags().StringVar(&permCfg, "config", "", "configuration document (required)")
+	cmd.AddCommand(perms)
 	return cmd
 }
 
@@ -159,6 +194,15 @@ func variantList(m map[string]string) string {
 	}
 	sort.Strings(out)
 	return strings.Join(out, ", ")
+}
+
+func sortedKeys[V any](m map[string]V) []string {
+	out := make([]string, 0, len(m))
+	for k := range m {
+		out = append(out, k)
+	}
+	sort.Strings(out)
+	return out
 }
 
 func keys(m map[string]bool) []string {
@@ -200,6 +244,14 @@ func loadChoices(root string) (*choices.Catalogue, []report.Issue, error) {
 	}
 	for _, m := range ChoiceModules {
 		k.Modules[m] = true
+	}
+	bundles, err := bootstrap.LoadBundles(filepath.Join(root, "expected-state", "app-permissions.yaml"))
+	if err != nil {
+		return nil, nil, err
+	}
+	k.Bundles = map[string]bool{}
+	for _, b := range bundles.Bundles {
+		k.Bundles[b.ID] = true
 	}
 	var gates struct {
 		Gates []struct {

@@ -12,7 +12,7 @@
       "powerplatform:pipeline app registered as a Power Platform management application (pac admin application register --application-id {app:pipeline}); token audience https://service.powerapps.com/ for the BAP admin API"
     ],
     "roles": [
-      "Power Platform Administrator (for the one-time registration only; held by a person, not the app)"
+      "Power Platform Administrator"
     ],
     "tcm": {
       "resource": null,
@@ -54,7 +54,7 @@
       "powerplatform:pipeline app registered as a Power Platform management application (pac admin application register --application-id {app:pipeline}); token audience https://service.powerapps.com/ for the BAP admin API"
     ],
     "roles": [
-      "Power Platform Administrator (for the one-time registration only; held by a person, not the app)"
+      "Power Platform Administrator"
     ],
     "tcm": {
       "resource": null,
@@ -192,7 +192,7 @@
       "powerplatform:pipeline app registered as a Power Platform management application (pac admin application register --application-id {app:pipeline}); token audience https://service.powerapps.com/ for the BAP admin API"
     ],
     "roles": [
-      "Power Platform Administrator (for the one-time registration only; held by a person, not the app)"
+      "Power Platform Administrator"
     ],
     "tcm": {
       "resource": null,
@@ -219,7 +219,7 @@
       "powerplatform:pipeline app registered as a Power Platform management application (pac admin application register --application-id {app:pipeline}); token audience https://service.powerapps.com/ for the BAP admin API"
     ],
     "roles": [
-      "Power Platform Administrator (for the one-time registration only; held by a person, not the app)"
+      "Power Platform Administrator"
     ],
     "tcm": {
       "resource": null,
@@ -259,7 +259,7 @@
       "powerplatform:pipeline app registered as a Power Platform management application (pac admin application register --application-id {app:pipeline}); token audience https://service.powerapps.com/ for the BAP admin API"
     ],
     "roles": [
-      "Power Platform Administrator (for the one-time registration only; held by a person, not the app)"
+      "Power Platform Administrator"
     ],
     "tcm": {
       "resource": null,
@@ -305,7 +305,7 @@
       "powerplatform:pipeline app registered as a Power Platform management application (pac admin application register --application-id {app:pipeline}); token audience https://service.powerapps.com/ for the BAP admin API"
     ],
     "roles": [
-      "Power Platform Administrator (for the one-time registration only; held by a person, not the app)"
+      "Power Platform Administrator"
     ],
     "tcm": {
       "resource": null,
@@ -327,7 +327,7 @@
       "powerplatform:pipeline app registered as a Power Platform management application (pac admin application register --application-id {app:pipeline}); token audience https://service.powerapps.com/ for the BAP admin API"
     ],
     "roles": [
-      "Power Platform Administrator (for the one-time registration only; held by a person, not the app)"
+      "Power Platform Administrator"
     ],
     "tcm": {
       "resource": null,

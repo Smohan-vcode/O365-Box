@@ -518,7 +518,7 @@ func newCheckCmd(g *globals) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			perms, err := loadPermissions(root)
+			gr, err := neededGrants(root, &doc.Config)
 			if err != nil {
 				return err
 			}
@@ -526,7 +526,8 @@ func newCheckCmd(g *globals) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return checkIdentity(cmd.Context(), cmd.OutOrStdout(), doc.Config.Tenant.TenantID, ks, perms, 0)
+			fmt.Fprintf(cmd.OutOrStdout(), "  expected bundles: %s\n", strings.Join(gr.IDs(), ", "))
+			return checkIdentity(cmd.Context(), cmd.OutOrStdout(), doc.Config.Tenant.TenantID, ks, gr.Permissions, 0)
 		}}
 	f.bind(c, false)
 	return c

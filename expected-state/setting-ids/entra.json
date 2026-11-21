@@ -1096,7 +1096,7 @@
     "read": "GET /policies/identitySecurityDefaultsEnforcementPolicy",
     "check": "isEnabled == false, only after CA01-CA03 have state 'enabled'",
     "permissions": [
-      "graph:Policy.ReadWrite.SecurityDefaults (not granted: proposed)"
+      "graph:Policy.ReadWrite.SecurityDefaults"
     ],
     "roles": [],
     "tcm": {
@@ -1323,7 +1323,7 @@
     "read": "GET /groupSettings?$filter=templateId eq '5cf42378-d67d-4f36-ba46-e8b86229381d'",
     "check": "values[name=EnableBannedPasswordCheck].value == 'true'; values[name=BannedPasswordList].value contains every configured term",
     "permissions": [
-      "graph:Directory.ReadWrite.All (not granted: proposed)"
+      "graph:Directory.ReadWrite.All"
     ],
     "roles": [],
     "tcm": {
@@ -1355,7 +1355,7 @@
     "read": "GET /groupSettings?$filter=templateId eq '5cf42378-d67d-4f36-ba46-e8b86229381d'",
     "check": "values[name=LockoutThreshold].value == '10'; values[name=LockoutDurationInSeconds].value == '60'",
     "permissions": [
-      "graph:Directory.ReadWrite.All (not granted: proposed)"
+      "graph:Directory.ReadWrite.All"
     ],
     "roles": [],
     "tcm": {
@@ -1377,7 +1377,7 @@
     "read": "GET /domains?$select=id,passwordValidityPeriodInDays",
     "check": "every domain: passwordValidityPeriodInDays == 2147483647",
     "permissions": [
-      "graph:Domain.ReadWrite.All (not granted: proposed)"
+      "graph:Domain.ReadWrite.All"
     ],
     "roles": [],
     "tcm": {
@@ -1544,7 +1544,7 @@
     "check": "defaultUserRolePermissions.allowedToCreateSecurityGroups == false; Group.Unified values[name=EnableGroupCreation].value == 'false'",
     "permissions": [
       "graph:Policy.ReadWrite.Authorization",
-      "graph:Directory.ReadWrite.All (not granted: proposed)"
+      "graph:Directory.ReadWrite.All"
     ],
     "roles": [],
     "tcm": {
@@ -1663,7 +1663,7 @@
     "read": "GET /beta/policies/deviceRegistrationPolicy",
     "check": "azureADJoin.allowedToJoin.@odata.type == '#microsoft.graph.enumeratedDeviceRegistrationMembership' and groups == [{group:device-join}]",
     "permissions": [
-      "graph:Policy.ReadWrite.DeviceConfiguration (not granted: proposed)"
+      "graph:Policy.ReadWrite.DeviceConfiguration"
     ],
     "roles": [],
     "tcm": {
@@ -1692,7 +1692,7 @@
     "read": "GET /beta/policies/deviceRegistrationPolicy; GET /roleManagement/directory/roleAssignments?$filter=roleDefinitionId eq '9f06204d-73c1-4d4c-880a-6edb90606fd8'",
     "check": "azureADJoin.localAdmins.registeringUsers.@odata.type == '#microsoft.graph.noDeviceRegistrationMembership'; no assignments of the Microsoft Entra Joined Device Local Administrator role",
     "permissions": [
-      "graph:Policy.ReadWrite.DeviceConfiguration (not granted: proposed)"
+      "graph:Policy.ReadWrite.DeviceConfiguration"
     ],
     "roles": [],
     "tcm": {
@@ -1714,7 +1714,7 @@
     "read": "GET /beta/policies/deviceRegistrationPolicy",
     "check": "userDeviceQuota == 5",
     "permissions": [
-      "graph:Policy.ReadWrite.DeviceConfiguration (not granted: proposed)"
+      "graph:Policy.ReadWrite.DeviceConfiguration"
     ],
     "roles": [],
     "tcm": {
@@ -1738,7 +1738,7 @@
     "read": "GET /beta/policies/deviceRegistrationPolicy",
     "check": "localAdminPassword.isEnabled == true",
     "permissions": [
-      "graph:Policy.ReadWrite.DeviceConfiguration (not granted: proposed)"
+      "graph:Policy.ReadWrite.DeviceConfiguration"
     ],
     "roles": [],
     "tcm": {

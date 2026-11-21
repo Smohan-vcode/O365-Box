@@ -115,12 +115,12 @@ func TestResolveDefaultsAndAnswers(t *testing.T) {
 	}
 
 	r, _ = c.Resolve(nil, Context{Modules: map[string]bool{"sales": true, "devices": true}, Detected: map[string]bool{"a.fact": true}})
-	if r.Answers["a.mode"] != "existing" || !r.Bundles["azure"] || r.LeftOut["ADM-005"] != "b.forms=on" || r.Variants["WIN-058"] != "intune" {
+	if r.Answers["a.mode"] != "existing" || r.Bundles["azure"] == "" || r.LeftOut["ADM-005"] != "choice b.forms=on" || r.Variants["WIN-058"] != "intune" {
 		t.Errorf("defaults with sales, devices and the fact: %+v", r)
 	}
 
 	r, _ = c.Resolve(map[string]string{"c.store": "open"}, Context{Modules: map[string]bool{"devices": true}})
-	if r.Defaulted["c.store"] || r.LeftOut["WIN-058"] != "c.store=open" || r.Variants["WIN-058"] != "" {
+	if r.Defaulted["c.store"] || r.LeftOut["WIN-058"] != "choice c.store=open" || r.Variants["WIN-058"] != "" {
 		t.Errorf("answered: %+v", r)
 	}
 

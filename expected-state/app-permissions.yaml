@@ -1,24 +1,83 @@
-# Application permissions for the pipeline's app registration. Granted by
-# bootstrap (SPEC §18.5). S-02 may add ConfigurationMonitoring permissions.
-graph:
-  - User.ReadWrite.All
-  - Group.ReadWrite.All
-  - Directory.Read.All
-  - Policy.Read.All
-  - Policy.ReadWrite.ConditionalAccess
-  - Policy.ReadWrite.AuthenticationMethod
-  - UserAuthenticationMethod.ReadWrite.All   # first sign-in passes (SPEC §18.9)
-  - Organization.Read.All
-  - DeviceManagementConfiguration.ReadWrite.All
-  - Sites.FullControl.All
-  - AuditLog.Read.All
-  - Reports.Read.All
-  - SecurityEvents.Read.All
-  - Policy.ReadWrite.Authorization          # directory settings (SC-18)
-  - Policy.ReadWrite.ConsentRequest         # admin consent workflow (SC-18)
-exchange: ["Exchange.ManageAsApp"]
-# PnP.PowerShell app-only needs the SharePoint resource's own permission;
-# the Graph entry above does not cover SharePoint's API (SC-17).
-sharepoint: ["Sites.FullControl.All"]
-entra_roles: ["Exchange Administrator", "SharePoint Administrator", "User Administrator", "Teams Administrator"]
+# Application permissions for the pipeline's app registration, grouped into
+# bundles (SPEC §18.5, §24.3). Bootstrap grants `base` plus every bundle the
+# configuration needs, and nothing else; `box check identity` compares the
+# app with that union.
+#
+# A bundle is needed when:
+#   - its `module` is on in the configuration, or
+#   - a choice's effects name it (defaults/choices.yaml), or
+#   - a setting the selection applies needs one of its permissions or roles
+#     (expected-state/setting-ids/*.json `permissions` and `roles`).
+# A bundle with a `module` is never needed while that module is off; the
+# settings that need it are left out (reason "module <name> is off").
+#
+# Engine data: no company values.
+bundles:
+  - id: base
+    why: Users, groups, Conditional Access, sign-in methods, sites, mail and the reports every company gets.
+    graph:
+      - User.ReadWrite.All
+      - Group.ReadWrite.All
+      - Directory.Read.All
+      - Policy.Read.All
+      - Policy.ReadWrite.ConditionalAccess
+      - Policy.ReadWrite.AuthenticationMethod
+      - UserAuthenticationMethod.ReadWrite.All   # first sign-in passes (SPEC §18.9)
+      - Organization.Read.All
+      - Sites.FullControl.All
+      - AuditLog.Read.All
+      - Reports.Read.All
+      - SecurityEvents.Read.All
+      - Policy.ReadWrite.Authorization          # directory settings (SC-18)
+      - Policy.ReadWrite.ConsentRequest         # admin consent workflow (SC-18)
+    exchange: [Exchange.ManageAsApp]
+    # PnP.PowerShell app-only needs the SharePoint resource's own permission;
+    # the Graph entry above does not cover SharePoint's API (SC-17).
+    sharepoint: [Sites.FullControl.All]
+    entra_roles: [Exchange Administrator, SharePoint Administrator, User Administrator]
+
+  - id: devices
+    module: devices
+    why: Intune policies for Windows, Mac and phones, app protection, enrolment and device registration.
+    graph:
+      - DeviceManagementConfiguration.ReadWrite.All
+      - DeviceManagementApps.ReadWrite.All
+      - DeviceManagementServiceConfig.ReadWrite.All
+      - DeviceManagementScripts.ReadWrite.All
+      - Policy.ReadWrite.DeviceConfiguration
+
+  - id: directory
+    why: Tenant-wide settings - directory setting templates, password expiry, security defaults and Microsoft 365 admin centre settings.
+    graph:
+      - Directory.ReadWrite.All
+      - Domain.ReadWrite.All
+      - Policy.ReadWrite.SecurityDefaults
+      - OrgSettings-AppsAndServices.ReadWrite.All
+      - OrgSettings-Forms.ReadWrite.All
+      - PeopleSettings.ReadWrite.All
+      - Policy.ReadWrite.ApplicationConfiguration
+
+  - id: app-consent
+    high_privilege: true
+    why: Reviews and removes risky app consents (ADM-007). High privilege - it can change any app registration.
+    graph: [Application.ReadWrite.All]
+
+  - id: teams
+    why: Teams meeting, messaging and external access policies (app-only Teams PowerShell with the pipeline certificate).
+    entra_roles: [Teams Administrator]
+
+  - id: purview
+    why: Sensitivity labels, data loss prevention and alert policies (Security & Compliance PowerShell).
+    entra_roles: [Compliance Administrator]
+
+  - id: security
+    why: Microsoft Defender alert policies.
+    entra_roles: [Security Administrator]
+
+  - id: powerplatform
+    why: Power Platform data policies and environment settings. No Entra permission - a person registers the app once in Power Platform (gate G-10).
+
+  - id: azure
+    why: Free Azure safety settings on the company's subscription. Azure roles are assigned at the subscription when T15-03 builds the provider; no Entra permission.
+
 never: ["Global Administrator", "Mail.ReadWrite", "Mail.Send"]

@@ -246,7 +246,7 @@ type Resolved struct {
 	LeftOut   map[string]string // setting -> "choice id=value"
 	Variants  map[string]string // setting -> variant key
 	Modules   map[string]bool
-	Bundles   map[string]bool
+	Bundles   map[string]string // bundle -> "choice id=value" that needs it
 	Gates     map[string]bool
 }
 
@@ -254,7 +254,7 @@ type Resolved struct {
 // default) and gathers their effects.
 func (c *Catalogue) Resolve(answers map[string]string, ctx Context) (*Resolved, error) {
 	r := &Resolved{Answers: map[string]string{}, Defaulted: map[string]bool{}, LeftOut: map[string]string{},
-		Variants: map[string]string{}, Modules: map[string]bool{}, Bundles: map[string]bool{}, Gates: map[string]bool{}}
+		Variants: map[string]string{}, Modules: map[string]bool{}, Bundles: map[string]string{}, Gates: map[string]bool{}}
 	ids := make([]string, 0, len(answers))
 	for id := range answers {
 		ids = append(ids, id)
@@ -285,13 +285,13 @@ func (c *Catalogue) Resolve(answers map[string]string, ctx Context) (*Resolved, 
 			r.Modules[m] = true
 		}
 		for _, s := range o.Effects.Exceptions {
-			r.LeftOut[s] = ch.ID + "=" + v
+			r.LeftOut[s] = "choice " + ch.ID + "=" + v
 		}
 		for s, k := range o.Effects.Variants {
 			r.Variants[s] = k
 		}
 		for _, b := range o.Effects.Bundles {
-			r.Bundles[b] = true
+			r.Bundles[b] = "choice " + ch.ID + "=" + v
 		}
 		for _, g := range o.Effects.Gates {
 			r.Gates[g] = true

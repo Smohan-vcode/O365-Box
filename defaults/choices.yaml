@@ -106,7 +106,7 @@ choices:
       - value: later
         label: Later
         cost: none
-        effects: {exceptions: [PVW-003, PVW-004, PVW-005, PVW-006, PVW-007, PVW-008, PVW-010, PVW-011, PVW-012, PVW-013, PVW-014, PVW-015, PVW-016, PVW-017, PVW-018, PVW-019, PVW-020]}
+        effects: {exceptions: [OFC-013, PVW-003, PVW-004, PVW-005, PVW-006, PVW-007, PVW-008, PVW-010, PVW-011, PVW-012, PVW-013, PVW-014, PVW-015, PVW-016, PVW-017, PVW-018, PVW-019, PVW-020]}
 
   # ---------- Security step: how strict ----------
   - id: signin.device_code

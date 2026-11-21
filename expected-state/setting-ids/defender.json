@@ -12,7 +12,7 @@
     "check": "Advanced features 'Automated Investigation' == On; each device group automation level == Full",
     "permissions": [],
     "roles": [
-      "Security Administrator (the person at the gate)"
+      "Security Administrator"
     ],
     "tcm": {
       "resource": null,
@@ -34,7 +34,7 @@
     "check": "Advanced features 'Tamper protection' == On; per device: managedDevices/{id}/windowsProtectionState.tamperProtectionEnabled == true (Windows) and MAC-028 enforcement level block (macOS)",
     "permissions": [],
     "roles": [
-      "Security Administrator (the person at the gate)"
+      "Security Administrator"
     ],
     "tcm": {
       "resource": null,
@@ -56,7 +56,7 @@
     "check": "a web content filtering policy exists with the listed categories blocked and scope 'all devices'",
     "permissions": [],
     "roles": [
-      "Security Administrator (the person at the gate)"
+      "Security Administrator"
     ],
     "tcm": {
       "resource": null,
@@ -81,7 +81,7 @@
     "check": "Advanced features 'Custom network indicators' == On",
     "permissions": [],
     "roles": [
-      "Security Administrator (the person at the gate)"
+      "Security Administrator"
     ],
     "tcm": {
       "resource": null,
@@ -103,7 +103,7 @@
     "check": "Device discovery mode == Standard",
     "permissions": [],
     "roles": [
-      "Security Administrator (the person at the gate)"
+      "Security Administrator"
     ],
     "tcm": {
       "resource": null,
@@ -125,7 +125,7 @@
     "check": "a vulnerability notification rule exists with recipient {mailbox:alerts}",
     "permissions": [],
     "roles": [
-      "Security Administrator (the person at the gate)"
+      "Security Administrator"
     ],
     "tcm": {
       "resource": null,
@@ -147,7 +147,7 @@
     "check": "an alert notification rule exists, severities include Medium and High, recipient {mailbox:alerts}",
     "permissions": [],
     "roles": [
-      "Security Administrator (the person at the gate)"
+      "Security Administrator"
     ],
     "tcm": {
       "resource": null,
@@ -169,7 +169,7 @@
     "check": "Preview features == Off in both places",
     "permissions": [],
     "roles": [
-      "Security Administrator (the person at the gate)"
+      "Security Administrator"
     ],
     "tcm": {
       "resource": null,
@@ -547,7 +547,7 @@
     ],
     "roles": [
       "Exchange Administrator",
-      "Security Administrator (S&C alert policy; not yet granted)"
+      "Security Administrator"
     ],
     "tcm": {
       "resource": null,

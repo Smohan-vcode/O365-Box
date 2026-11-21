@@ -15,7 +15,7 @@
     "read": "Get-CsTenantFederationConfiguration",
     "check": "AllowTeamsConsumer == false; AllowTeamsConsumerInbound == false",
     "permissions": [
-      "teams:app-only Connect-MicrosoftTeams (certificate, or -AccessTokens with Graph and Teams admin API tokens)"
+      "teams:app-only Connect-MicrosoftTeams"
     ],
     "roles": [
       "Teams Administrator"
@@ -53,7 +53,7 @@
     "read": "Get-CsTenantFederationConfiguration | Select-Object AllowFederatedUsers, AllowedDomains, BlockedDomains",
     "check": "AllowFederatedUsers == true; core: AllowedDomains is AllowAllKnownDomains; enhanced: AllowedDomains lists exactly the configured domains",
     "permissions": [
-      "teams:app-only Connect-MicrosoftTeams (certificate, or -AccessTokens with Graph and Teams admin API tokens)"
+      "teams:app-only Connect-MicrosoftTeams"
     ],
     "roles": [
       "Teams Administrator"
@@ -80,7 +80,7 @@
     "read": "Get-CsTeamsClientConfiguration -Identity Global",
     "check": "AllowGuestUser == false",
     "permissions": [
-      "teams:app-only Connect-MicrosoftTeams (certificate, or -AccessTokens with Graph and Teams admin API tokens)"
+      "teams:app-only Connect-MicrosoftTeams"
     ],
     "roles": [
       "Teams Administrator"
@@ -108,7 +108,7 @@
     "read": "Get-CsTeamsMeetingPolicy -Identity Global",
     "check": "AutoAdmittedUsers == EveryoneInCompanyExcludingGuests; AllowPSTNUsersToBypassLobby == false",
     "permissions": [
-      "teams:app-only Connect-MicrosoftTeams (certificate, or -AccessTokens with Graph and Teams admin API tokens)"
+      "teams:app-only Connect-MicrosoftTeams"
     ],
     "roles": [
       "Teams Administrator"
@@ -135,7 +135,7 @@
     "read": "Get-CsTeamsMeetingPolicy -Identity Global",
     "check": "AllowAnonymousUsersToStartMeeting == false",
     "permissions": [
-      "teams:app-only Connect-MicrosoftTeams (certificate, or -AccessTokens with Graph and Teams admin API tokens)"
+      "teams:app-only Connect-MicrosoftTeams"
     ],
     "roles": [
       "Teams Administrator"
@@ -162,7 +162,7 @@
     "read": "Get-CsTeamsMeetingPolicy -Identity Global",
     "check": "DesignatedPresenterRoleMode == OrganizerOnlyUserOverride",
     "permissions": [
-      "teams:app-only Connect-MicrosoftTeams (certificate, or -AccessTokens with Graph and Teams admin API tokens)"
+      "teams:app-only Connect-MicrosoftTeams"
     ],
     "roles": [
       "Teams Administrator"
@@ -189,7 +189,7 @@
     "read": "Get-CsTeamsMeetingPolicy -Identity Global",
     "check": "AllowExternalParticipantGiveRequestControl == false",
     "permissions": [
-      "teams:app-only Connect-MicrosoftTeams (certificate, or -AccessTokens with Graph and Teams admin API tokens)"
+      "teams:app-only Connect-MicrosoftTeams"
     ],
     "roles": [
       "Teams Administrator"
@@ -218,7 +218,7 @@
     "read": "Get-CsTeamsMeetingPolicy -Identity Global",
     "check": "AllowCloudRecording == true; AllowTranscription == true; NewMeetingRecordingExpirationDays == 365",
     "permissions": [
-      "teams:app-only Connect-MicrosoftTeams (certificate, or -AccessTokens with Graph and Teams admin API tokens)"
+      "teams:app-only Connect-MicrosoftTeams"
     ],
     "roles": [
       "Teams Administrator"
@@ -249,7 +249,7 @@
     "read": "Get-CsTeamsMessagingPolicy -Identity Global; Get-ReportSubmissionPolicy",
     "check": "AllowSecurityEndUserReporting == true; ReportChatMessageEnabled == true",
     "permissions": [
-      "teams:app-only Connect-MicrosoftTeams (certificate, or -AccessTokens with Graph and Teams admin API tokens)",
+      "teams:app-only Connect-MicrosoftTeams",
       "exchange:Exchange.ManageAsApp"
     ],
     "roles": [
@@ -282,7 +282,7 @@
     "read": "Get-CsTeamsClientConfiguration -Identity Global",
     "check": "AllowDropBox, AllowBox, AllowGoogleDrive, AllowShareFile, AllowEgnyte all == false",
     "permissions": [
-      "teams:app-only Connect-MicrosoftTeams (certificate, or -AccessTokens with Graph and Teams admin API tokens)"
+      "teams:app-only Connect-MicrosoftTeams"
     ],
     "roles": [
       "Teams Administrator"
@@ -309,7 +309,7 @@
     "read": "Get-CsTeamsClientConfiguration -Identity Global",
     "check": "AllowEmailIntoChannel == false",
     "permissions": [
-      "teams:app-only Connect-MicrosoftTeams (certificate, or -AccessTokens with Graph and Teams admin API tokens)"
+      "teams:app-only Connect-MicrosoftTeams"
     ],
     "roles": [
       "Teams Administrator"
@@ -346,7 +346,7 @@
     "read": "Get-CsTeamsAppPermissionPolicy -Identity Global; Get-CsTeamsAppSetupPolicy -Identity Global; Get-CsTeamsSettingsCustomApp; Get-M365TeamsApp",
     "check": "GlobalCatalogAppsType == AllowedAppList and PrivateCatalogAppsType == AllowedAppList with only approved app ids; AllowSideLoading == false; isSideloadedAppsInteractionEnabled == false",
     "permissions": [
-      "teams:app-only Connect-MicrosoftTeams (certificate, or -AccessTokens with Graph and Teams admin API tokens)"
+      "teams:app-only Connect-MicrosoftTeams"
     ],
     "roles": [
       "Teams Administrator"
@@ -374,7 +374,7 @@
     "read": "Get-CsTeamsChannelsPolicy -Identity Global",
     "check": "AllowChannelSharingToExternalUser == false; AllowUserToParticipateInExternalSharedChannel == false",
     "permissions": [
-      "teams:app-only Connect-MicrosoftTeams (certificate, or -AccessTokens with Graph and Teams admin API tokens)"
+      "teams:app-only Connect-MicrosoftTeams"
     ],
     "roles": [
       "Teams Administrator"

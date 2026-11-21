@@ -199,3 +199,53 @@ func TestConfigValidateChecksChoices(t *testing.T) {
 		t.Errorf("exit %d", code)
 	}
 }
+
+func TestPermissionBundlesFollowTheSelection(t *testing.T) {
+	cfg, err := os.ReadFile(acmeConfig)
+	if err != nil {
+		t.Fatal(err)
+	}
+	grants := func(text string) (ids []string, graph []string) {
+		p := filepath.Join(t.TempDir(), "box-config.yaml")
+		if err := os.WriteFile(p, []byte(text), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		code, out := box(t, "choices", "permissions", "--config", p, "--json")
+		var res struct {
+			Bundles []struct {
+				ID string `json:"id"`
+			} `json:"bundles"`
+			Permissions struct {
+				Graph []string `json:"graph"`
+			} `json:"permissions"`
+		}
+		if code != ExitOK || json.Unmarshal([]byte(out), &res) != nil {
+			t.Fatalf("exit %d\n%s", code, out)
+		}
+		for _, b := range res.Bundles {
+			ids = append(ids, b.ID)
+		}
+		return ids, res.Permissions.Graph
+	}
+	ids, graph := grants(strings.Replace(string(cfg), "devices: true", "devices: false", 1))
+	for _, g := range graph {
+		if strings.HasPrefix(g, "DeviceManagement") || g == "Policy.ReadWrite.DeviceConfiguration" {
+			t.Errorf("devices off still grants %s", g)
+		}
+	}
+	if strings.Contains(strings.Join(ids, ","), "devices") || ids[0] != "base" {
+		t.Errorf("bundles %v", ids)
+	}
+	ids, _ = grants(string(cfg))
+	if !strings.Contains(strings.Join(ids, ","), "devices") {
+		t.Errorf("devices on: bundles %v", ids)
+	}
+	ids, _ = grants(string(cfg) + "\nchoices:\n  automation.governance: later\n")
+	if strings.Contains(strings.Join(ids, ","), "powerplatform") {
+		t.Errorf("automation governance later still needs powerplatform: %v", ids)
+	}
+	ids, _ = grants(string(cfg) + "\nchoices:\n  azure.subscription: create\n")
+	if !strings.Contains(strings.Join(ids, ","), "azure") {
+		t.Errorf("azure choice does not add its bundle: %v", ids)
+	}
+}

@@ -18,12 +18,6 @@ import (
 	"github.com/Smohan-vcode/O365-Box/engine/internal/keystore"
 )
 
-func loadPermissions(root string) (bootstrap.Permissions, error) {
-	var p bootstrap.Permissions
-	err := readYAMLFile(filepath.Join(root, "expected-state", "app-permissions.yaml"), &p)
-	return p, err
-}
-
 func openKeystore() (keystore.Store, error) {
 	dir, err := keystore.DefaultDir()
 	if err != nil {
@@ -79,9 +73,14 @@ func newBootstrapCmd(g *globals) *cobra.Command {
 			if cfg.Tenant.Environment == "live" && !live {
 				return usageError("this configuration targets a live tenant: bootstrap the test tenant first, then pass --live")
 			}
-			perms, err := loadPermissions(root)
+			gr, err := neededGrants(root, &cfg)
 			if err != nil {
 				return err
+			}
+			perms := gr.Permissions
+			fmt.Fprintln(out, "Permission bundles this configuration needs (you approve them at the sign-in):")
+			for _, n := range gr.Needs {
+				fmt.Fprintln(out, "  "+n.describe())
 			}
 			ks, err := openKeystore()
 			if err != nil {
@@ -174,6 +173,12 @@ func checkIdentity(ctx context.Context, out io.Writer, tenant string, ks keystor
 		fmt.Fprintln(out, "  ✗ "+p)
 	}
 	if len(problems) > 0 {
+		for _, p := range problems {
+			if strings.HasPrefix(p, "missing ") {
+				fmt.Fprintln(out, "  The configuration needs permission bundles the app does not have yet: run box bootstrap again and approve them at the Global Administrator sign-in (SPEC §24.3).")
+				break
+			}
+		}
 		fmt.Fprintf(out, "✗ check identity: %d problem(s)\n", len(problems))
 		return exitError{ExitFailure}
 	}

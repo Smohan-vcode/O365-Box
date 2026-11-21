@@ -4,7 +4,7 @@ pwsh: {minimum: "7.4.0", tested: "7.4.6"}
 modules:
   - {name: Microsoft.Graph.Authentication, version: "2.25.0", provider: identity}
   - {name: Microsoft.Graph.Identity.DirectoryManagement, version: "2.25.0", provider: identity}
-  - {name: ExchangeOnlineManagement, version: "3.6.0", provider: exchange}
+  - {name: ExchangeOnlineManagement, version: "3.9.2", provider: exchange}   # 3.8+ for Connect-IPPSSession -AccessToken (SC-21)
   - {name: PnP.PowerShell, version: "2.12.0", provider: sharepoint}
   - {name: MicrosoftTeams, version: "6.7.0", provider: teams}
 tools:

@@ -260,6 +260,24 @@ func selection(root string, cfg *config.Config) (policy.Selection, error) {
 	}
 	sel.Choices = r.Answers
 	sel.Defaulted = keys(r.Defaulted)
+	if len(r.Bundles) > 0 {
+		sel.ChoiceBundles = r.Bundles
+	}
+	// A setting whose provider or permissions belong to a module that is off
+	// is left out (SPEC §24.3): no device policy without the devices module.
+	bundles, maps, err := grantData(root)
+	if err != nil {
+		return sel, err
+	}
+	mods := cfg.Modules.Map()
+	for id, m := range maps {
+		if _, done := r.LeftOut[id]; done {
+			continue
+		}
+		if mod := moduleOfMapping(bundles, m); mod != "" && !mods[mod] {
+			r.LeftOut[id] = "module " + mod + " is off"
+		}
+	}
 	if len(r.LeftOut) > 0 {
 		sel.LeftOut = r.LeftOut
 	}

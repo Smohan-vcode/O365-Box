@@ -1,0 +1,71 @@
+{
+  "_comment": "Recorded Microsoft Graph responses for a fictional tenant (Fernhill Labs, fernhill.example). Shapes follow the Graph v1.0 and beta documentation. {{base}} is the test server's URL.",
+  "/v1.0/organization": {"body": {"value": [{"id": "00000000-0000-4000-8000-00000000f00d", "displayName": "Fernhill Labs", "createdDateTime": "2025-02-01T09:00:00Z", "onPremisesSyncEnabled": null,
+    "verifiedDomains": [{"name": "fernhill.example", "isDefault": true, "isInitial": false}, {"name": "fernhilllabs.onmicrosoft.com", "isDefault": false, "isInitial": true}]}]}},
+  "/v1.0/policies/authorizationPolicy": {"body": {"id": "authorizationPolicy", "allowInvitesFrom": "adminsAndGuestInviters",
+    "defaultUserRolePermissions": {"allowedToCreateApps": false, "permissionGrantPoliciesAssigned": ["ManagePermissionGrantsForSelf.microsoft-user-default-legacy"]}}},
+  "/v1.0/policies/identitySecurityDefaultsEnforcementPolicy": {"body": {"id": "00000000-0000-0000-0000-000000000005", "isEnabled": false}},
+  "/v1.0/domains": {"body": {"value": [
+    {"id": "fernhill.example", "isVerified": true, "isDefault": true, "isInitial": false, "authenticationType": "Managed", "passwordValidityPeriodInDays": 2147483647},
+    {"id": "fernhilllabs.onmicrosoft.com", "isVerified": true, "isDefault": false, "isInitial": true, "authenticationType": "Managed", "passwordValidityPeriodInDays": 2147483647}]}},
+  "/v1.0/users": {"body": {"value": [
+    {"id": "u-ada", "displayName": "Ada Fernhill", "userPrincipalName": "ada@fernhill.example", "userType": "Member", "accountEnabled": true, "createdDateTime": "2025-02-01T09:00:00Z", "assignedLicenses": [{"skuId": "s1"}], "signInActivity": {"lastSignInDateTime": "2026-11-20T08:00:00Z"}},
+    {"id": "u-bob", "displayName": "Bob Quill", "userPrincipalName": "bob@fernhill.example", "userType": "Member", "accountEnabled": true, "createdDateTime": "2025-03-01T09:00:00Z", "assignedLicenses": [{"skuId": "s1"}], "signInActivity": {"lastSignInDateTime": "2026-05-01T08:00:00Z"}},
+    {"id": "u-bg1", "displayName": "Break Glass 1", "userPrincipalName": "bg1@fernhilllabs.onmicrosoft.com", "userType": "Member", "accountEnabled": true, "createdDateTime": "2025-02-01T09:00:00Z", "assignedLicenses": [], "signInActivity": {}}]}},
+  "/v1.0/users?guest": {"body": {"value": [
+    {"id": "g-1", "displayName": "Carol (Partner)", "mail": "carol@partner.example", "createdDateTime": "2025-06-01T09:00:00Z", "externalUserState": "Accepted", "accountEnabled": true, "signInActivity": {"lastSignInDateTime": "2025-07-01T08:00:00Z"}}]}},
+  "/v1.0/reports/authenticationMethods/userRegistrationDetails": {"body": {"value": [
+    {"userPrincipalName": "ada@fernhill.example", "userDisplayName": "Ada Fernhill", "userType": "member", "isAdmin": true, "isMfaRegistered": true, "isMfaCapable": true, "isPasswordlessCapable": true, "methodsRegistered": ["fido2", "microsoftAuthenticatorPush"]},
+    {"userPrincipalName": "bob@fernhill.example", "userDisplayName": "Bob Quill", "userType": "member", "isAdmin": false, "isMfaRegistered": false, "isMfaCapable": false, "isPasswordlessCapable": false, "methodsRegistered": []},
+    {"userPrincipalName": "bg1@fernhilllabs.onmicrosoft.com", "userDisplayName": "Break Glass 1", "userType": "member", "isAdmin": true, "isMfaRegistered": true, "isMfaCapable": true, "methodsRegistered": ["fido2"]}]}},
+  "/v1.0/roleManagement/directory/roleDefinitions": {"body": {"value": [
+    {"id": "62e90394-69f5-4237-9190-012177145e10", "templateId": "62e90394-69f5-4237-9190-012177145e10", "displayName": "Global Administrator", "isBuiltIn": true},
+    {"id": "f2ef992c-3afb-46b9-b7cf-a126ee74c451", "templateId": "f2ef992c-3afb-46b9-b7cf-a126ee74c451", "displayName": "Global Reader", "isBuiltIn": true}]}},
+  "/v1.0/roleManagement/directory/roleAssignments": {"body": {"value": [
+    {"id": "a1", "roleDefinitionId": "62e90394-69f5-4237-9190-012177145e10", "principalId": "u-ada", "directoryScopeId": "/", "principal": {"@odata.type": "#microsoft.graph.user", "id": "u-ada", "displayName": "Ada Fernhill", "userPrincipalName": "ada@fernhill.example"}},
+    {"id": "a2", "roleDefinitionId": "62e90394-69f5-4237-9190-012177145e10", "principalId": "u-bg1", "directoryScopeId": "/", "principal": {"@odata.type": "#microsoft.graph.user", "id": "u-bg1", "displayName": "Break Glass 1", "userPrincipalName": "bg1@fernhilllabs.onmicrosoft.com"}},
+    {"id": "a3", "roleDefinitionId": "f2ef992c-3afb-46b9-b7cf-a126ee74c451", "principalId": "u-bob", "directoryScopeId": "/", "principal": {"@odata.type": "#microsoft.graph.user", "id": "u-bob", "displayName": "Bob Quill", "userPrincipalName": "bob@fernhill.example"}}]}},
+  "/v1.0/roleManagement/directory/roleEligibilitySchedules": {"status": 403, "body": {"error": {"code": "AadPremiumLicenseRequired", "message": "The tenant needs an Entra ID P2 licence."}}},
+  "/v1.0/identity/conditionalAccess/policies": {"body": {"value": [
+    {"id": "ca1", "displayName": "Require MFA for everyone", "state": "enabled",
+      "conditions": {"users": {"includeUsers": ["All"], "excludeGroups": ["grp-bg"]}, "applications": {"includeApplications": ["All"]}, "clientAppTypes": ["all"]},
+      "grantControls": {"operator": "OR", "builtInControls": ["mfa"]}},
+    {"id": "ca2", "displayName": "Block legacy sign-in (report only)", "state": "enabledForReportingButNotEnforced",
+      "conditions": {"users": {"includeUsers": ["All"]}, "applications": {"includeApplications": ["All"]}, "clientAppTypes": ["exchangeActiveSync", "other"]},
+      "grantControls": {"operator": "OR", "builtInControls": ["block"]}}]}},
+  "/v1.0/policies/authenticationMethodsPolicy": {"body": {"id": "authenticationMethodsPolicy", "policyMigrationState": "migrationComplete", "authenticationMethodConfigurations": [
+    {"id": "Fido2", "state": "enabled"}, {"id": "MicrosoftAuthenticator", "state": "enabled"}, {"id": "Sms", "state": "enabled"}, {"id": "Voice", "state": "disabled"}]}},
+  "/v1.0/policies/deviceRegistrationPolicy": {"body": {"id": "deviceRegistrationPolicy", "userDeviceQuota": 20, "multiFactorAuthConfiguration": "required"}},
+  "/v1.0/applications": {"body": {"value": [
+    {"id": "app1", "appId": "11111111-1111-4111-8111-111111111111", "displayName": "Payroll export", "createdDateTime": "2025-04-01T00:00:00Z",
+      "passwordCredentials": [{"keyId": "k1", "displayName": "old", "hint": "abc", "endDateTime": "2026-01-01T00:00:00Z"}], "keyCredentials": []}]}},
+  "/v1.0/oauth2PermissionGrants": {"body": {"value": [
+    {"id": "gr1", "clientId": "sp1", "consentType": "AllPrincipals", "resourceId": "sp-graph", "scope": "User.Read"},
+    {"id": "gr2", "clientId": "sp2", "consentType": "Principal", "principalId": "u-bob", "resourceId": "sp-graph", "scope": "Mail.Read offline_access"}]}},
+  "/v1.0/deviceManagement/managedDevices": {"body": {"value": [
+    {"id": "d1", "deviceName": "FH-LAP-01", "operatingSystem": "Windows", "osVersion": "10.0.26100.2000", "complianceState": "compliant", "isEncrypted": true, "lastSyncDateTime": "2026-11-20T07:00:00Z", "managedDeviceOwnerType": "company", "userPrincipalName": "ada@fernhill.example", "enrolledDateTime": "2025-03-01T00:00:00Z"},
+    {"id": "d2", "deviceName": "FH-MAC-02", "operatingSystem": "macOS", "osVersion": "15.1", "complianceState": "noncompliant", "isEncrypted": false, "lastSyncDateTime": "2026-09-01T07:00:00Z", "managedDeviceOwnerType": "company", "userPrincipalName": "bob@fernhill.example", "enrolledDateTime": "2025-05-01T00:00:00Z"}]}},
+  "/v1.0/deviceManagement/deviceCompliancePolicies": {"body": {"value": [{"@odata.type": "#microsoft.graph.windows10CompliancePolicy", "id": "cp1", "displayName": "Windows baseline", "lastModifiedDateTime": "2026-01-01T00:00:00Z"}]}},
+  "/v1.0/deviceManagement/deviceConfigurations": {"body": {"value": []}},
+  "/beta/deviceManagement/configurationPolicies": {"body": {"value": [{"id": "cfg1", "name": "Office macros", "platforms": "windows10", "technologies": "mdm", "lastModifiedDateTime": "2026-01-01T00:00:00Z"}]}},
+  "/v1.0/deviceAppManagement/managedAppPolicies": {"body": {"value": []}},
+  "/v1.0/directory/deviceLocalCredentials": {"body": {"value": [{"id": "d1", "deviceName": "FH-LAP-01", "lastBackupDateTime": "2026-11-19T00:00:00Z"}]}},
+  "/v1.0/admin/sharepoint/settings": {"body": {"sharingCapability": "externalUserAndGuestSharing", "isResharingByExternalUsersEnabled": false, "sharingDomainRestrictionMode": "none"}},
+  "/beta/security/informationProtection/sensitivityLabels": {"status": 403, "body": {"error": {"code": "Forbidden", "message": "Insufficient privileges."}}},
+  "/v1.0/security/labels/retentionLabels": {"body": {"value": [{"id": "rl1", "displayName": "Keep 7 years", "retentionDuration": {"days": 2555}, "actionAfterRetentionPeriod": "delete", "behaviorDuringRetentionPeriod": "retain"}]}},
+  "/v1.0/security/alerts_v2": {"body": {"value": [
+    {"id": "al1", "title": "Suspicious inbox forwarding", "severity": "high", "status": "new", "category": "Exfiltration", "serviceSource": "microsoftDefenderForOffice365", "createdDateTime": "2026-10-03T10:00:00Z"},
+    {"id": "al2", "title": "Unfamiliar sign-in properties", "severity": "medium", "status": "resolved", "category": "InitialAccess", "serviceSource": "azureAdIdentityProtection", "createdDateTime": "2026-02-03T10:00:00Z", "resolvedDateTime": "2026-02-04T10:00:00Z"}]}},
+  "/v1.0/auditLogs/directoryAudits": {"body": {"@odata.nextLink": "{{base}}/v1.0/auditLogs/directoryAudits?page=2", "value": [
+    {"id": "da1", "activityDateTime": "2026-11-20T10:00:00Z", "category": "RoleManagement", "activityDisplayName": "Add member to role", "result": "success",
+      "initiatedBy": {"user": {"userPrincipalName": "ada@fernhill.example"}}, "targetResources": [{"displayName": null, "userPrincipalName": "bob@fernhill.example"}]}]}},
+  "/v1.0/auditLogs/directoryAudits?page=2": {"body": {"value": [
+    {"id": "da2", "activityDateTime": "2026-10-25T10:00:00Z", "category": "Policy", "activityDisplayName": "Update conditional access policy", "result": "success",
+      "initiatedBy": {"app": {"displayName": "Microsoft Graph Command Line Tools"}}, "targetResources": [{"displayName": "Require MFA for everyone"}]}]}},
+  "/v1.0/auditLogs/signIns": {"body": {"value": [
+    {"id": "s1", "createdDateTime": "2026-11-20T08:00:00Z", "userPrincipalName": "ada@fernhill.example", "appDisplayName": "Office 365", "clientAppUsed": "Browser", "status": {"errorCode": 0}, "conditionalAccessStatus": "success", "riskLevelDuringSignIn": "none", "isInteractive": true, "ipAddress": "203.0.113.7"},
+    {"id": "s2", "createdDateTime": "2026-11-02T08:00:00Z", "userPrincipalName": "bob@fernhill.example", "appDisplayName": "Office 365 Exchange Online", "clientAppUsed": "IMAP4", "status": {"errorCode": 0}, "conditionalAccessStatus": "notApplied", "riskLevelDuringSignIn": "none", "isInteractive": false, "ipAddress": "198.51.100.9"}]}},
+  "/v1.0/identityProtection/riskyUsers": {"status": 403, "body": {"error": {"code": "Forbidden", "message": "Your tenant is not licensed for this feature."}}},
+  "/v1.0/security/secureScores": {"body": {"value": [{"createdDateTime": "2026-11-20T00:00:00Z", "currentScore": 41.5, "maxScore": 92, "licensedUserCount": 3, "activeUserCount": 2, "controlScores": [{"controlName": "AdminMFAV2", "score": 10}]}]}},
+  "/v1.0/subscribedSkus": {"body": {"value": [{"skuPartNumber": "SPB", "skuId": "s1", "capabilityStatus": "Enabled", "consumedUnits": 2, "prepaidUnits": {"enabled": 5}}]}}
+}

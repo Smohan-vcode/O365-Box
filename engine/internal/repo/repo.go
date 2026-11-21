@@ -34,7 +34,7 @@ func exists(p string) bool {
 }
 
 // SkipDirs are never scanned.
-var SkipDirs = map[string]bool{".git": true, "bin": true, "dist": true, "node_modules": true, ".terraform": true}
+var SkipDirs = map[string]bool{".git": true, ".claude": true, "bin": true, "dist": true, "node_modules": true, ".terraform": true}
 
 const maxTextSize = 2 << 20
 

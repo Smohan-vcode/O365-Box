@@ -20,7 +20,7 @@ CI runs `box backlog check`.
 | T0-04 | Sign-in, discovery and bootstrap | P0 | M | T0-03, S-06, S-08 | yes | TODO |
 | T0-05 | Pipeline and scheduled jobs | P0 | S | T0-04, T0-06 |  | TODO |
 | T0-06 | Configuration store | P0 | M | T0-02, T0-04 |  | TODO |
-| T13-01 | TUI shell | P0 | S | T0-02 |  | TODO |
+| T13-01 | TUI shell | P0 | S | T0-02 |  | DONE |
 | T13-02 | Start, sign-in and discovery screen | P0 | M | T13-01, T0-04, S-08 |  | TODO |
 | T13-03 | Company, addresses and people screens | P0 | M | T13-02 |  | TODO |
 | T13-04 | Security screen and hardening presets | P0 | M | T13-02 |  | TODO |

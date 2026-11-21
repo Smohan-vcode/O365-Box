@@ -51,16 +51,25 @@ func New(out, errOut io.Writer) *cobra.Command {
 		Use:   "box",
 		Short: "Company in a Box: set up and harden a company on Microsoft 365",
 		Long: "box sets up and hardens a company's Microsoft 365 tenant from a guided onboarding.\n" +
-			"Run it with no arguments to start onboarding (available from task T13-01).",
+			"Run it with no arguments in a terminal to start or continue onboarding.",
 		Version:       Version,
 		SilenceUsage:  true,
 		SilenceErrors: true,
+	}
+	tf := &tuiFlags{}
+	tf.bind(root, false)
+	root.Args = cobra.NoArgs
+	root.RunE = func(cmd *cobra.Command, _ []string) error {
+		if !isTerminal() {
+			return cmd.Help()
+		}
+		return tf.run()
 	}
 	root.SetOut(out)
 	root.SetErr(errOut)
 	root.PersistentFlags().StringVar(&g.repo, "repo", "", "path inside the engine repository (default: current directory)")
 	root.PersistentFlags().BoolVar(&g.asJSON, "json", false, "print machine-readable JSON")
-	root.AddCommand(newConfigCmd(g), newCheckLiteralsCmd(g), newCheckConnectorsCmd(g), newBacklogCmd(g), newDoctorCmd(g))
+	root.AddCommand(newConfigCmd(g), newCheckLiteralsCmd(g), newCheckConnectorsCmd(g), newBacklogCmd(g), newDoctorCmd(g), newOnboardCmd())
 	root.AddCommand(newRunCommands(g)...)
 	return root
 }

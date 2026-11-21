@@ -1,6 +1,11 @@
-# Steps of the teams provider: Meeting, external access, guest and app policies (T1-05, T13-05).
+# Steps of the teams provider: Meeting, external access, guest and app policies (T1-05, T13-05, T14-09).
 # One Microsoft module per provider (spike S-05). Steps are added by the
 # tasks named above; each needs a handler in Box.teams.psm1.
 provider: teams
 modules: [MicrosoftTeams]
-steps: []
+steps:
+  - id: policy.teams
+    title: Resolved Teams settings
+    track: T14
+    task: T14-09
+    reads: ["@policy", policy]

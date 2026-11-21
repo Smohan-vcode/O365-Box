@@ -98,3 +98,67 @@ Describe 'policy.capabilities: users not covered (T14-02)' {
     @(Get-NotCoveredUsers -UserPlans @{ 'a@x' = @('AAD_PREMIUM') } -Needed @{ entra_p1 = @('AAD_PREMIUM') }).Count | Should -Be 0
   }
 }
+
+Describe 'policy.sharepoint comparisons (T14-09)' {
+  BeforeAll { Import-Module (Join-Path $PSScriptRoot 'sharepoint' 'Box.sharepoint.psm1') -Force }
+  It 'merges one payload part across settings and finds the differences' {
+    $s = @(
+      [pscustomobject]@{ id = 'SPO-001'; payload = [pscustomobject]@{ 'Set-PnPTenant' = [pscustomobject]@{ SharingCapability = 'ExistingExternalUserSharingOnly' } } },
+      [pscustomobject]@{ id = 'SPO-005'; payload = [pscustomobject]@{ 'Set-PnPTenant' = [pscustomobject]@{ ExternalUserExpirationRequired = $true; ExternalUserExpireInDays = 30 } } },
+      [pscustomobject]@{ id = 'SPO-016'; payload = [pscustomobject]@{ 'Set-PnPRequestAccessEmails' = [pscustomobject]@{ Disabled = $true } } })
+    $want = Merge-BoxPayload $s 'Set-PnPTenant'
+    @($want.Keys) | Should -Be @('SharingCapability', 'ExternalUserExpirationRequired', 'ExternalUserExpireInDays')
+    $cur = [pscustomobject]@{ SharingCapability = 'ExistingExternalUserSharingOnly'; ExternalUserExpirationRequired = $false; ExternalUserExpireInDays = 30 }
+    $d = @(Compare-BoxProperties $cur $want)
+    $d.Count | Should -Be 1
+    $d[0].name | Should -Be 'ExternalUserExpirationRequired'
+  }
+  It 'reads a property under its read name' {
+    $d = @(Compare-BoxProperties ([pscustomobject]@{ SharePointAddInsDisabled = $true }) ([ordered]@{ IsSharePointAddInsDisabled = $true }) @{ IsSharePointAddInsDisabled = 'SharePointAddInsDisabled' })
+    $d.Count | Should -Be 0
+  }
+  It 'refuses two settings that want different values' {
+    $s = @(
+      [pscustomobject]@{ id = 'A'; payload = @{ 'Set-PnPTenant' = @{ SharingCapability = 'Disabled' } } },
+      [pscustomobject]@{ id = 'B'; payload = @{ 'Set-PnPTenant' = @{ SharingCapability = 'ExistingExternalUserSharingOnly' } } })
+    { Merge-BoxPayload $s 'Set-PnPTenant' } | Should -Throw '*want different values*'
+  }
+  It 'reports where the baseline step and the policy step disagree' {
+    @(Test-BaselineAgreement ([ordered]@{ SharingCapability = 'Disabled'; LegacyAuthProtocolsEnabled = $false }) ([ordered]@{ SharingCapability = 'Disabled'; LegacyAuthProtocolsEnabled = $false })).Count | Should -Be 0
+    @(Test-BaselineAgreement ([ordered]@{ SharingCapability = 'Disabled' }) ([ordered]@{ SharingCapability = 'ExistingExternalUserSharingOnly' })).Count | Should -Be 1
+  }
+  It 'knows the tenant values another value decides' {
+    $m = Get-SupersededTenantKeys ([pscustomobject]@{ EnableAzureADB2BIntegration = $true; OneDriveSharingCapability = 'Disabled' })
+    @($m.Keys | Sort-Object) | Should -Be @('NotifyOwnersWhenInvitationsAccepted', 'RequireAcceptingAccountMatchInvitedAccount')
+    (Get-SupersededTenantKeys ([pscustomobject]@{ EnableAzureADB2BIntegration = $false; OneDriveSharingCapability = 'ExternalUserSharingOnly' })).Count | Should -Be 0
+  }
+  It 'makes a SharePoint-generated Conditional Access policy report-only with break-glass excluded' {
+    $p = [pscustomobject]@{ state = 'enabled'; conditions = [pscustomobject]@{ users = [pscustomobject]@{ excludeGroups = @('g1') } } }
+    $f = Get-CaPolicyFix $p 'bg'
+    $f.state | Should -Be 'enabledForReportingButNotEnforced'
+    $f.conditions.users.excludeGroups | Should -Be @('g1', 'bg')
+    $ok = [pscustomobject]@{ state = 'enabledForReportingButNotEnforced'; conditions = [pscustomobject]@{ users = [pscustomobject]@{ excludeGroups = @('bg') } } }
+    (Get-CaPolicyFix $ok 'bg').Count | Should -Be 0
+  }
+}
+
+Describe 'policy.teams payloads (T14-09)' {
+  BeforeAll { Import-Module (Join-Path $PSScriptRoot 'teams' 'Box.teams.psm1') -Force }
+  It 'groups parameters by cmdlet, picks the tier and leaves out other areas'' parts' {
+    $s = @(
+      [pscustomobject]@{ id = 'TMS-002'; payload = [pscustomobject]@{ core = [pscustomobject]@{ 'Set-CsTenantFederationConfiguration' = [pscustomobject]@{ Identity = 'Global'; AllowFederatedUsers = $true } }; enhanced = [pscustomobject]@{ 'Set-CsTenantFederationConfiguration' = [pscustomobject]@{ Identity = 'Global'; AllowedDomainsAsAList = '{config:teams_federation_allow_list}' } } } },
+      [pscustomobject]@{ id = 'TMS-001'; payload = [pscustomobject]@{ 'Set-CsTenantFederationConfiguration' = [pscustomobject]@{ Identity = 'Global'; AllowTeamsConsumer = $false } } },
+      [pscustomobject]@{ id = 'TMS-009'; payload = [pscustomobject]@{ 'Set-CsTeamsMessagingPolicy' = [pscustomobject]@{ Identity = 'Global'; AllowSecurityEndUserReporting = $true }; 'Set-ReportSubmissionPolicy(exchange)' = [pscustomobject]@{ ReportChatMessageEnabled = $true } } })
+    $r = Resolve-TeamsPayload $s 'core'
+    @($r.cmdlets.Keys) | Should -Be @('Set-CsTenantFederationConfiguration', 'Set-CsTeamsMessagingPolicy')
+    @($r.cmdlets['Set-CsTenantFederationConfiguration'].Keys) | Should -Be @('Identity', 'AllowFederatedUsers', 'AllowTeamsConsumer')
+    $r.skipped | Should -Be @('TMS-009 Set-ReportSubmissionPolicy(exchange)')
+    $e = Resolve-TeamsPayload $s 'enhanced'
+    @($e.cmdlets['Set-CsTenantFederationConfiguration']['AllowedDomainsAsAList']).Count | Should -Be 0
+  }
+  It 'compares values, app lists by id, and ignores Identity' {
+    $cur = [pscustomobject]@{ Identity = 'Global'; AllowGuestUser = $true; GlobalCatalogApps = @([pscustomobject]@{ Id = 'abc' }); AllowedDomains = 'Microsoft.Rtc.Management.WritableConfig.Policy.Edge.AllowAllKnownDomains' }
+    $want = [ordered]@{ Identity = 'Tag:Other'; AllowGuestUser = $false; GlobalCatalogApps = @(); AllowedDomains = 'AllowAllKnownDomains' }
+    @(Compare-TeamsValues $cur $want | ForEach-Object { $_.name }) | Should -Be @('AllowGuestUser', 'GlobalCatalogApps')
+  }
+}

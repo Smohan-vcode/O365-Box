@@ -1416,3 +1416,8 @@ PRC-10 already speak of four labels).
 **Proposed §25.1 wording** (SPEC not edited): "Choices may carry `values`
 that fill configuration keys the settings read (`devices.*`,
 `ai_policy.*`, `values.*`, and the list `policy.consumer_mail_domains`)."
+
+**Scope confirmed by the owner (2026-11-21):** "apply to sensitive site
+members only, agreed" — DLP-06 and DLP-07 apply to the people who own or
+edit the sensitive sites (`{site_members:<url>}`, expanded on every apply),
+not to everyone.

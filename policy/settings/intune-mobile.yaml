@@ -1,0 +1,237 @@
+# Intune, iOS and Android: master settings.
+# mode: enforce | staged (audit or report-only first, then enforce) | report (evidence only)
+# value is the intended state in words; the setting resolution task (track T14) resolves each to the exact API setting and records it in expected-state/setting-ids.json.
+admin_centre: Intune, iOS and Android
+settings:
+- id: MOB-001
+  platform: ios android
+  name: 'Enrolment: personal phones use app protection without device enrolment'
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-07
+  - DEV-01
+- id: MOB-002
+  platform: ios android
+  name: 'Enrolment: company-owned phones are supervised or fully managed'
+  value: 'on'
+  tier: enhanced
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-01
+- id: MOB-003
+  platform: ios android
+  name: 'Compliance: jailbroken or rooted devices'
+  value: blocked
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-10
+- id: MOB-004
+  platform: ios android
+  name: 'Compliance: minimum operating system version'
+  value: current minus one major release
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-04
+- id: MOB-005
+  platform: ios android
+  name: 'Compliance: passcode'
+  value: required; 6 digits; simple values blocked
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-03
+- id: MOB-006
+  platform: ios android
+  name: 'Compliance: maximum inactivity before lock'
+  value: 5 minutes
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-03
+- id: MOB-007
+  platform: android
+  name: 'Compliance: storage encryption'
+  value: required
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-02
+- id: MOB-008
+  platform: android
+  name: 'Compliance: Play integrity verdict'
+  value: basic and device integrity
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-10
+- id: MOB-009
+  platform: android
+  name: 'Compliance: apps from unknown sources and USB debugging'
+  value: blocked
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - CFG-08
+- id: MOB-010
+  platform: ios android
+  name: 'Compliance: device threat level from mobile threat defence'
+  value: low or secured
+  tier: core
+  mode: enforce
+  capability: defender_business
+  requirements:
+  - MAL-02
+- id: MOB-011
+  platform: ios android
+  name: 'App protection: PIN or biometric to open work apps'
+  value: 6 digits; recheck after 30 minutes
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-07
+  - DEV-03
+- id: MOB-012
+  platform: ios android
+  name: 'App protection: send organisation data to other apps'
+  value: policy-managed apps only
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-07
+  - DAT-03
+- id: MOB-013
+  platform: ios android
+  name: 'App protection: cut, copy and paste with other apps'
+  value: policy-managed apps with paste in
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-07
+- id: MOB-014
+  platform: ios android
+  name: 'App protection: save copies of organisation data'
+  value: company storage only
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-07
+  - COL-05
+- id: MOB-015
+  platform: ios android
+  name: 'App protection: backup of organisation data to personal cloud'
+  value: blocked
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-07
+- id: MOB-016
+  platform: ios android
+  name: 'App protection: encrypt organisation data'
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-02
+  - DEV-07
+- id: MOB-017
+  platform: ios android
+  name: 'App protection: open web links'
+  value: managed browser
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-07
+- id: MOB-018
+  platform: android
+  name: 'App protection: screen capture'
+  value: blocked
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-07
+- id: MOB-019
+  platform: ios android
+  name: 'App protection: printing organisation data'
+  value: blocked
+  tier: enhanced
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-07
+- id: MOB-020
+  platform: ios android
+  name: 'App protection: third-party keyboards'
+  value: blocked
+  tier: enhanced
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-07
+- id: MOB-021
+  platform: ios android
+  name: 'App protection: jailbroken or rooted device'
+  value: block access
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-10
+- id: MOB-022
+  platform: ios android
+  name: 'App protection: minimum operating system and app version'
+  value: warn below current minus one; block below minus two
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-04
+- id: MOB-023
+  platform: ios android
+  name: 'App protection: offline grace period'
+  value: 12 hours to block; wipe data after 90 days
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-07
+  - DEV-08
+- id: MOB-024
+  platform: ios android
+  name: 'App protection: failed PIN attempts'
+  value: 5, then reset PIN
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-03
+- id: MOB-025
+  platform: ios android
+  name: 'App protection: wipe organisation data when the account is disabled'
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-08
+  - IAM-12

@@ -1,0 +1,173 @@
+# Exchange: master settings.
+# mode: enforce | staged (audit or report-only first, then enforce) | report (evidence only)
+# value is the intended state in words; the setting resolution task (track T14) resolves each to the exact API setting and records it in expected-state/setting-ids.json.
+admin_centre: Exchange
+settings:
+- id: EXO-001
+  platform: all
+  name: SMTP AUTH
+  value: disabled for the organisation; per-mailbox exception by record
+  tier: core
+  mode: staged
+  capability: exchange
+  requirements:
+  - EML-05
+  - IAM-03
+- id: EXO-002
+  platform: all
+  name: POP and IMAP on new mailboxes
+  value: disabled
+  tier: core
+  mode: enforce
+  capability: exchange
+  requirements:
+  - EML-05
+- id: EXO-003
+  platform: all
+  name: Reject direct send
+  value: 'on'
+  tier: core
+  mode: staged
+  capability: exchange
+  requirements:
+  - EML-05
+  - EML-03
+- id: EXO-004
+  platform: all
+  name: 'Remote domains: automatic forwarding'
+  value: disabled on the default domain
+  tier: core
+  mode: enforce
+  capability: exchange
+  requirements:
+  - EML-04
+- id: EXO-005
+  platform: all
+  name: 'Transport rule: block messages of the auto-forward class leaving the company'
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: exchange
+  requirements:
+  - EML-04
+- id: EXO-007
+  platform: all
+  name: External sender tag in Outlook
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: exchange
+  requirements:
+  - EML-06
+- id: EXO-008
+  platform: all
+  name: MailTips for external recipients and large audiences
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: exchange
+  requirements:
+  - EML-06
+  - DAT-03
+- id: EXO-009
+  platform: all
+  name: Mailbox auditing
+  value: on for all mailboxes, including shared
+  tier: core
+  mode: enforce
+  capability: exchange
+  requirements:
+  - LOG-01
+- id: EXO-010
+  platform: all
+  name: 'Shared mailboxes: sign-in'
+  value: blocked
+  tier: core
+  mode: enforce
+  capability: exchange
+  requirements:
+  - EML-08
+- id: EXO-011
+  platform: all
+  name: 'Shared mailboxes: access'
+  value: full access and send-as through access groups only
+  tier: core
+  mode: enforce
+  capability: exchange
+  requirements:
+  - EML-08
+  - IAM-12
+- id: EXO-012
+  platform: all
+  name: 'Outlook on the web: additional storage providers'
+  value: 'off'
+  tier: core
+  mode: enforce
+  capability: exchange
+  requirements:
+  - EML-07
+  - COL-04
+- id: EXO-013
+  platform: all
+  name: 'Outlook on the web: unmanaged devices'
+  value: read-only attachments
+  tier: core
+  mode: enforce
+  capability: exchange
+  requirements:
+  - COL-02
+- id: EXO-014
+  platform: all
+  name: Users installing mail add-ins
+  value: not allowed
+  tier: core
+  mode: enforce
+  capability: exchange
+  requirements:
+  - EML-07
+- id: EXO-015
+  platform: all
+  name: Calendar sharing outside
+  value: free and busy time only
+  tier: core
+  mode: enforce
+  capability: exchange
+  requirements:
+  - COL-01
+- id: EXO-016
+  platform: all
+  name: DKIM signing
+  value: on for every sending domain, 2048-bit
+  tier: core
+  mode: enforce
+  capability: exchange
+  requirements:
+  - EML-03
+- id: EXO-017
+  platform: all
+  name: SPF, DMARC at reject, MTA-STS enforce, TLS reporting
+  value: published and staged per the mail tasks
+  tier: core
+  mode: staged
+  capability: exchange
+  requirements:
+  - EML-03
+  - DAT-09
+- id: EXO-018
+  platform: all
+  name: Exchange Web Services access
+  value: allow list of applications
+  tier: enhanced
+  mode: enforce
+  capability: exchange
+  requirements:
+  - EML-05
+- id: EXO-019
+  platform: all
+  name: Modern authentication
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: exchange
+  requirements:
+  - IAM-03

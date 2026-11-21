@@ -1,0 +1,26 @@
+admin_centre: Test centre
+settings:
+- id: SET-001
+  platform: all
+  name: A setting
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: free
+  requirements: [AAA-01]
+- id: SET-002
+  platform: all
+  name: Points at nothing
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: free
+  requirements: [ZZZ-99]
+- id: SET-001
+  platform: all
+  name: Duplicate
+  value: 'on'
+  tier: core
+  mode: sometimes
+  capability: paid
+  requirements: [AAA-01]

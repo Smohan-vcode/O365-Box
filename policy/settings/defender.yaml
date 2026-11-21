@@ -1,0 +1,221 @@
+# Security (Defender): master settings.
+# mode: enforce | staged (audit or report-only first, then enforce) | report (evidence only)
+# value is the intended state in words; the setting resolution task (track T14) resolves each to the exact API setting and records it in expected-state/setting-ids.json.
+admin_centre: Security (Defender)
+settings:
+- id: DEF-001
+  platform: all
+  name: 'Endpoint: automated investigation and remediation'
+  value: full, automatic
+  tier: core
+  mode: enforce
+  capability: defender_business
+  requirements:
+  - INC-03
+  - MAL-02
+- id: DEF-002
+  platform: all
+  name: 'Endpoint: tamper protection, tenant-wide'
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: defender_business
+  requirements:
+  - MAL-01
+- id: DEF-003
+  platform: all
+  name: 'Endpoint: web content filtering policy'
+  value: block adult, high-bandwidth abuse, illegal and high-risk categories
+  tier: core
+  mode: staged
+  capability: defender_business
+  requirements:
+  - MAL-04
+- id: DEF-004
+  platform: all
+  name: 'Endpoint: custom network indicators'
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: defender_business
+  requirements:
+  - MAL-04
+- id: DEF-005
+  platform: all
+  name: 'Endpoint: device discovery'
+  value: standard
+  tier: core
+  mode: enforce
+  capability: defender_business
+  requirements:
+  - DEV-08
+- id: DEF-006
+  platform: all
+  name: 'Endpoint: vulnerability management, weekly exposure report'
+  value: to alerts address
+  tier: core
+  mode: report
+  capability: defender_business
+  requirements:
+  - CFG-04
+- id: DEF-007
+  platform: all
+  name: 'Endpoint: alert email notifications, medium and above'
+  value: to alerts address
+  tier: core
+  mode: enforce
+  capability: defender_business
+  requirements:
+  - LOG-02
+- id: DEF-008
+  platform: all
+  name: 'Endpoint: preview features'
+  value: 'off'
+  tier: core
+  mode: enforce
+  capability: defender_business
+  requirements:
+  - GOV-05
+- id: DEF-009
+  platform: all
+  name: 'Mail: preset security policy, Standard'
+  value: all recipients
+  tier: core
+  mode: enforce
+  capability: defender_o365_p1
+  requirements:
+  - EML-01
+  - EML-02
+- id: DEF-010
+  platform: all
+  name: 'Mail: preset security policy, Strict'
+  value: owner, administrators, finance and legal role holders
+  tier: core
+  mode: enforce
+  capability: defender_o365_p1
+  requirements:
+  - EML-01
+  - EML-02
+- id: DEF-011
+  platform: all
+  name: 'Mail: impersonation protection for named users and company domains'
+  value: on; quarantine
+  tier: core
+  mode: enforce
+  capability: defender_o365_p1
+  requirements:
+  - EML-01
+- id: DEF-012
+  platform: all
+  name: 'Mail: honour sender DMARC policy'
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: defender_o365_p1
+  requirements:
+  - EML-01
+  - EML-03
+- id: DEF-013
+  platform: all
+  name: 'Mail: Safe Attachments for mail, with dynamic delivery'
+  value: block
+  tier: core
+  mode: enforce
+  capability: defender_o365_p1
+  requirements:
+  - EML-02
+- id: DEF-014
+  platform: all
+  name: 'Mail: Safe Attachments for SharePoint, OneDrive and Teams'
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: defender_o365_p1
+  requirements:
+  - EML-02
+  - COL-01
+- id: DEF-015
+  platform: all
+  name: 'Mail: Safe Links in mail, Teams and Office apps; no click-through'
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: defender_o365_p1
+  requirements:
+  - EML-02
+  - MAL-04
+- id: DEF-016
+  platform: all
+  name: 'Mail: common attachment filter and zero-hour purge'
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: exchange
+  requirements:
+  - EML-02
+- id: DEF-017
+  platform: all
+  name: 'Mail: high-confidence phishing and malware'
+  value: quarantine; release by administrators only
+  tier: core
+  mode: enforce
+  capability: exchange
+  requirements:
+  - EML-01
+- id: DEF-018
+  platform: all
+  name: 'Mail: outbound spam, automatic forwarding'
+  value: 'off'
+  tier: core
+  mode: enforce
+  capability: exchange
+  requirements:
+  - EML-04
+- id: DEF-019
+  platform: all
+  name: 'Mail: outbound spam limits and notification'
+  value: restrict sender; notify alerts address
+  tier: core
+  mode: enforce
+  capability: exchange
+  requirements:
+  - EML-04
+  - LOG-02
+- id: DEF-020
+  platform: all
+  name: 'Mail: user-reported messages'
+  value: report button on; copies to the security mailbox
+  tier: core
+  mode: enforce
+  capability: exchange
+  requirements:
+  - EML-06
+  - INC-01
+- id: DEF-021
+  platform: all
+  name: 'Mail: tenant allow and block list'
+  value: empty at start; entries expire in 30 days
+  tier: core
+  mode: enforce
+  capability: exchange
+  requirements:
+  - EML-01
+- id: DEF-022
+  platform: all
+  name: 'Mail: attack simulation training'
+  value: quarterly campaign
+  tier: addon
+  mode: enforce
+  capability: defender_o365_p2
+  requirements:
+  - AWR-01
+- id: DEF-023
+  platform: all
+  name: Cloud app discovery and session control
+  value: 'on'
+  tier: addon
+  mode: enforce
+  capability: defender_suite
+  requirements:
+  - APP-01
+  - DAT-12

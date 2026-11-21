@@ -1,0 +1,229 @@
+id: cis_v8
+title: CIS Critical Security Controls v8
+mapped_at: safeguard
+note: Only the controls this catalogue addresses are listed. Controls not listed are not covered by tenant settings and need separate treatment.
+controls:
+- id: '1.1'
+  requirements:
+  - DEV-01
+  - DEV-08
+  - IAM-14
+- id: '2.1'
+  requirements:
+  - APP-01
+- id: '2.2'
+  requirements:
+  - DEV-04
+- id: '2.3'
+  requirements:
+  - APP-01
+- id: '2.5'
+  requirements:
+  - APP-02
+  - CFG-08
+  - COL-04
+  - EML-07
+  - IAM-10
+- id: '3.2'
+  requirements:
+  - COL-06
+- id: '3.3'
+  requirements:
+  - APP-03
+  - COL-01
+  - COL-02
+  - COL-05
+  - DAT-08
+  - DAT-13
+  - EML-04
+- id: '3.4'
+  requirements:
+  - DAT-11
+- id: '3.6'
+  requirements:
+  - DEV-02
+- id: '3.7'
+  requirements:
+  - DAT-01
+  - DAT-10
+- id: '3.9'
+  requirements:
+  - DEV-09
+- id: '3.10'
+  requirements:
+  - DAT-09
+- id: '3.11'
+  requirements:
+  - DAT-02
+- id: '3.13'
+  requirements:
+  - DAT-03
+  - DAT-04
+  - DAT-05
+  - DAT-06
+  - DAT-07
+  - DAT-12
+- id: '4.1'
+  requirements:
+  - CFG-01
+  - CFG-06
+  - DEV-01
+  - DEV-07
+  - DEV-10
+  - GOV-01
+  - GOV-03
+  - GOV-04
+  - GOV-05
+  - IAM-08
+- id: '4.3'
+  requirements:
+  - DEV-03
+  - IAM-09
+- id: '4.5'
+  requirements:
+  - DEV-05
+- id: '4.8'
+  requirements:
+  - CFG-07
+  - EML-05
+- id: '4.11'
+  requirements:
+  - DEV-08
+- id: '5.1'
+  requirements:
+  - EML-08
+  - IAM-13
+- id: '5.2'
+  requirements:
+  - IAM-05
+- id: '5.3'
+  requirements:
+  - IAM-12
+- id: '5.4'
+  requirements:
+  - DEV-06
+  - IAM-06
+  - IAM-07
+  - IAM-16
+- id: '5.5'
+  requirements:
+  - IAM-17
+- id: '6.1'
+  requirements:
+  - IAM-11
+- id: '6.2'
+  requirements:
+  - IAM-12
+- id: '6.3'
+  requirements:
+  - IAM-01
+  - IAM-03
+  - IAM-04
+  - IAM-15
+- id: '6.4'
+  requirements:
+  - IAM-01
+- id: '6.5'
+  requirements:
+  - IAM-02
+- id: '6.8'
+  requirements:
+  - IAM-06
+- id: '7.1'
+  requirements:
+  - CFG-04
+- id: '7.3'
+  requirements:
+  - CFG-02
+- id: '7.4'
+  requirements:
+  - CFG-03
+- id: '7.5'
+  requirements:
+  - CFG-04
+- id: '8.2'
+  requirements:
+  - LOG-01
+- id: '8.10'
+  requirements:
+  - LOG-03
+- id: '8.11'
+  requirements:
+  - LOG-02
+  - LOG-04
+- id: '9.1'
+  requirements:
+  - CFG-05
+- id: '9.2'
+  requirements:
+  - MAL-04
+- id: '9.3'
+  requirements:
+  - MAL-04
+- id: '9.5'
+  requirements:
+  - EML-03
+- id: '9.6'
+  requirements:
+  - EML-02
+  - MAL-05
+- id: '9.7'
+  requirements:
+  - EML-01
+  - EML-02
+- id: '10.1'
+  requirements:
+  - MAL-01
+- id: '10.2'
+  requirements:
+  - MAL-01
+- id: '10.5'
+  requirements:
+  - MAL-03
+  - MAL-05
+- id: '11.1'
+  requirements:
+  - BCK-04
+- id: '11.2'
+  requirements:
+  - BCK-01
+- id: '11.4'
+  requirements:
+  - BCK-02
+- id: '11.5'
+  requirements:
+  - BCK-03
+- id: '12.3'
+  requirements:
+  - COL-03
+- id: '13.1'
+  requirements:
+  - MAL-02
+- id: '13.7'
+  requirements:
+  - INC-03
+- id: '14.1'
+  requirements:
+  - AWR-01
+  - AWR-02
+- id: '14.6'
+  requirements:
+  - EML-06
+- id: '15.1'
+  requirements:
+  - SUP-01
+- id: '15.7'
+  requirements:
+  - SUP-02
+- id: '17.1'
+  requirements:
+  - INC-01
+- id: '17.2'
+  requirements:
+  - INC-02
+- id: '17.4'
+  requirements:
+  - INC-01
+- id: '18.1'
+  requirements:
+  - GOV-02

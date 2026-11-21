@@ -1,0 +1,169 @@
+id: nis2
+title: NIS2 Directive (EU) 2022/2555, Article 21(2)
+mapped_at: measure (a) to (j)
+note: Article 23 reporting deadlines (early warning within 24 hours, notification within 72 hours, final report within one month) are carried by requirement INC-02. National transposition and the implementing regulation for
+  digital providers add detail not mapped here.
+controls:
+- id: a
+  title: Policies on risk analysis and information system security
+  requirements:
+  - APP-03
+  - DAT-01
+  - DAT-11
+  - GOV-01
+  - GOV-02
+  - GOV-03
+- id: b
+  title: Incident handling
+  requirements:
+  - EML-06
+  - INC-01
+  - INC-02
+  - INC-03
+  - LOG-01
+  - LOG-02
+  - LOG-03
+  - LOG-04
+  - MAL-02
+- id: c
+  title: Business continuity, backup management, disaster recovery and crisis management
+  requirements:
+  - BCK-01
+  - BCK-02
+  - BCK-03
+  - BCK-04
+  - DAT-11
+  - IAM-07
+- id: d
+  title: Supply chain security
+  requirements:
+  - APP-01
+  - APP-02
+  - APP-03
+  - COL-04
+  - DAT-13
+  - EML-07
+  - IAM-10
+  - IAM-11
+  - SUP-01
+  - SUP-02
+- id: e
+  title: Security in acquisition, development and maintenance, including vulnerability handling and disclosure
+  requirements:
+  - CFG-01
+  - CFG-02
+  - CFG-03
+  - CFG-04
+  - CFG-08
+  - DEV-04
+  - GOV-05
+  - IAM-17
+  - MAL-03
+- id: f
+  title: Policies and procedures to assess the effectiveness of measures
+  requirements:
+  - BCK-03
+  - CFG-04
+  - GOV-03
+  - GOV-04
+  - IAM-13
+  - LOG-01
+  - LOG-03
+- id: g
+  title: Basic cyber hygiene practices and cybersecurity training
+  requirements:
+  - AWR-01
+  - AWR-02
+  - CFG-01
+  - CFG-05
+  - CFG-06
+  - CFG-07
+  - CFG-08
+  - COL-02
+  - COL-05
+  - DAT-03
+  - DAT-07
+  - DEV-01
+  - DEV-03
+  - DEV-04
+  - DEV-05
+  - DEV-07
+  - DEV-09
+  - DEV-10
+  - EML-01
+  - EML-02
+  - EML-04
+  - EML-05
+  - EML-06
+  - EML-07
+  - IAM-03
+  - IAM-05
+  - IAM-08
+  - MAL-01
+  - MAL-02
+  - MAL-03
+  - MAL-04
+  - MAL-05
+- id: h
+  title: Policies and procedures on cryptography and encryption
+  requirements:
+  - DAT-02
+  - DAT-06
+  - DAT-09
+  - DEV-02
+  - DEV-09
+  - EML-03
+- id: i
+  title: Human resources security, access control policies and asset management
+  requirements:
+  - APP-01
+  - AWR-02
+  - CFG-06
+  - CFG-07
+  - COL-01
+  - COL-02
+  - COL-05
+  - COL-06
+  - DAT-01
+  - DAT-03
+  - DAT-04
+  - DAT-05
+  - DAT-06
+  - DAT-07
+  - DAT-08
+  - DAT-10
+  - DAT-12
+  - DAT-13
+  - DEV-01
+  - DEV-06
+  - DEV-07
+  - DEV-08
+  - EML-04
+  - EML-08
+  - IAM-01
+  - IAM-02
+  - IAM-05
+  - IAM-06
+  - IAM-07
+  - IAM-08
+  - IAM-09
+  - IAM-10
+  - IAM-11
+  - IAM-12
+  - IAM-13
+  - IAM-14
+  - IAM-16
+  - IAM-17
+  - SUP-02
+- id: j
+  title: Multi-factor or continuous authentication, secured communications and secured emergency communications
+  requirements:
+  - COL-03
+  - EML-01
+  - EML-03
+  - EML-05
+  - IAM-01
+  - IAM-02
+  - IAM-03
+  - IAM-04
+  - IAM-15

@@ -167,7 +167,7 @@
     "users",
     "groups",
     "structure",
-    "baseline"
+    "policy"
   ],
   "properties": {
     "version": {
@@ -616,43 +616,86 @@
         "sites"
       ]
     },
-    "baseline": {
+    "policy": {
+      "description": "Policy selection (policy/README.md). Frameworks switch on coverage, procedures and evidence; the tier and the plan decide which settings apply.",
       "type": "object",
       "properties": {
-        "preset": {
+        "frameworks": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9_]+$"
+          }
+        },
+        "tier": {
           "enum": [
-            "essential",
-            "recommended",
-            "strict"
+            "core",
+            "enhanced"
           ]
         },
-        "overrides": {
+        "rollout": {
+          "type": "object",
+          "properties": {
+            "stage": {
+              "enum": [
+                "audit",
+                "enforce"
+              ]
+            },
+            "audit_days": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "pilot_group": {
+              "type": "string",
+              "pattern": "^grp-[a-z0-9-]+$"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "stage",
+            "audit_days",
+            "pilot_group"
+          ]
+        },
+        "exceptions": {
           "type": "array",
           "items": {
             "type": "object",
             "properties": {
               "id": {
                 "type": "string",
-                "minLength": 1
+                "pattern": "^[A-Z]{2,4}-[0-9]{2,3}$"
               },
-              "value": {},
               "reason": {
                 "type": "string",
                 "minLength": 1
+              },
+              "reference": {
+                "type": "string",
+                "minLength": 1
+              },
+              "ends": {
+                "type": "string",
+                "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
               }
             },
             "additionalProperties": false,
             "required": [
               "id",
-              "value",
-              "reason"
+              "reason",
+              "reference",
+              "ends"
             ]
           }
         }
       },
       "additionalProperties": false,
       "required": [
-        "preset"
+        "frameworks",
+        "tier",
+        "rollout"
       ]
     },
     "disclosures": {

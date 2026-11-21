@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/Smohan-vcode/O365-Box/engine/internal/report"
 )
@@ -91,12 +92,14 @@ func TestEngineDataChecks(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	issues, err := Validate(d, Options{Roles: testRoles, Settings: []string{"other.setting"}, Jurisdictions: []string{"gb", "eu"}})
+	cat := &PolicyCatalog{Frameworks: []string{"soc2"}, Settings: []string{"ENT-001"}, Requirements: []string{"IAM-01"}}
+	issues, err := Validate(d, Options{Roles: testRoles, Policy: cat, Jurisdictions: []string{"gb", "eu"}})
 	if err != nil {
 		t.Fatal(err)
 	}
 	want := map[string]string{
-		"baseline.overrides[0].id":   "not in baseline/catalogue.yaml",
+		"policy.frameworks[1]":       `framework "nist_csf_2" is not in policy/frameworks`,
+		"policy.exceptions[0].id":    `"TMS-005" is neither a setting nor a requirement`,
 		"jurisdictions.operating[2]": "defaults/jurisdictions/de.yaml",
 	}
 	for path, msg := range want {
@@ -107,6 +110,60 @@ func TestEngineDataChecks(t *testing.T) {
 		if !found {
 			t.Errorf("want %s: %s; got %v", path, msg, issues)
 		}
+	}
+}
+
+func TestPolicyChecks(t *testing.T) {
+	base := loadExample(t)
+	day := func(s string) time.Time {
+		t.Helper()
+		d, err := time.Parse(DateLayout, s)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return d
+	}
+	cases := []struct {
+		name, old, new, today, path, want string
+	}{
+		{"expired exception", "ends: '2099-12-31'", "ends: '2026-01-31'", "2026-02-01", "policy.exceptions[0].ends", "expired on 2026-01-31"},
+		{"exception ends today is still valid", "ends: '2099-12-31'", "ends: '2026-02-01'", "2026-02-01", "", ""},
+		{"exception end not a date", "ends: '2099-12-31'", "ends: '2099-02-31'", "2026-02-01", "policy.exceptions[0].ends", "not a date"},
+		{"exception end pattern", "ends: '2099-12-31'", "ends: 31/12/2099", "2026-02-01", "policy.exceptions[0].ends", "does not match pattern"},
+		{"pilot group undefined", "pilot_group: grp-admins", "pilot_group: grp-pilots", "2026-02-01", "policy.rollout.pilot_group", `pilot group "grp-pilots" is not defined`},
+		{"pilot group not an access group", "pilot_group: grp-admins", "pilot_group: grp-break-glass", "2026-02-01", "policy.rollout.pilot_group", "not an access group"},
+		{"unknown tier", "tier: core", "tier: baseline", "2026-02-01", "policy.tier", "value must be one of"},
+		{"policy required", "policy:\n  frameworks:", "unused:\n  frameworks:", "2026-02-01", "", "missing property 'policy'"},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			if !strings.Contains(base, c.old) {
+				t.Fatalf("fixture text not found: %q", c.old)
+			}
+			d, err := Parse("fixture.yaml", []byte(strings.Replace(base, c.old, c.new, 1)))
+			if err != nil {
+				t.Fatal(err)
+			}
+			issues, err := Validate(d, Options{Roles: testRoles, Today: day(c.today)})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if c.want == "" {
+				for _, i := range issues {
+					t.Error(i)
+				}
+				return
+			}
+			for _, i := range issues {
+				if i.Path == c.path && strings.Contains(i.Message, c.want) {
+					return
+				}
+			}
+			t.Errorf("want issue at %s containing %q; got:", c.path, c.want)
+			for _, i := range issues {
+				t.Log("  ", i)
+			}
+		})
 	}
 }
 

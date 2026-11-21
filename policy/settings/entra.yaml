@@ -1,0 +1,456 @@
+# Microsoft Entra: master settings.
+# mode: enforce | staged (audit or report-only first, then enforce) | report (evidence only)
+# value is the intended state in words; the setting resolution task (track T14) resolves each to the exact API setting and records it in expected-state/setting-ids.json.
+admin_centre: Microsoft Entra
+settings:
+- id: ENT-001
+  platform: all
+  name: 'Conditional Access: require multi-factor authentication, all users, all apps'
+  value: on; break-glass group excluded
+  tier: core
+  mode: staged
+  capability: entra_p1
+  requirements:
+  - IAM-01
+- id: ENT-002
+  platform: all
+  name: 'Conditional Access: block legacy authentication clients'
+  value: block
+  tier: core
+  mode: staged
+  capability: entra_p1
+  requirements:
+  - IAM-03
+  - EML-05
+- id: ENT-003
+  platform: all
+  name: 'Conditional Access: phishing-resistant authentication strength for administrator roles'
+  value: required
+  tier: core
+  mode: staged
+  capability: entra_p1
+  requirements:
+  - IAM-02
+- id: ENT-004
+  platform: all
+  name: 'Conditional Access: require compliant device for desktop and web apps, users on a managed plan'
+  value: required
+  tier: core
+  mode: staged
+  capability: entra_p1
+  requirements:
+  - IAM-08
+  - DEV-01
+- id: ENT-005
+  platform: mobile
+  name: 'Conditional Access: require approved app with app protection policy on iOS and Android'
+  value: required
+  tier: core
+  mode: staged
+  capability: entra_p1
+  requirements:
+  - IAM-08
+  - DEV-07
+- id: ENT-006
+  platform: all
+  name: 'Conditional Access: block unknown or unsupported device platforms'
+  value: block
+  tier: core
+  mode: staged
+  capability: entra_p1
+  requirements:
+  - IAM-08
+- id: ENT-007
+  platform: all
+  name: 'Conditional Access: administrators sign-in frequency'
+  value: 8 hours; no persistent browser session
+  tier: core
+  mode: enforce
+  capability: entra_p1
+  requirements:
+  - IAM-09
+- id: ENT-008
+  platform: all
+  name: 'Conditional Access: unmanaged devices sign-in frequency'
+  value: 12 hours; no persistent browser session
+  tier: core
+  mode: enforce
+  capability: entra_p1
+  requirements:
+  - IAM-09
+  - COL-02
+- id: ENT-009
+  platform: all
+  name: 'Conditional Access: application-enforced restrictions for SharePoint and Exchange on unmanaged devices'
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: entra_p1
+  requirements:
+  - COL-02
+- id: ENT-010
+  platform: all
+  name: 'Conditional Access: require multi-factor authentication to register or join a device'
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: entra_p1
+  requirements:
+  - IAM-14
+- id: ENT-011
+  platform: all
+  name: 'Conditional Access: require multi-factor authentication or temporary access pass to register security information'
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: entra_p1
+  requirements:
+  - IAM-01
+- id: ENT-012
+  platform: all
+  name: 'Conditional Access: block device code and authentication transfer flows'
+  value: block
+  tier: core
+  mode: staged
+  capability: entra_p1
+  requirements:
+  - IAM-03
+- id: ENT-013
+  platform: all
+  name: 'Conditional Access: require multi-factor authentication for Azure management'
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: entra_p1
+  requirements:
+  - IAM-02
+- id: ENT-014
+  platform: all
+  name: 'Conditional Access: block sign-in from countries outside the allowed list'
+  value: block; list from deployment configuration
+  tier: enhanced
+  mode: staged
+  capability: entra_p1
+  requirements:
+  - IAM-08
+- id: ENT-015
+  platform: all
+  name: 'Conditional Access: emergency access group excluded from every policy'
+  value: verified on each apply
+  tier: core
+  mode: enforce
+  capability: entra_p1
+  requirements:
+  - IAM-07
+- id: ENT-016
+  platform: all
+  name: 'Conditional Access: block high sign-in risk; require password change on high user risk'
+  value: 'on'
+  tier: addon
+  mode: enforce
+  capability: entra_p2
+  requirements:
+  - IAM-15
+- id: ENT-017
+  platform: all
+  name: 'Privileged Identity Management: administrator roles eligible, activation up to 4 hours with justification'
+  value: 'on'
+  tier: addon
+  mode: enforce
+  capability: entra_p2
+  requirements:
+  - IAM-16
+- id: ENT-018
+  platform: all
+  name: Security defaults
+  value: off once the Conditional Access policies are enforced
+  tier: core
+  mode: enforce
+  capability: free
+  requirements:
+  - IAM-01
+- id: ENT-019
+  platform: all
+  name: 'Authentication methods: passkey (FIDO2)'
+  value: enabled, all users
+  tier: core
+  mode: enforce
+  capability: free
+  requirements:
+  - IAM-02
+  - IAM-01
+- id: ENT-020
+  platform: all
+  name: 'Authentication methods: Authenticator app'
+  value: enabled; number matching and application name shown
+  tier: core
+  mode: enforce
+  capability: free
+  requirements:
+  - IAM-01
+- id: ENT-021
+  platform: all
+  name: 'Authentication methods: temporary access pass'
+  value: enabled; one-time use; 1 hour
+  tier: core
+  mode: enforce
+  capability: free
+  requirements:
+  - IAM-01
+  - IAM-12
+- id: ENT-022
+  platform: all
+  name: 'Authentication methods: text message'
+  value: disabled
+  tier: core
+  mode: enforce
+  capability: free
+  requirements:
+  - IAM-04
+- id: ENT-023
+  platform: all
+  name: 'Authentication methods: voice call'
+  value: disabled
+  tier: core
+  mode: enforce
+  capability: free
+  requirements:
+  - IAM-04
+- id: ENT-024
+  platform: all
+  name: 'Authentication methods: email one-time passcode for members'
+  value: disabled
+  tier: core
+  mode: enforce
+  capability: free
+  requirements:
+  - IAM-04
+- id: ENT-025
+  platform: all
+  name: 'Authentication methods: legacy per-user MFA and SSPR method policies'
+  value: migrated to the unified policy
+  tier: core
+  mode: enforce
+  capability: free
+  requirements:
+  - IAM-04
+- id: ENT-026
+  platform: all
+  name: 'Password protection: custom banned password list'
+  value: enforced; company and product names
+  tier: core
+  mode: enforce
+  capability: entra_p1
+  requirements:
+  - IAM-05
+- id: ENT-027
+  platform: all
+  name: 'Password protection: lockout threshold and duration'
+  value: 10 attempts; 60 seconds
+  tier: core
+  mode: enforce
+  capability: free
+  requirements:
+  - IAM-05
+- id: ENT-028
+  platform: all
+  name: Password expiry
+  value: never expire
+  tier: core
+  mode: enforce
+  capability: free
+  requirements:
+  - IAM-05
+- id: ENT-029
+  platform: all
+  name: Self-service password reset
+  value: enabled for all; two methods required
+  tier: core
+  mode: enforce
+  capability: entra_p1
+  requirements:
+  - IAM-05
+- id: ENT-030
+  platform: all
+  name: Users can register applications
+  value: 'no'
+  tier: core
+  mode: enforce
+  capability: free
+  requirements:
+  - IAM-10
+- id: ENT-031
+  platform: all
+  name: User consent for applications
+  value: not allowed
+  tier: core
+  mode: enforce
+  capability: free
+  requirements:
+  - IAM-10
+  - APP-01
+- id: ENT-032
+  platform: all
+  name: Admin consent workflow
+  value: enabled; reviewers are the owner role
+  tier: core
+  mode: enforce
+  capability: free
+  requirements:
+  - IAM-10
+- id: ENT-033
+  platform: all
+  name: Users can create tenants
+  value: 'no'
+  tier: core
+  mode: enforce
+  capability: free
+  requirements:
+  - IAM-10
+- id: ENT-034
+  platform: all
+  name: Users can create security groups and Microsoft 365 groups
+  value: no; limited to administrators
+  tier: core
+  mode: enforce
+  capability: free
+  requirements:
+  - COL-06
+- id: ENT-035
+  platform: all
+  name: Restrict non-administrator access to the directory admin portal
+  value: 'yes'
+  tier: core
+  mode: enforce
+  capability: free
+  requirements:
+  - IAM-06
+- id: ENT-036
+  platform: all
+  name: Guest invitations
+  value: only administrators and the guest inviter role
+  tier: core
+  mode: enforce
+  capability: free
+  requirements:
+  - IAM-11
+  - SUP-02
+- id: ENT-037
+  platform: all
+  name: Guest user access level
+  value: most restricted
+  tier: core
+  mode: enforce
+  capability: free
+  requirements:
+  - IAM-11
+- id: ENT-038
+  platform: all
+  name: 'External collaboration: allowed domains'
+  value: allow list only, empty at start
+  tier: enhanced
+  mode: enforce
+  capability: free
+  requirements:
+  - IAM-11
+- id: ENT-039
+  platform: all
+  name: 'Device join: who may join devices'
+  value: named group
+  tier: core
+  mode: enforce
+  capability: free
+  requirements:
+  - IAM-14
+- id: ENT-040
+  platform: all
+  name: 'Device join: additional local administrators on joined devices'
+  value: none
+  tier: core
+  mode: enforce
+  capability: free
+  requirements:
+  - DEV-06
+- id: ENT-041
+  platform: all
+  name: 'Device join: maximum devices per user'
+  value: '5'
+  tier: core
+  mode: enforce
+  capability: free
+  requirements:
+  - IAM-14
+- id: ENT-042
+  platform: windows
+  name: Local administrator password solution in the directory
+  value: enabled
+  tier: core
+  mode: enforce
+  capability: free
+  requirements:
+  - DEV-06
+- id: ENT-043
+  platform: all
+  name: Global Administrator holders
+  value: two emergency accounts only; no daily-use account
+  tier: core
+  mode: enforce
+  capability: free
+  requirements:
+  - IAM-06
+  - IAM-07
+- id: ENT-044
+  platform: all
+  name: Administrator accounts
+  value: cloud-only; no mailbox licence
+  tier: core
+  mode: enforce
+  capability: free
+  requirements:
+  - IAM-06
+- id: ENT-045
+  platform: all
+  name: Alert on any sign-in by an emergency access account
+  value: mail to alerts address
+  tier: core
+  mode: enforce
+  capability: free
+  requirements:
+  - IAM-07
+  - LOG-04
+- id: ENT-046
+  platform: all
+  name: 'Pipeline application: credential type'
+  value: federated credential; no client secret
+  tier: core
+  mode: enforce
+  capability: free
+  requirements:
+  - IAM-17
+- id: ENT-047
+  platform: all
+  name: 'Application registrations: secrets older than 180 days'
+  value: reported weekly
+  tier: core
+  mode: report
+  capability: free
+  requirements:
+  - IAM-17
+- id: ENT-048
+  platform: all
+  name: LinkedIn account connections
+  value: 'off'
+  tier: core
+  mode: enforce
+  capability: free
+  requirements:
+  - APP-03
+- id: ENT-049
+  platform: all
+  name: Sign-in and audit log export
+  value: weekly to the evidence library
+  tier: core
+  mode: report
+  capability: free
+  requirements:
+  - LOG-03

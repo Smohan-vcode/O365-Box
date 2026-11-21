@@ -1,0 +1,171 @@
+# SharePoint and OneDrive: master settings.
+# mode: enforce | staged (audit or report-only first, then enforce) | report (evidence only)
+# value is the intended state in words; the setting resolution task (track T14) resolves each to the exact API setting and records it in expected-state/setting-ids.json.
+admin_centre: SharePoint and OneDrive
+settings:
+- id: SPO-001
+  platform: all
+  name: External sharing, tenant level
+  value: existing guests only
+  tier: core
+  mode: enforce
+  capability: sharepoint
+  requirements:
+  - COL-01
+- id: SPO-002
+  platform: all
+  name: External sharing, per site
+  value: off unless the site is listed as shareable
+  tier: core
+  mode: enforce
+  capability: sharepoint
+  requirements:
+  - COL-01
+  - DAT-08
+- id: SPO-003
+  platform: all
+  name: Default sharing link type and permission
+  value: specific people; view
+  tier: core
+  mode: enforce
+  capability: sharepoint
+  requirements:
+  - COL-01
+- id: SPO-004
+  platform: all
+  name: Anyone links
+  value: 'off'
+  tier: core
+  mode: enforce
+  capability: sharepoint
+  requirements:
+  - COL-01
+- id: SPO-005
+  platform: all
+  name: Guest access expiry
+  value: 30 days
+  tier: core
+  mode: enforce
+  capability: sharepoint
+  requirements:
+  - COL-01
+  - SUP-02
+- id: SPO-006
+  platform: all
+  name: Guests must sign in with the invited account and cannot share onward
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: sharepoint
+  requirements:
+  - COL-01
+- id: SPO-007
+  platform: all
+  name: Sharing domain allow list
+  value: on, empty at start
+  tier: enhanced
+  mode: enforce
+  capability: sharepoint
+  requirements:
+  - COL-01
+- id: SPO-008
+  platform: all
+  name: Unmanaged devices
+  value: limited, web-only access
+  tier: core
+  mode: enforce
+  capability: sharepoint
+  requirements:
+  - COL-02
+- id: SPO-009
+  platform: all
+  name: Idle session sign-out
+  value: warn at 55 minutes; sign out at 60
+  tier: core
+  mode: enforce
+  capability: sharepoint
+  requirements:
+  - IAM-09
+- id: SPO-010
+  platform: all
+  name: Apps that do not use modern authentication
+  value: blocked
+  tier: core
+  mode: enforce
+  capability: sharepoint
+  requirements:
+  - IAM-03
+- id: SPO-011
+  platform: all
+  name: 'OneDrive sync: only directory-joined or compliant devices, company tenant only'
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: sharepoint
+  requirements:
+  - COL-05
+- id: SPO-012
+  platform: all
+  name: OneDrive external sharing
+  value: 'off'
+  tier: core
+  mode: enforce
+  capability: sharepoint
+  requirements:
+  - COL-01
+- id: SPO-013
+  platform: all
+  name: Version history
+  value: at least 100 major versions
+  tier: core
+  mode: enforce
+  capability: sharepoint
+  requirements:
+  - BCK-01
+- id: SPO-014
+  platform: all
+  name: Site creation by users
+  value: 'off'
+  tier: core
+  mode: enforce
+  capability: sharepoint
+  requirements:
+  - COL-06
+- id: SPO-015
+  platform: all
+  name: Custom scripts and legacy add-in access
+  value: 'off'
+  tier: core
+  mode: enforce
+  capability: sharepoint
+  requirements:
+  - CFG-01
+  - IAM-10
+- id: SPO-016
+  platform: all
+  name: Access requests
+  value: 'off'
+  tier: core
+  mode: enforce
+  capability: sharepoint
+  requirements:
+  - COL-01
+- id: SPO-017
+  platform: all
+  name: Sharing notifications to owners
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: sharepoint
+  requirements:
+  - LOG-04
+- id: SPO-018
+  platform: all
+  name: Site permissions
+  value: groups only; no individuals; checked weekly
+  tier: core
+  mode: enforce
+  capability: sharepoint
+  requirements:
+  - IAM-12
+  - COL-06

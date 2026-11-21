@@ -1,0 +1,262 @@
+id: iso27001_2022
+title: ISO/IEC 27001:2022 Annex A
+mapped_at: control
+note: Only the controls this catalogue addresses are listed. Controls not listed are not covered by tenant settings and need separate treatment.
+controls:
+- id: A.5.1
+  requirements:
+  - GOV-01
+- id: A.5.5
+  requirements:
+  - INC-02
+- id: A.5.7
+  requirements:
+  - GOV-02
+- id: A.5.8
+  requirements:
+  - GOV-02
+- id: A.5.9
+  requirements:
+  - APP-01
+  - COL-06
+  - DEV-01
+  - DEV-08
+- id: A.5.10
+  requirements:
+  - APP-03
+  - AWR-02
+- id: A.5.11
+  requirements:
+  - DEV-08
+  - IAM-12
+- id: A.5.12
+  requirements:
+  - DAT-01
+- id: A.5.13
+  requirements:
+  - DAT-01
+  - DAT-02
+  - DAT-10
+- id: A.5.14
+  requirements:
+  - COL-01
+  - COL-03
+  - DAT-03
+  - DAT-07
+  - EML-01
+  - EML-03
+  - EML-04
+  - EML-06
+- id: A.5.15
+  requirements:
+  - COL-06
+  - EML-08
+  - IAM-06
+  - IAM-08
+  - IAM-11
+- id: A.5.16
+  requirements:
+  - EML-08
+  - IAM-12
+  - SUP-02
+- id: A.5.17
+  requirements:
+  - DAT-06
+  - IAM-01
+  - IAM-04
+  - IAM-05
+  - IAM-17
+- id: A.5.18
+  requirements:
+  - IAM-12
+  - IAM-13
+- id: A.5.19
+  requirements:
+  - IAM-11
+  - SUP-01
+  - SUP-02
+- id: A.5.20
+  requirements:
+  - SUP-01
+- id: A.5.22
+  requirements:
+  - SUP-01
+- id: A.5.23
+  requirements:
+  - APP-01
+  - APP-02
+  - APP-03
+  - COL-04
+  - DAT-13
+  - EML-07
+  - IAM-10
+- id: A.5.24
+  requirements:
+  - INC-01
+  - INC-02
+- id: A.5.25
+  requirements:
+  - LOG-02
+- id: A.5.26
+  requirements:
+  - INC-01
+  - INC-03
+- id: A.5.28
+  requirements:
+  - LOG-03
+- id: A.5.29
+  requirements:
+  - BCK-04
+  - IAM-07
+- id: A.5.30
+  requirements:
+  - BCK-03
+  - BCK-04
+- id: A.5.33
+  requirements:
+  - DAT-11
+- id: A.5.34
+  requirements:
+  - DAT-04
+- id: A.5.35
+  requirements:
+  - GOV-04
+- id: A.5.36
+  requirements:
+  - GOV-03
+  - GOV-04
+- id: A.6.2
+  requirements:
+  - AWR-02
+- id: A.6.3
+  requirements:
+  - AWR-01
+- id: A.6.7
+  requirements:
+  - COL-02
+  - DEV-07
+- id: A.6.8
+  requirements:
+  - EML-06
+- id: A.7.10
+  requirements:
+  - DEV-09
+- id: A.7.14
+  requirements:
+  - DEV-08
+- id: A.8.1
+  requirements:
+  - COL-02
+  - COL-05
+  - DEV-01
+  - DEV-02
+  - DEV-03
+  - DEV-07
+  - DEV-10
+  - IAM-08
+  - IAM-14
+- id: A.8.2
+  requirements:
+  - DEV-06
+  - IAM-02
+  - IAM-06
+  - IAM-07
+  - IAM-16
+  - IAM-17
+- id: A.8.3
+  requirements:
+  - COL-01
+  - DAT-08
+  - DAT-10
+- id: A.8.5
+  requirements:
+  - CFG-06
+  - DEV-03
+  - EML-05
+  - IAM-01
+  - IAM-02
+  - IAM-03
+  - IAM-09
+- id: A.8.7
+  requirements:
+  - EML-01
+  - EML-02
+  - MAL-01
+  - MAL-02
+  - MAL-03
+  - MAL-05
+- id: A.8.8
+  requirements:
+  - CFG-02
+  - CFG-03
+  - CFG-04
+  - DEV-04
+- id: A.8.9
+  requirements:
+  - CFG-01
+  - CFG-05
+  - CFG-06
+  - CFG-07
+  - GOV-05
+- id: A.8.10
+  requirements:
+  - DAT-11
+- id: A.8.12
+  requirements:
+  - COL-05
+  - DAT-03
+  - DAT-04
+  - DAT-05
+  - DAT-06
+  - DAT-07
+  - DAT-08
+  - DAT-12
+  - DAT-13
+  - EML-04
+- id: A.8.13
+  requirements:
+  - BCK-01
+  - BCK-02
+  - BCK-03
+- id: A.8.14
+  requirements:
+  - BCK-02
+- id: A.8.15
+  requirements:
+  - LOG-01
+  - LOG-03
+- id: A.8.16
+  requirements:
+  - IAM-15
+  - LOG-02
+  - LOG-04
+  - MAL-02
+- id: A.8.19
+  requirements:
+  - CFG-08
+  - COL-04
+  - EML-07
+  - IAM-10
+- id: A.8.20
+  requirements:
+  - CFG-07
+  - DEV-05
+- id: A.8.21
+  requirements:
+  - COL-03
+  - DAT-09
+  - EML-03
+  - EML-05
+- id: A.8.23
+  requirements:
+  - CFG-05
+  - EML-02
+  - MAL-04
+- id: A.8.24
+  requirements:
+  - DAT-02
+  - DAT-09
+  - DEV-02
+- id: A.8.32
+  requirements:
+  - GOV-05

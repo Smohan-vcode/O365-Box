@@ -1,0 +1,72 @@
+# Power Platform: master settings.
+# mode: enforce | staged (audit or report-only first, then enforce) | report (evidence only)
+# value is the intended state in words; the setting resolution task (track T14) resolves each to the exact API setting and records it in expected-state/setting-ids.json.
+admin_centre: Power Platform
+settings:
+- id: PPL-001
+  platform: all
+  name: 'Environment creation: production, trial and developer'
+  value: administrators only
+  tier: core
+  mode: enforce
+  capability: power_platform
+  requirements:
+  - DAT-13
+  - COL-06
+- id: PPL-002
+  platform: all
+  name: 'Tenant data policy: business connectors'
+  value: SharePoint, Outlook, Approvals, Forms, Teams, Planner, To Do, OneDrive
+  tier: core
+  mode: enforce
+  capability: power_platform
+  requirements:
+  - DAT-13
+- id: PPL-003
+  platform: all
+  name: 'Tenant data policy: all other connectors, including web request and custom connectors'
+  value: blocked
+  tier: core
+  mode: enforce
+  capability: power_platform
+  requirements:
+  - DAT-13
+  - DAT-03
+- id: PPL-004
+  platform: all
+  name: 'Tenant isolation: inbound and outbound cross-tenant connections'
+  value: blocked
+  tier: core
+  mode: enforce
+  capability: power_platform
+  requirements:
+  - DAT-13
+- id: PPL-005
+  platform: all
+  name: Sharing apps and flows with everyone
+  value: 'off'
+  tier: core
+  mode: enforce
+  capability: power_platform
+  requirements:
+  - DAT-13
+  - IAM-12
+- id: PPL-006
+  platform: all
+  name: AI features in the automation tools
+  value: 'off'
+  tier: core
+  mode: enforce
+  capability: power_platform
+  requirements:
+  - APP-03
+- id: PPL-007
+  platform: all
+  name: Flow ownership
+  value: flow owner account plus the owner role as co-owner
+  tier: core
+  mode: enforce
+  capability: power_platform
+  requirements:
+  - IAM-12
+  - GOV-05

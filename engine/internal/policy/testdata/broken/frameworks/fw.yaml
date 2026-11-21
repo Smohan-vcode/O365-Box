@@ -1,0 +1,6 @@
+id: fw
+title: Fixture framework
+mapped_at: control
+controls:
+- id: C1
+  requirements: [AAA-01, YYY-42]

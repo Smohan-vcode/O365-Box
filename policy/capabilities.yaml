@@ -1,0 +1,24 @@
+# What each capability key means and whether the base plan includes it.
+# `included_in` is checked against the tenant's licences by the capability check (track T14); the
+# service-plan names there are confirmed on the tenant, not assumed.
+capabilities:
+  free:              {name: "Any Microsoft 365 or Entra tenant", included_in: [business_basic, business_standard, business_premium]}
+  exchange:          {name: "Exchange Online and its built-in protection", included_in: [business_basic, business_standard, business_premium]}
+  sharepoint:        {name: "SharePoint and OneDrive", included_in: [business_basic, business_standard, business_premium]}
+  teams:             {name: "Teams", included_in: [business_basic, business_standard, business_premium]}
+  power_platform:    {name: "Power Platform administration", included_in: [business_basic, business_standard, business_premium]}
+  m365_apps:         {name: "Microsoft 365 desktop apps and cloud policy", included_in: [business_standard, business_premium]}
+  entra_p1:          {name: "Entra ID Plan 1: Conditional Access", included_in: [business_premium]}
+  intune_p1:         {name: "Intune Plan 1: device and app management", included_in: [business_premium]}
+  defender_business: {name: "Defender for Business: endpoint protection and response", included_in: [business_premium]}
+  defender_o365_p1:  {name: "Defender for Office 365 Plan 1: Safe Links, Safe Attachments, impersonation", included_in: [business_premium]}
+  purview_ip:        {name: "Sensitivity labels: manual, default and mandatory", included_in: [business_premium]}
+  purview_dlp_core:  {name: "Data loss prevention for mail, SharePoint and OneDrive", included_in: [business_premium]}
+  purview_audit:     {name: "Audit (Standard) and alert policies", included_in: [business_basic, business_standard, business_premium]}
+  entra_p2:          {name: "Entra ID Plan 2: risk-based access, privileged identity management", included_in: [], addon: "Defender Suite for Business Premium"}
+  defender_o365_p2:  {name: "Defender for Office 365 Plan 2: attack simulation, automated mail response", included_in: [], addon: "Defender Suite for Business Premium"}
+  defender_suite:    {name: "Defender for Cloud Apps and related", included_in: [], addon: "Defender Suite for Business Premium"}
+  purview_suite:     {name: "Endpoint and Teams data loss prevention, automatic labelling, insider risk", included_in: [], addon: "Purview Suite for Business Premium"}
+  purview_retention: {name: "Enforced retention on unlicensed shared mailboxes, legal hold", included_in: [], addon: "see upgrades/retention.md"}
+  backup_service:    {name: "Independent backup of mail and files", included_in: [], addon: "pay-as-you-go or third party"}
+rule: "A user on a plan that lacks a capability is outside the settings that need it. The resolver lists those users in the coverage report as not covered."

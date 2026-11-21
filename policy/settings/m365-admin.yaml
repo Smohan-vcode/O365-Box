@@ -1,0 +1,133 @@
+# Microsoft 365 admin centre and Azure: master settings.
+# mode: enforce | staged (audit or report-only first, then enforce) | report (evidence only)
+# value is the intended state in words; the setting resolution task (track T14) resolves each to the exact API setting and records it in expected-state/setting-ids.json.
+admin_centre: Microsoft 365 admin centre and Azure
+settings:
+- id: ADM-001
+  platform: all
+  name: 'User-owned apps and services: store access and trials'
+  value: 'off'
+  tier: core
+  mode: enforce
+  capability: free
+  requirements:
+  - APP-02
+- id: ADM-002
+  platform: all
+  name: Self-service purchase, all products
+  value: disabled
+  tier: core
+  mode: enforce
+  capability: free
+  requirements:
+  - APP-02
+- id: ADM-003
+  platform: all
+  name: Idle session timeout for web apps
+  value: 1 hour on unmanaged devices
+  tier: core
+  mode: enforce
+  capability: free
+  requirements:
+  - IAM-09
+- id: ADM-004
+  platform: all
+  name: Password expiration policy
+  value: never expire
+  tier: core
+  mode: enforce
+  capability: free
+  requirements:
+  - IAM-05
+- id: ADM-005
+  platform: all
+  name: 'Microsoft Forms: external sharing and phishing protection'
+  value: sharing off; protection on
+  tier: core
+  mode: enforce
+  capability: free
+  requirements:
+  - COL-01
+  - EML-01
+- id: ADM-006
+  platform: all
+  name: Sway, Whiteboard and Bookings sharing outside
+  value: 'off'
+  tier: core
+  mode: enforce
+  capability: free
+  requirements:
+  - COL-01
+- id: ADM-007
+  platform: all
+  name: Third-party storage in Office on the web
+  value: 'off'
+  tier: core
+  mode: enforce
+  capability: free
+  requirements:
+  - COL-04
+- id: ADM-008
+  platform: all
+  name: Calendar external sharing
+  value: free and busy time only
+  tier: core
+  mode: enforce
+  capability: free
+  requirements:
+  - COL-01
+- id: ADM-009
+  platform: all
+  name: Release track
+  value: standard
+  tier: core
+  mode: enforce
+  capability: free
+  requirements:
+  - GOV-05
+- id: ADM-010
+  platform: all
+  name: Copilot chat and web grounding
+  value: as approved in the AI policy
+  tier: core
+  mode: enforce
+  capability: free
+  requirements:
+  - APP-03
+- id: ADM-011
+  platform: all
+  name: Viva and analytics features not in use
+  value: 'off'
+  tier: core
+  mode: enforce
+  capability: free
+  requirements:
+  - APP-03
+- id: ADM-012
+  platform: all
+  name: 'Azure: users can create subscriptions; subscriptions leaving or entering the directory'
+  value: not allowed
+  tier: core
+  mode: enforce
+  capability: free
+  requirements:
+  - APP-02
+  - IAM-10
+- id: ADM-013
+  platform: all
+  name: Customer lockbox
+  value: 'on'
+  tier: addon
+  mode: enforce
+  capability: purview_suite
+  requirements:
+  - SUP-02
+- id: ADM-014
+  platform: all
+  name: Security score
+  value: reported monthly
+  tier: core
+  mode: report
+  capability: free
+  requirements:
+  - GOV-04

@@ -14,7 +14,7 @@ type Config struct {
 	Users         []User        `yaml:"users"`
 	Groups        []Group       `yaml:"groups"`
 	Structure     Structure     `yaml:"structure"`
-	Baseline      Baseline      `yaml:"baseline"`
+	Policy        Policy        `yaml:"policy"`
 	Integrations  Integrations  `yaml:"integrations"`
 }
 
@@ -116,14 +116,27 @@ type Library struct {
 	AccessReason string            `yaml:"access_reason"`
 }
 
-type Baseline struct {
-	Preset    string     `yaml:"preset"`
-	Overrides []Override `yaml:"overrides"`
+// Policy is the policy selection (policy/README.md).
+type Policy struct {
+	Frameworks []string          `yaml:"frameworks"`
+	Tier       string            `yaml:"tier"`
+	Rollout    Rollout           `yaml:"rollout"`
+	Exceptions []PolicyException `yaml:"exceptions"`
 }
 
-type Override struct {
-	ID     string `yaml:"id"`
-	Reason string `yaml:"reason"`
+type Rollout struct {
+	Stage      string `yaml:"stage"`
+	AuditDays  int    `yaml:"audit_days"`
+	PilotGroup string `yaml:"pilot_group"`
+}
+
+// PolicyException removes a setting, or the settings of a requirement,
+// until Ends (YYYY-MM-DD).
+type PolicyException struct {
+	ID        string `yaml:"id"`
+	Reason    string `yaml:"reason"`
+	Reference string `yaml:"reference"`
+	Ends      string `yaml:"ends"`
 }
 
 type Integrations struct {

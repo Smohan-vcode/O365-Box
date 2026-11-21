@@ -1,0 +1,286 @@
+# Intune, macOS: master settings.
+# mode: enforce | staged (audit or report-only first, then enforce) | report (evidence only)
+# value is the intended state in words; the setting resolution task (track T14) resolves each to the exact API setting and records it in expected-state/setting-ids.json.
+admin_centre: Intune, macOS
+settings:
+- id: MAC-001
+  platform: macos
+  name: 'Compliance: FileVault'
+  value: required
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-02
+- id: MAC-002
+  platform: macos
+  name: 'Compliance: system integrity protection'
+  value: required
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - CFG-01
+- id: MAC-003
+  platform: macos
+  name: 'Compliance: firewall'
+  value: required
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-05
+- id: MAC-004
+  platform: macos
+  name: 'Compliance: Gatekeeper'
+  value: App Store and identified developers
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - CFG-08
+- id: MAC-005
+  platform: macos
+  name: 'Compliance: minimum operating system version'
+  value: current supported release
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-04
+- id: MAC-006
+  platform: macos
+  name: 'Compliance: password required'
+  value: required
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-03
+- id: MAC-007
+  platform: macos
+  name: 'FileVault: enable at next sign-out; no deferral bypass'
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-02
+- id: MAC-008
+  platform: macos
+  name: 'FileVault: escrow personal recovery key; rotate every 6 months; hide key from user'
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-02
+- id: MAC-009
+  platform: macos
+  name: 'Firewall: enabled with stealth mode'
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-05
+- id: MAC-010
+  platform: macos
+  name: 'Firewall: block all incoming connections'
+  value: 'on'
+  tier: enhanced
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-05
+- id: MAC-011
+  platform: macos
+  name: 'Gatekeeper: user cannot override'
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - CFG-08
+- id: MAC-012
+  platform: macos
+  name: Screen saver idle time and password on wake
+  value: 15 minutes; immediately; 5 minutes in the enhanced tier
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-03
+- id: MAC-013
+  platform: macos
+  name: 'Password: minimum length, lockout'
+  value: 12 characters; 10 attempts
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-03
+- id: MAC-014
+  platform: macos
+  name: Automatic login
+  value: disabled
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-03
+- id: MAC-015
+  platform: macos
+  name: Guest user
+  value: disabled
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - CFG-01
+- id: MAC-016
+  platform: macos
+  name: 'Software update: automatic check, download and install, including security responses'
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - CFG-02
+- id: MAC-017
+  platform: macos
+  name: 'Software update: enforced deadline'
+  value: 7 days after release
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - CFG-02
+- id: MAC-018
+  platform: macos
+  name: Remote login and remote Apple events
+  value: disabled
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - CFG-07
+- id: MAC-019
+  platform: macos
+  name: 'Sharing services: screen, file, printer, internet, Bluetooth'
+  value: disabled
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - CFG-07
+- id: MAC-020
+  platform: macos
+  name: AirDrop
+  value: disabled
+  tier: enhanced
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DAT-03
+- id: MAC-021
+  platform: macos
+  name: Personal cloud document and desktop sync
+  value: disabled
+  tier: enhanced
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - COL-05
+- id: MAC-022
+  platform: macos
+  name: Administrator password required for system-wide settings
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-06
+- id: MAC-023
+  platform: macos
+  name: Standard user account at enrolment
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - DEV-06
+- id: MAC-024
+  platform: macos
+  name: Single sign-on with the company directory using hardware-bound keys
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - IAM-02
+  - DEV-03
+- id: MAC-025
+  platform: macos
+  name: 'Endpoint protection: onboarding with required system extension, full disk access and network filter approvals'
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: defender_business
+  requirements:
+  - MAL-02
+- id: MAC-026
+  platform: macos
+  name: 'Endpoint protection: real-time and cloud-delivered protection'
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: defender_business
+  requirements:
+  - MAL-01
+- id: MAC-027
+  platform: macos
+  name: 'Endpoint protection: potentially unwanted applications'
+  value: block
+  tier: core
+  mode: enforce
+  capability: defender_business
+  requirements:
+  - MAL-01
+- id: MAC-028
+  platform: macos
+  name: 'Endpoint protection: tamper protection'
+  value: block
+  tier: core
+  mode: enforce
+  capability: defender_business
+  requirements:
+  - MAL-01
+- id: MAC-029
+  platform: macos
+  name: 'Endpoint protection: network protection'
+  value: block
+  tier: core
+  mode: enforce
+  capability: defender_business
+  requirements:
+  - MAL-04
+- id: MAC-030
+  platform: macos
+  name: Browser policies
+  value: same values as Windows
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - CFG-05
+- id: MAC-031
+  platform: macos
+  name: 'OneDrive: sync only the company tenant; folder backup on'
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - COL-05
+  - BCK-01

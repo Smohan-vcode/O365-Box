@@ -1,0 +1,134 @@
+# Teams: master settings.
+# mode: enforce | staged (audit or report-only first, then enforce) | report (evidence only)
+# value is the intended state in words; the setting resolution task (track T14) resolves each to the exact API setting and records it in expected-state/setting-ids.json.
+admin_centre: Teams
+settings:
+- id: TMS-001
+  platform: all
+  name: 'External access: unmanaged consumer accounts'
+  value: blocked
+  tier: core
+  mode: enforce
+  capability: teams
+  requirements:
+  - COL-03
+- id: TMS-002
+  platform: all
+  name: 'External access: other organisations'
+  value: allowed; allow list in the enhanced tier
+  tier: core
+  mode: enforce
+  capability: teams
+  requirements:
+  - COL-03
+- id: TMS-003
+  platform: all
+  name: Guest access
+  value: 'off'
+  tier: core
+  mode: enforce
+  capability: teams
+  requirements:
+  - COL-03
+  - IAM-11
+- id: TMS-004
+  platform: all
+  name: 'Meetings: who bypasses the lobby'
+  value: people in the organisation only
+  tier: core
+  mode: enforce
+  capability: teams
+  requirements:
+  - COL-03
+- id: TMS-005
+  platform: all
+  name: 'Meetings: anonymous users can start a meeting'
+  value: 'no'
+  tier: core
+  mode: enforce
+  capability: teams
+  requirements:
+  - COL-03
+- id: TMS-006
+  platform: all
+  name: 'Meetings: who can present'
+  value: organisers and co-organisers
+  tier: core
+  mode: enforce
+  capability: teams
+  requirements:
+  - COL-03
+- id: TMS-007
+  platform: all
+  name: 'Meetings: external participants can give or request control'
+  value: 'no'
+  tier: core
+  mode: enforce
+  capability: teams
+  requirements:
+  - COL-03
+- id: TMS-008
+  platform: all
+  name: 'Meetings: recording and transcription'
+  value: on; recordings expire after 365 days
+  tier: core
+  mode: enforce
+  capability: teams
+  requirements:
+  - LOG-01
+- id: TMS-009
+  platform: all
+  name: 'Messaging: report a security concern'
+  value: 'on'
+  tier: core
+  mode: enforce
+  capability: teams
+  requirements:
+  - EML-06
+- id: TMS-010
+  platform: all
+  name: 'Files: third-party storage providers'
+  value: all off
+  tier: core
+  mode: enforce
+  capability: teams
+  requirements:
+  - COL-04
+- id: TMS-011
+  platform: all
+  name: Channel email addresses
+  value: 'off'
+  tier: core
+  mode: enforce
+  capability: teams
+  requirements:
+  - COL-03
+  - EML-01
+- id: TMS-012
+  platform: all
+  name: 'Apps: third-party and custom apps'
+  value: blocked; allow list by approval
+  tier: core
+  mode: enforce
+  capability: teams
+  requirements:
+  - COL-04
+  - IAM-10
+- id: TMS-013
+  platform: all
+  name: Shared channels with other organisations
+  value: 'off'
+  tier: core
+  mode: enforce
+  capability: teams
+  requirements:
+  - COL-03
+- id: TMS-014
+  platform: all
+  name: Team creation
+  value: administrators only
+  tier: core
+  mode: enforce
+  capability: teams
+  requirements:
+  - COL-06

@@ -11,6 +11,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/Smohan-vcode/O365-Box/engine/internal/config"
+	"github.com/Smohan-vcode/O365-Box/engine/internal/policy"
 	"github.com/Smohan-vcode/O365-Box/engine/internal/report"
 	"github.com/Smohan-vcode/O365-Box/engine/internal/tasks"
 )
@@ -104,20 +105,13 @@ func engineOptions(root string) (config.Options, error) {
 	for _, r := range roles.Roles {
 		opt.Roles = append(opt.Roles, r.Name)
 	}
-	catPath := filepath.Join(root, "baseline", "catalogue.yaml")
-	if _, err := os.Stat(catPath); err == nil {
-		var cat struct {
-			Settings []struct {
-				ID string `yaml:"id"`
-			} `yaml:"settings"`
-		}
-		if err := readYAMLFile(catPath, &cat); err != nil {
+	if _, err := os.Stat(filepath.Join(root, "policy", policy.RequirementsFile)); err == nil {
+		cat, err := policy.Load(filepath.Join(root, "policy"), "policy")
+		if err != nil {
 			return opt, err
 		}
-		opt.Settings = []string{}
-		for _, s := range cat.Settings {
-			opt.Settings = append(opt.Settings, s.ID)
-		}
+		fws, settings, reqs := cat.IDs()
+		opt.Policy = &config.PolicyCatalog{Frameworks: fws, Settings: settings, Requirements: reqs}
 	}
 	jdir := filepath.Join(root, "defaults", "jurisdictions")
 	if entries, err := os.ReadDir(jdir); err == nil {

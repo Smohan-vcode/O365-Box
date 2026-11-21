@@ -685,8 +685,7 @@ policy:
     stage: audit                # audit | enforce
     audit_days: 14
     pilot_group: grp-admins
-  consumer_mail_domains: []     # optional; data loss prevention (T14-11)
-  company_marker_terms: []      # optional; data loss prevention (T14-11)
+  consumer_mail_domains: [gmail.com, outlook.com]   # optional; data loss prevention (T14-11)
   exceptions:
     - {id: TMS-004, reason: "Board meeting guests skip the lobby", reference: EXC-0001, ends: 2027-05-31}
 ```
@@ -699,6 +698,10 @@ policy:
 - `rollout`: settings whose mode is `staged` start in audit or report-only
   on the pilot group for `audit_days`, then move to enforce when `stage`
   changes to `enforce`. That change is a configuration save like any other.
+- `consumer_mail_domains`: personal mail providers that data loss
+  prevention treats as outside the company (T14-11). Terms that mark the
+  company's own documents are company data, so they are Dictionary values
+  (`company.marker_terms`), not configuration (R11).
 - `exceptions`: every departure from the selected tier. `id` names a
   setting, or a requirement to except all of its settings; `reason` is
   plain language; `reference` is the `Exceptions` list item (§23); `ends`

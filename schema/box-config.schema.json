@@ -689,6 +689,15 @@
               "ends"
             ]
           }
+        },
+        "consumer_mail_domains": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*\\.[a-z]{2,}$"
+          },
+          "description": "Personal mail providers for data loss prevention (T14-11)"
         }
       },
       "additionalProperties": false,

@@ -1,0 +1,13 @@
+# Delegated scopes the Global Administrator consents to at onboarding
+# sign-in (SPEC §18.2), with the Microsoft Graph Command Line Tools client.
+# Used only for discovery and bootstrap; the token is discarded after (R12).
+client: microsoft-graph-command-line-tools
+delegated:
+  - Organization.Read.All
+  - Domain.ReadWrite.All
+  - Application.ReadWrite.All
+  - AppRoleAssignment.ReadWrite.All
+  - RoleManagement.ReadWrite.Directory
+  - User.ReadWrite.All
+  - Group.ReadWrite.All
+  - Directory.Read.All

@@ -1,0 +1,20 @@
+organisation:
+  modern_auth: on
+  smtp_auth_disabled_by_default: true
+  external_sender_tag: on
+  mailtips_external_recipients: on
+  audit: on
+outbound_spam:
+  automatic_forwarding: off
+preset_security_policies: standard     # Defender for Office 365 Plan 1
+shared_mailboxes:
+  sign_in_blocked: true
+  sent_items_copied_for_send_as: true
+transport_rules:
+  - name: "Quotation copy"
+    when: {direction: outbound, subject_matches: "^\\[[A-Z]+-[^\\]]+\\]"}
+    action: {blind_copy_to: quotes}
+  - name: "Block inbound structured mail without token"
+    when: {recipient: inbound, body_not_contains_token: true}
+    action: {redirect_to: alerts}
+dkim: {selectors: [selector1, selector2], key_size: 2048, enabled: true}

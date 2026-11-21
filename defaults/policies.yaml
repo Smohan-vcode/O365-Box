@@ -1,0 +1,24 @@
+# Policy index. Text templates live in defaults/policies/<id>.md and are
+# rendered with company values to the Compliance site's Policies library.
+policies:
+  - {id: POL-01, title: Information security, enforced_by: "security baseline"}
+  - {id: POL-02, title: Acceptable use, enforced_by: "acknowledgement"}
+  - {id: POL-03, title: Identity and access, enforced_by: "Conditional Access MFA, admin separation, groups"}
+  - {id: POL-04, title: Email and external communication, enforced_by: "role groups, send-as, forwarding off"}
+  - {id: POL-05, title: Data classification and handling, enforced_by: "site classification, sharing defaults"}
+  - {id: POL-06, title: Document and file management, enforced_by: "site and library structure"}
+  - {id: POL-07, title: Records retention, enforced_by: "retention defaults; enforced by upgrades/retention.md"}
+  - {id: POL-08, title: Contract and document management, enforced_by: "Approvals flow, register"}
+  - {id: POL-09, title: Quotation and pricing, enforced_by: "register, compliance rule"}
+  - {id: POL-10, title: Meeting recording and notes, enforced_by: "Teams meeting policy, recording notice"}
+  - {id: POL-11, title: Vendor accounts and third-party risk, enforced_by: "accounts address, allowed-apps list"}
+  - {id: POL-12, title: Privacy and data-subject requests, enforced_by: "request register"}
+  - {id: POL-13, title: Incident response, enforced_by: "security intake, alert rules"}
+  - {id: POL-14, title: Change management, enforced_by: "pull-request approval"}
+  - {id: POL-15, title: Risk assessment, enforced_by: "annual control task"}
+  - {id: POL-16, title: Business continuity and backup, enforced_by: "annual test"}
+  - {id: POL-17, title: Secure development and vulnerability management, enforced_by: "manual"}
+  - {id: POL-18, title: Logging and monitoring, enforced_by: "audit log export"}
+  - {id: POL-19, title: Encryption and key management, enforced_by: "manual"}
+  - {id: POL-20, title: Personnel security, enforced_by: "joiner and leaver checklists"}
+  - {id: POL-21, title: Use of AI, enforced_by: "Teams app policy, user consent off, allowed-apps list"}

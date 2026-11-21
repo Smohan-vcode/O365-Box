@@ -1,0 +1,16 @@
+# Proposed retention defaults, offered in onboarding. Each company confirms
+# them (status CONFIRMED) before upgrades/retention.md is applied.
+status: PROPOSED
+default_years: 7
+classes:
+  corporate: {keep: permanent}
+  agreement: {keep: "term + 7y"}
+  quotation: {keep: 7y}
+  tax: {keep: 7y}
+  meeting_notes: {keep: "account life + 3y"}
+  meeting_recording: {keep: 1y}
+  application_unsuccessful: {keep: 1y}
+  privacy_request: {keep: "closure + 3y"}
+  security_report: {keep: 5y}
+  audit_log: {keep: 3y}
+  notice: {keep: "superseded + 7y"}

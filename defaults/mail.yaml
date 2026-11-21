@@ -1,0 +1,32 @@
+# Recommended mail objects offered in onboarding step 3 (SPEC §6).
+# shared: shared mailbox, no licence, sign-in blocked; access group gets
+#   full access and send-as. recommended: preselected in the TUI.
+# lists: distribution lists; members are user ids or shared mailbox names.
+shared:
+  - {name: info, aliases: [hello, contact], access: grp-staff, recommended: true}
+  - {name: support, aliases: [help], access: grp-staff, auto_reply: support, recommended: true}
+  - {name: sales, access: grp-sales, recommended: true}
+  - {name: billing, access: grp-finance, recommended: true}
+  - {name: security, aliases: [abuse], access: grp-admins, auto_reply: security, recommended: true}
+  - {name: privacy, aliases: [dpo], access: grp-legal, auto_reply: privacy, recommended: true}
+  - {name: legal, access: grp-legal}
+  - {name: contracts, access: grp-legal}
+  - {name: nda, access: grp-legal}
+  - {name: invoices, aliases: [ap], access: grp-finance}
+  - {name: corporate, access: grp-admins}
+  - {name: accounts, access: grp-admins}
+  - {name: careers, aliases: [jobs], access: grp-admins}
+  - {name: quotes, access: grp-sales, module: sales, note: "receives blind copies by transport rule"}
+  - {name: inbound, access: grp-admins, module: sales, note: "structured messages read by a flow"}
+lists:
+  - {name: postmaster, aliases: [hostmaster, webmaster], members: [founder], external_senders: true, recommended: true}
+  - {name: dmarc, members: [founder], external_senders: true, recommended: true}
+  - {name: alerts, members: [founder], external_senders: true, recommended: true}
+  - {name: press, members: [founder], external_senders: true}
+  - {name: trust, members: [founder], external_senders: true}
+  - {name: partners, members: [founder], external_senders: true}
+  - {name: team, members: [founder], external_senders: false}
+auto_replies:
+  support: "Thank you for contacting {company.trading_name} support. We have received your message and will reply within one business day."
+  security: "Thank you for your report to {company.trading_name}. Our security team reviews every report and will respond as soon as possible."
+  privacy: "Thank you for your request to {company.trading_name}. We will respond within the period the law requires."

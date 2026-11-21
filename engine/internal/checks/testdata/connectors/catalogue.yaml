@@ -1,0 +1,3 @@
+flows:
+  - {id: X01, name: "Fine", connectors: [sharepoint]}
+  - {id: X02, name: "Calls out", connectors: [sharepoint, http]}

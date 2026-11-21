@@ -1,0 +1,9 @@
+# Fictional Dictionary values for examples/acme (SPEC §9.2).
+company.address.street: 7 Lanternway
+company.address.city: Exampleton
+company.address.state: ''
+company.address.postcode: EX9 4QZ
+company.address.country: United Kingdom
+company.registration.number: 09990001
+company.telephone: +44 20 7946 0999
+company.notices_email: legal@quillfeather.example

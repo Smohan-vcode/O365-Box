@@ -1,0 +1,31 @@
+# Declared identity state. Applied in T1-05; monitored in T7-02.
+security_defaults: off            # replaced by the Conditional Access policies below
+authentication_methods:
+  fido2: {state: enabled}
+  microsoft_authenticator: {state: enabled, number_matching: on}
+  temporary_access_pass: {state: enabled, one_time: true}
+  sms: {state: disabled}
+  voice: {state: disabled}
+  email_otp: {state: disabled}
+conditional_access:
+  exclude_group: grp-break-glass
+  policies:
+    - {name: "CA01 Require MFA for all users", users: all, apps: all, grant: [mfa]}
+    - {name: "CA02 Block legacy authentication", users: all, apps: all, client_apps: [exchangeActiveSync, other], grant: [block]}
+    - {name: "CA03 Phishing-resistant MFA for administrators", users: {roles: privileged}, apps: all, grant: [authentication_strength_phishing_resistant]}
+    - {name: "CA04 Compliant device for managed-plan users", users: {plan: business_premium}, apps: all, platforms: [windows, macOS, iOS, android], grant: [compliant_device], start_state: report_only}
+    - {name: "CA05 Sign-in frequency for administrators", users: {roles: privileged}, apps: all, session: {sign_in_frequency_hours: 8}}
+directory:
+  users_can_register_apps: false
+  users_can_consent_to_apps: false
+  admin_consent_workflow: enabled
+  guest_invitations: admins_only
+  guest_access: restricted
+  self_service_password_reset: enabled
+password_policy: {expiry: never, banned_password_list: enabled}
+break_glass:
+  accounts_from: configuration tenant.break_glass_accounts
+  role: Global Administrator
+  method: fido2
+  alert_on_sign_in: alerts
+standing_global_admins: break_glass_only

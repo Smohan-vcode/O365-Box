@@ -1,0 +1,12 @@
+# Each role becomes a group named role-<name>.
+roles:
+  - {name: owner, may: [people.manage, roles.manage, rules.manage, dictionary.manage, setup.manage, all.read]}
+  - {name: legal-approver, may: [approval.partner]}
+  - {name: company-legal-admin, may: [company.read, company.send, approval.company]}
+  - {name: signer, may: [signature.request]}
+  - {name: sender, may: [document.create, document.send, counterparty.manage]}
+  - {name: finance-approver, may: [approval.order]}
+  - {name: control-owner, may: [controltask.close]}
+default_rules:
+  - {scope_domain: partner, condition: external_paper, approver_role: legal-approver}
+  - {scope_domain: company, condition: always, approver_role: company-legal-admin}

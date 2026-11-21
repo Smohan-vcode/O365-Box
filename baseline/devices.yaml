@@ -1,0 +1,10 @@
+# Applies to users on a plan that includes device management.
+enrolment: {personal_windows: blocked, platforms: [windows, macOS, iOS, android]}
+compliance:
+  windows: {bitlocker: required, secure_boot: required, min_os: "10.0.22631", defender: required, password_required: true}
+  macos: {filevault: required, min_os: "14.0", password_required: true}
+  ios: {jailbroken: blocked, passcode_required: true}
+  android: {rooted: blocked, passcode_required: true, encryption: required}
+  noncompliance_grace_days: 3
+app_protection: {mobile_outlook_and_office: {pin_required: true, block_save_as_personal: true, wipe_after_failed_pins: 10}}
+defender_for_business: {onboarding: automatic_via_intune}

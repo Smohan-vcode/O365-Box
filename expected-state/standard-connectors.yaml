@@ -1,0 +1,12 @@
+# Connectors flows may use (rule R2). S-04 confirms each is standard on the
+# tenant. api: connector API names as they appear in solution source
+# (/providers/Microsoft.PowerApps/apis/<api>).
+allowed:
+  sharepoint: {name: "SharePoint", api: [shared_sharepointonline]}
+  office365: {name: "Office 365 Outlook", api: [shared_office365]}
+  approvals: {name: "Approvals", api: [shared_approvals]}
+  forms: {name: "Microsoft Forms", api: [shared_microsoftforms]}
+  teams: {name: "Microsoft Teams", api: [shared_teams]}
+  planner_or_todo: {name: "Planner or Microsoft To Do", api: [shared_planner, shared_todo]}
+  onedrive: {name: "OneDrive for Business", api: [shared_onedriveforbusiness]}
+forbidden_examples: ["HTTP", "HTTP request trigger", "Word Online (Business)", "Dataverse", "custom connectors"]

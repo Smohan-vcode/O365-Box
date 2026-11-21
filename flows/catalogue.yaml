@@ -1,0 +1,23 @@
+# Every flow in the solution. connectors must all appear in
+# expected-state/standard-connectors.yaml (rule R2).
+# child: true = called by other flows; replaceable: true = rule R9.
+flows:
+  - {id: F01, name: "Document created", trigger: "SharePoint: when an item is created (Documents)", connectors: [sharepoint], does: "Validate fields; call Numbering; call Fill; evaluate approval rules; set DRAFT, IN_REVIEW or READY; write Events"}
+  - {id: F02, name: "Numbering", child: true, trigger: "manual (child)", connectors: [sharepoint], concurrency: 1, does: "Read and increment Counters for the template's reference pattern; return the reference"}
+  - {id: F03, name: "Fill", child: true, replaceable: true, trigger: "manual (child)", connectors: [sharepoint], does: "Copy the content type's template to the counterparty folder; set properties from the item, Dictionary and reference; set needs_manual_edit when the template has alternatives"}
+  - {id: F04, name: "Approval", child: true, trigger: "manual (child)", connectors: [sharepoint, approvals, office365], does: "Resolve role holders from RoleAssignments; apply the self-approval safeguard; start and wait for approval; write Approvals and Events"}
+  - {id: F05, name: "Signature", child: true, replaceable: true, trigger: "manual (child)", connectors: [sharepoint, planner_or_todo, office365], does: "Assign the signer a task with document link and signer details; on completion set SENT"}
+  - {id: F06, name: "Executed copy received", trigger: "SharePoint: when a file is created (Executed inbox)", connectors: [sharepoint], does: "Match reference in file name; move to the counterparty folder; restrict to read; set EXECUTED and dates; call Execution action"}
+  - {id: F07, name: "Execution action", child: true, trigger: "manual (child)", connectors: [sharepoint, office365, planner_or_todo], does: "Switch on the template's action: clear counterparty, open customer, open partner, open vendor, open joiner checklist, link to lead document, filing reminder, order task"}
+  - {id: F08, name: "Order hand-off", child: true, replaceable: true, trigger: "manual (child)", connectors: [planner_or_todo, sharepoint], does: "Assign the owner a task to issue the licence and record its identifier in Orders"}
+  - {id: F09, name: "Package", child: true, trigger: "manual (child)", connectors: [sharepoint], does: "Create one Documents item per signed item and fill attached items, all with one package_run_id"}
+  - {id: F10, name: "Daily reminders", trigger: "Recurrence, daily", connectors: [sharepoint, office365], does: "Unsigned reminders; expiry notices; set EXPIRED; overdue reviews; fallback reassignment of approvals"}
+  - {id: F11, name: "Dictionary changed", trigger: "SharePoint: when an item is created or modified (Dictionary)", connectors: [sharepoint, office365], does: "Write Events; flag SENT documents that used the key; create pending Notices versions; notify owners"}
+  - {id: F12, name: "Notice approved", trigger: "SharePoint: when an item is modified (Notices)", connectors: [sharepoint, approvals], does: "On approval, fill the new version, supersede the earlier one, set next review"}
+  - {id: F13, name: "External paper", trigger: "SharePoint: when a file is created (External paper)", connectors: [sharepoint], does: "Create an EXTERNAL_PAPER Documents item and start Approval"}
+  - {id: F14, name: "Inbound message", trigger: "Office 365 Outlook: when a new email arrives in a shared mailbox (inbound)", connectors: [office365, sharepoint], does: "Check token and type; parse JSON; dedupe on external id; write Leads or a DRAFT Documents item; write InboundLog"}
+  - {id: F15, name: "Public NDA request", trigger: "Microsoft Forms: when a response is submitted", connectors: [forms, sharepoint, office365], does: "Create or match Counterparties; create a DRAFT Documents item for the NDA template; notify legal"}
+  - {id: F16, name: "Privacy request", trigger: "Office 365 Outlook: new email in shared mailbox (privacy)", connectors: [office365, sharepoint], does: "Create PrivacyRequests item with due date one month ahead; reminder at day 20"}
+  - {id: F17, name: "Control tasks", trigger: "Recurrence, daily", connectors: [sharepoint, office365], does: "Create ControlTasks on due dates; mark overdue; on close with output, write Evidence"}
+  - {id: F18, name: "Policy acknowledgement", trigger: "SharePoint: when an item is created (policy versions view)", connectors: [sharepoint, approvals], does: "Ask each active person to acknowledge; write Acknowledgements"}
+  - {id: F19, name: "Review templates due", trigger: "Recurrence, weekly", connectors: [sharepoint, office365], does: "Raise review tasks for notices and records at next_review_on"}

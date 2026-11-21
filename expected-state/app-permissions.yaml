@@ -1,0 +1,19 @@
+# Application permissions for the pipeline's app registration. Granted by
+# bootstrap (SPEC §18.5). S-02 may add ConfigurationMonitoring permissions.
+graph:
+  - User.ReadWrite.All
+  - Group.ReadWrite.All
+  - Directory.Read.All
+  - Policy.Read.All
+  - Policy.ReadWrite.ConditionalAccess
+  - Policy.ReadWrite.AuthenticationMethod
+  - UserAuthenticationMethod.ReadWrite.All   # first sign-in passes (SPEC §18.9)
+  - Organization.Read.All
+  - DeviceManagementConfiguration.ReadWrite.All
+  - Sites.FullControl.All
+  - AuditLog.Read.All
+  - Reports.Read.All
+  - SecurityEvents.Read.All
+exchange: ["Exchange.ManageAsApp"]
+entra_roles: ["Exchange Administrator", "SharePoint Administrator", "User Administrator", "Teams Administrator"]
+never: ["Global Administrator", "Mail.ReadWrite", "Mail.Send"]

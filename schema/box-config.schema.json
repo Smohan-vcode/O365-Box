@@ -1,0 +1,775 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Smohan-vcode/O365-Box/schema/box-config.schema.json",
+  "title": "box-config.yaml",
+  "description": "A company's configuration document (SPEC \u00a79.1). Stored in the company's tenant, never in the repository.",
+  "$defs": {
+    "folder": {
+      "oneOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "folders": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/folder"
+              }
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "name"
+          ]
+        }
+      ]
+    },
+    "library": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "access": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "enum": [
+              "owner",
+              "member",
+              "visitor"
+            ]
+          }
+        },
+        "access_reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "versioning": {
+          "enum": [
+            "major",
+            "major_minor",
+            "none"
+          ]
+        },
+        "content_types": {
+          "enum": [
+            "generated"
+          ]
+        },
+        "domain": {
+          "enum": [
+            "company",
+            "partner",
+            "notice"
+          ]
+        },
+        "folders_by": {
+          "enum": [
+            "counterparty"
+          ]
+        },
+        "template_tag": {
+          "type": "string",
+          "minLength": 1
+        },
+        "folders": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/folder"
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "name"
+      ]
+    },
+    "site": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "url": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*$"
+        },
+        "external": {
+          "enum": [
+            "off",
+            "existing_guests",
+            "new_guests"
+          ]
+        },
+        "external_reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "classification": {
+          "enum": [
+            "Public",
+            "Internal",
+            "Confidential",
+            "Restricted"
+          ]
+        },
+        "access": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "enum": [
+              "owner",
+              "member",
+              "visitor"
+            ]
+          }
+        },
+        "fixed": {
+          "type": "boolean"
+        },
+        "libraries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/library"
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "url",
+        "external",
+        "classification",
+        "access"
+      ]
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "tenant",
+    "company",
+    "jurisdictions",
+    "modules",
+    "dns",
+    "mail",
+    "users",
+    "groups",
+    "structure",
+    "baseline"
+  ],
+  "properties": {
+    "version": {
+      "const": 1
+    },
+    "tenant": {
+      "type": "object",
+      "properties": {
+        "environment": {
+          "enum": [
+            "test",
+            "live"
+          ]
+        },
+        "tenant_id": {
+          "type": "string",
+          "pattern": "^$|^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "default_plan": {
+          "enum": [
+            "business_basic",
+            "business_standard",
+            "business_premium"
+          ]
+        },
+        "break_glass_accounts": {
+          "type": "array",
+          "minItems": 2,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9]([a-z0-9._-]*[a-z0-9])?$"
+          }
+        },
+        "flow_owner": {
+          "type": "string",
+          "minLength": 1
+        },
+        "usage_location": {
+          "type": "string",
+          "pattern": "^[A-Z]{2}$"
+        },
+        "time_zone": {
+          "type": "string"
+        },
+        "first_sign_in_hours": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 720
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "environment",
+        "default_plan",
+        "break_glass_accounts",
+        "flow_owner",
+        "usage_location"
+      ]
+    },
+    "company": {
+      "type": "object",
+      "properties": {
+        "legal_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "trading_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "entity_wording": {
+          "type": "string",
+          "minLength": 1
+        },
+        "primary_domain": {
+          "type": "string",
+          "pattern": "^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*\\.[a-z]{2,}$"
+        },
+        "domain_aliases": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*\\.[a-z]{2,}$"
+          },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "legal_name",
+        "trading_name",
+        "entity_wording",
+        "primary_domain"
+      ]
+    },
+    "jurisdictions": {
+      "type": "object",
+      "properties": {
+        "registered": {
+          "type": "string",
+          "pattern": "^(generic|[a-z]{2}(-[a-z0-9]{1,3})?)$"
+        },
+        "operating": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^(generic|[a-z]{2}(-[a-z0-9]{1,3})?)$"
+          },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "registered",
+        "operating"
+      ]
+    },
+    "modules": {
+      "type": "object",
+      "properties": {
+        "records": {
+          "type": "boolean"
+        },
+        "people": {
+          "type": "boolean"
+        },
+        "legal": {
+          "type": "boolean"
+        },
+        "sales": {
+          "type": "boolean"
+        },
+        "policies": {
+          "type": "boolean"
+        },
+        "compliance": {
+          "type": "boolean"
+        },
+        "devices": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "records",
+        "people",
+        "legal",
+        "sales",
+        "policies",
+        "compliance",
+        "devices"
+      ]
+    },
+    "dns": {
+      "type": "object",
+      "properties": {
+        "provider": {
+          "enum": [
+            "cloudflare",
+            "route53",
+            "azure",
+            "godaddy",
+            "manual"
+          ]
+        },
+        "zone": {
+          "type": "string",
+          "pattern": "^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*\\.[a-z]{2,}$"
+        },
+        "sending_subdomains": {
+          "type": "object",
+          "properties": {
+            "transactional": {
+              "type": "string",
+              "pattern": "^[a-z0-9]([a-z0-9._-]*[a-z0-9])?$"
+            },
+            "marketing": {
+              "type": "string",
+              "pattern": "^[a-z0-9]([a-z0-9._-]*[a-z0-9])?$"
+            }
+          },
+          "additionalProperties": false
+        },
+        "non_mail_hosts": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "dmarc_report_address": {
+          "type": "string",
+          "pattern": "^[a-z0-9]([a-z0-9._-]*[a-z0-9])?$"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "provider",
+        "zone",
+        "dmarc_report_address"
+      ]
+    },
+    "mail": {
+      "type": "object",
+      "properties": {
+        "shared": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "pattern": "^[a-z0-9]([a-z0-9._-]*[a-z0-9])?$"
+              },
+              "aliases": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9]([a-z0-9._-]*[a-z0-9])?$"
+                }
+              },
+              "access": {
+                "type": "string",
+                "minLength": 1
+              },
+              "auto_reply": {
+                "type": "string",
+                "minLength": 1
+              },
+              "note": {
+                "type": "string"
+              },
+              "module": {
+                "type": "string",
+                "minLength": 1
+              },
+              "recommended": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "name",
+              "access"
+            ]
+          }
+        },
+        "lists": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "pattern": "^[a-z0-9]([a-z0-9._-]*[a-z0-9])?$"
+              },
+              "aliases": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9]([a-z0-9._-]*[a-z0-9])?$"
+                }
+              },
+              "members": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "external_senders": {
+                "type": "boolean"
+              },
+              "note": {
+                "type": "string"
+              },
+              "recommended": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "name",
+              "members"
+            ]
+          }
+        },
+        "auto_replies": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "shared",
+        "lists"
+      ]
+    },
+    "users": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9]([a-z0-9._-]*[a-z0-9])?$"
+          },
+          "primary": {
+            "type": "string",
+            "pattern": "^[a-z0-9]([a-z0-9._-]*[a-z0-9])?$"
+          },
+          "given_name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "family_name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "plan": {
+            "enum": [
+              "business_basic",
+              "business_standard",
+              "business_premium",
+              "none"
+            ]
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "access_groups": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "break_glass": {
+            "type": "boolean"
+          },
+          "first_sign_in": {
+            "enum": [
+              "screen",
+              "email"
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "primary",
+          "given_name",
+          "family_name",
+          "plan"
+        ]
+      }
+    },
+    "groups": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^grp-[a-z0-9-]+$"
+          },
+          "kind": {
+            "enum": [
+              "access",
+              "system"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "members": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "note": {
+            "type": "string"
+          },
+          "fixed": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "kind"
+        ]
+      }
+    },
+    "structure": {
+      "type": "object",
+      "properties": {
+        "hub": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "url": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9-]*$"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "name",
+            "url"
+          ]
+        },
+        "sites": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/site"
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "hub",
+        "sites"
+      ]
+    },
+    "baseline": {
+      "type": "object",
+      "properties": {
+        "preset": {
+          "enum": [
+            "essential",
+            "recommended",
+            "strict"
+          ]
+        },
+        "overrides": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "value": {},
+              "reason": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "value",
+              "reason"
+            ]
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "preset"
+      ]
+    },
+    "disclosures": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "text": {
+            "type": "string"
+          },
+          "html": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "enabled"
+        ]
+      }
+    },
+    "legal": {
+      "type": "object",
+      "properties": {
+        "domains": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "company",
+              "partner",
+              "notice"
+            ]
+          }
+        },
+        "file_name_pattern": {
+          "type": "string"
+        },
+        "header_label_patterns": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "expiry_notice_days": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "unsigned_reminder_days": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "integrations": {
+      "type": "object",
+      "properties": {
+        "inbound_mailbox": {
+          "type": "string",
+          "pattern": "^[a-z0-9]([a-z0-9._-]*[a-z0-9])?$"
+        },
+        "inbound_token": {
+          "type": "string",
+          "pattern": "^(keychain|github):.+$"
+        },
+        "order_system": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "base_url": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "compliance": {
+      "type": "object",
+      "properties": {
+        "frameworks": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "soc2_criteria": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "security",
+              "availability",
+              "confidentiality",
+              "processing_integrity",
+              "privacy"
+            ]
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "retention": {
+      "type": "object"
+    },
+    "authority": {
+      "type": "object"
+    },
+    "secrets": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^(keychain|github):.+$"
+      }
+    },
+    "ids": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    }
+  }
+}

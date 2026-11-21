@@ -1,0 +1,21 @@
+# Fixture: a configuration that fails in several ways.
+version: 1
+tenant:
+  environment: staging
+  default_plan: business_premium
+  break_glass_accounts: [admin-1]
+  flow_owner: nobody
+  usage_location: US
+company: {legal_name: X, trading_name: X, entity_wording: X, primary_domain: x.example}
+jurisdictions: {registered: us, operating: [us]}
+modules: {records: true, people: true, legal: false, sales: false, policies: true, compliance: false, devices: false}
+dns: {provider: manual, zone: x.example, dmarc_report_address: dmarc}
+mail: {shared: [], lists: []}
+users:
+  - {id: owner, primary: owner, given_name: O, family_name: Wner, plan: business_basic, roles: [owner]}
+groups: []
+structure:
+  hub: {name: Hub, url: hub}
+  sites:
+    - {name: Admin, url: admin, external: "off", classification: Confidential, access: {someone: owner}}
+baseline: {preset: recommended}

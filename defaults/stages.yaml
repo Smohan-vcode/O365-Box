@@ -1,0 +1,9 @@
+# Stage reached = the lowest stage with an incomplete P0 step.
+stages:
+  - {name: "Details entered", tracks: [T0, T13]}
+  - {name: "Tenant secured", tracks: [T1]}
+  - {name: "Mail live", tracks: [T2]}
+  - {name: "Records ready", tracks: [T3, T4]}
+  - {name: "Legal ready", tracks: [T5, T6, T7, T8]}
+  - {name: "Policies approved", tracks: [T9]}
+  - {name: "Compliance running", tracks: [T10]}

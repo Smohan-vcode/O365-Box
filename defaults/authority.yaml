@@ -1,0 +1,5 @@
+# Who may sign for the company. Updated when a second officer is appointed.
+signing:
+  - {domain: partner, role: signer, limit: none}
+  - {domain: company, role: signer, limit: none}
+note: "At launch the founder holds every role."

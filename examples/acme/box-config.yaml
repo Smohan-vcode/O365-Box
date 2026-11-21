@@ -1,0 +1,330 @@
+# Fictional example configuration (SPEC §9.1). Every value here is made up.
+# Used by tests, `box check-literals` (its values must not appear outside
+# examples/) and the CI dry run. A real company's configuration is stored in
+# its own tenant, never in this repository.
+version: 1
+tenant:
+  environment: test
+  tenant_id: 00000000-0000-4000-8000-0000000000a1
+  default_plan: business_premium
+  break_glass_accounts:
+  - admin-1
+  - admin-2
+  flow_owner: founder
+  usage_location: GB
+  time_zone: GMT Standard Time
+  first_sign_in_hours: 8
+company:
+  legal_name: Quillfeather Widgets Limited
+  trading_name: Quillfeather
+  entity_wording: Quillfeather Widgets Limited, a company registered in England and Wales
+  primary_domain: quillfeather.example
+  domain_aliases: []
+jurisdictions:
+  registered: gb
+  operating:
+  - gb
+  - eu
+  - de
+modules:
+  records: true
+  people: true
+  legal: false
+  sales: false
+  policies: true
+  compliance: false
+  devices: true
+dns:
+  provider: manual
+  zone: quillfeather.example
+  sending_subdomains:
+    transactional: notify
+    marketing: news
+  non_mail_hosts:
+  - app
+  - api
+  dmarc_report_address: dmarc
+mail:
+  shared:
+  - name: info
+    aliases:
+    - hello
+    - contact
+    access: grp-staff
+  - name: support
+    aliases:
+    - help
+    access: grp-staff
+    auto_reply: support
+  - name: sales
+    access: grp-sales
+  - name: billing
+    access: grp-finance
+  - name: security
+    aliases:
+    - abuse
+    access: grp-admins
+    auto_reply: security
+  - name: privacy
+    aliases:
+    - dpo
+    access: grp-legal
+    auto_reply: privacy
+  lists:
+  - name: postmaster
+    aliases:
+    - hostmaster
+    - webmaster
+    members:
+    - founder
+    external_senders: true
+  - name: dmarc
+    members:
+    - founder
+    external_senders: true
+  - name: alerts
+    members:
+    - founder
+    external_senders: true
+  auto_replies:
+    support: Thank you for contacting {company.trading_name} support. We have received your message and
+      will reply within one business day.
+    security: Thank you for your report to {company.trading_name}. Our security team reviews every report
+      and will respond as soon as possible.
+    privacy: Thank you for your request to {company.trading_name}. We will respond within the period the
+      law requires.
+users:
+- id: founder
+  primary: robin
+  given_name: Robin
+  family_name: Thistlewood
+  plan: business_premium
+  roles:
+  - owner
+  - legal-approver
+  - company-legal-admin
+  - signer
+  - sender
+  - finance-approver
+  - control-owner
+  access_groups:
+  - grp-staff
+  - grp-sales
+  - grp-legal
+  - grp-finance
+  - grp-engineering
+  - grp-admins
+  first_sign_in: screen
+- id: ops
+  primary: sam
+  given_name: Sam
+  family_name: Marrowfield
+  plan: business_standard
+  roles:
+  - sender
+  access_groups:
+  - grp-staff
+  - grp-sales
+  first_sign_in: email
+- id: admin-1
+  primary: admin-1
+  given_name: Admin
+  family_name: One
+  plan: none
+  break_glass: true
+- id: admin-2
+  primary: admin-2
+  given_name: Admin
+  family_name: Two
+  plan: none
+  break_glass: true
+groups:
+- name: grp-staff
+  kind: access
+  title: Everyone on staff
+- name: grp-sales
+  kind: access
+  title: Sales
+- name: grp-legal
+  kind: access
+  title: Legal
+- name: grp-finance
+  kind: access
+  title: Finance
+- name: grp-engineering
+  kind: access
+  title: Engineering
+- name: grp-admins
+  kind: access
+  title: Administrators
+- name: grp-break-glass
+  kind: system
+  fixed: true
+  note: excluded from every Conditional Access policy
+  members:
+  - admin-1
+  - admin-2
+structure:
+  hub:
+    name: Company
+    url: company
+  sites:
+  - name: Corporate
+    url: corporate
+    external: "off"
+    classification: Restricted
+    access:
+      grp-admins: owner
+    libraries:
+    - name: Formation
+    - name: Board and shareholders
+    - name: Equity
+    - name: Company documents
+      content_types: generated
+      domain: company
+      folders_by: counterparty
+  - name: Legal
+    url: legal
+    external: "off"
+    classification: Confidential
+    access:
+      grp-legal: owner
+    libraries:
+    - name: Templates
+      access:
+        grp-legal: owner
+        grp-sales: visitor
+      access_reason: Sales reads approved templates
+      versioning: major
+      folders:
+      - Source
+    - name: Agreements
+      content_types: generated
+      domain: partner
+      folders_by: counterparty
+    - name: Executed inbox
+      access:
+        role-signer: member
+      access_reason: Signers upload executed copies
+    - name: External paper
+    - name: Notices and records
+      content_types: generated
+      domain: notice
+    - name: Pack exports
+  - name: Finance
+    url: finance
+    external: "off"
+    classification: Confidential
+    access:
+      grp-finance: owner
+    libraries:
+    - name: Invoices issued
+    - name: Bills
+    - name: Tax
+    - name: Bank statements
+  - name: Sales
+    url: sales
+    external: "off"
+    classification: Internal
+    access:
+      grp-sales: member
+      grp-staff: visitor
+    libraries:
+    - name: Accounts
+      folders_by: counterparty
+    - name: Collateral
+  - name: Marketing
+    url: marketing
+    external: "off"
+    classification: Internal
+    access:
+      grp-staff: member
+    libraries:
+    - name: Brand
+    - name: Content
+    - name: Campaigns
+  - name: Product
+    url: product
+    external: "off"
+    classification: Internal
+    access:
+      grp-engineering: member
+      grp-staff: visitor
+    libraries:
+    - name: Specifications
+    - name: Roadmap
+  - name: Compliance
+    url: compliance
+    external: "off"
+    classification: Internal
+    access:
+      grp-admins: owner
+      grp-staff: visitor
+    libraries:
+    - name: Policies
+      access:
+        grp-admins: owner
+        grp-staff: visitor
+    - name: Evidence
+    - name: Audits
+    - name: Questionnaires
+  - name: People
+    url: people
+    external: "off"
+    classification: Restricted
+    access:
+      grp-admins: owner
+    libraries:
+    - name: Agreements
+      content_types: generated
+      domain: company
+      template_tag: people
+    - name: Hiring
+  - name: Admin
+    url: admin
+    external: "off"
+    classification: Confidential
+    access:
+      grp-admins: owner
+    fixed: true
+    libraries:
+    - name: Configuration
+      versioning: major
+      access:
+        grp-admins: owner
+    - name: Setup evidence
+    - name: Automation logs
+    - name: Configuration exports
+baseline:
+  preset: recommended
+  overrides:
+  - id: teams.meetings.anonymous_join
+    value: 'off'
+    reason: Meetings are internal only
+disclosures:
+  email_external:
+    enabled: true
+    text: '{company.entity_wording}. Registered number {company.registration.number}. Registered office:
+      {company.address.street}, {company.address.city} {company.address.postcode}. This message may be
+      confidential; if you received it in error, please tell the sender and delete it.'
+  document_footer:
+    enabled: true
+    text: '{company.legal_name} · Registered in England and Wales no. {company.registration.number}'
+  meeting_notice:
+    enabled: true
+    text: This meeting may be recorded and transcribed.
+legal:
+  domains:
+  - company
+  - partner
+  - notice
+  expiry_notice_days: 60
+  unsigned_reminder_days: 7
+compliance:
+  frameworks:
+  - soc2
+  soc2_criteria:
+  - security
+secrets:
+  dns_token: keychain:box/00000000-0000-4000-8000-0000000000a1/dns
+ids: {}

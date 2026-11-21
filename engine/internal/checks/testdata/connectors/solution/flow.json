@@ -1,0 +1,8 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "a": {"api": {"name": "shared_sharepointonline"}},
+      "b": {"api": {"name": "shared_sendgrid"}}
+    }
+  }
+}

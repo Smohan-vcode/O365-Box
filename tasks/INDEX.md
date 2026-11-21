@@ -1,0 +1,75 @@
+# Task index
+
+The engine's development backlog, in dependency order within each track.
+Spikes are in `spikes/`. Generated from front matter; `box status` reads the
+same front matter (T0-02).
+
+| ID | Title | Priority | Size | Depends on | Human step | Status |
+| --- | --- | --- | --- | --- | --- | --- |
+| S-01 | Brackets to content controls bound to library columns | P0 | S | T3-01 |  | TODO |
+| S-02 | Write coverage of the Tenant Configuration Management APIs | P0 | S | T0-04 |  | TODO |
+| S-03 | Deploying the flow solution from source under the included licence | P0 | S | T0-04, T3-04 | yes | TODO |
+| S-04 | Standard connector check and limits | P0 | S | S-03 |  | TODO |
+| S-05 | Go orchestrator driving PowerShell providers | P0 | S | T0-01 |  | TODO |
+| S-06 | Bootstrap with a delegated Global Administrator session | P0 | S | T0-01 | yes | TODO |
+| S-07 | Exchange disclaimer rendering | P0 | S | T0-01 | yes | TODO |
+| S-08 | Fresh-tenant discovery and browser sign-in | P0 | S | T0-01 | yes | TODO |
+| T0-01 | Configuration schema and repository checks | P0 | S | none |  | DONE |
+| T0-02 | Orchestrator: step contract, graph, state and events | P0 | M | T0-01, S-05 |  | TODO |
+| T0-03 | Provider runner and box doctor | P0 | S | T0-02 |  | TODO |
+| T0-04 | Sign-in, discovery and bootstrap | P0 | M | T0-03, S-06, S-08 | yes | TODO |
+| T0-05 | Pipeline and scheduled jobs | P0 | S | T0-04, T0-06 |  | TODO |
+| T0-06 | Configuration store | P0 | M | T0-02, T0-04 |  | TODO |
+| T13-01 | TUI shell | P0 | S | T0-02 |  | TODO |
+| T13-02 | Start, sign-in and discovery screen | P0 | M | T13-01, T0-04, S-08 |  | TODO |
+| T13-03 | Company, addresses and people screens | P0 | M | T13-02 |  | TODO |
+| T13-04 | Security screen and hardening presets | P0 | M | T13-02 |  | TODO |
+| T13-05 | Jurisdictions and disclosures | P0 | M | T13-03, S-07 |  | TODO |
+| T13-06 | Structure, modules and permissions screen | P0 | M | T13-02 |  | TODO |
+| T13-07 | Review and confirmation screen | P0 | S | T13-03, T13-04, T13-05, T13-06 |  | TODO |
+| T13-08 | Run view, report and home screen | P0 | M | T13-07, T0-05, T0-06 |  | TODO |
+| T1-01 | Break-glass accounts and exclusion group | P0 | S | T0-04 | yes | TODO |
+| T1-02 | Users and licences | P0 | S | T1-01 |  | TODO |
+| T1-03 | Groups and role groups | P0 | S | T1-02 |  | TODO |
+| T1-04 | Device baseline | P1 | S | T1-03 |  | TODO |
+| T1-05 | Identity baseline | P0 | M | T1-03, S-02 | yes | TODO |
+| T2-01 | Shared mailboxes, lists and aliases | P0 | S | T1-03 |  | TODO |
+| T2-02 | Mail baseline | P0 | S | T2-01, S-02 |  | TODO |
+| T2-03 | DNS records and DKIM | P0 | S | T2-01 |  | TODO |
+| T2-04 | Probe test and DMARC staging | P0 | S | T2-02, T2-03 |  | TODO |
+| T3-01 | Hub and sites | P0 | S | T1-03 |  | TODO |
+| T3-02 | Libraries and permissions | P0 | S | T3-01 |  | TODO |
+| T3-03 | Register lists | P0 | M | T3-01 |  | TODO |
+| T3-04 | Counterparty folders and item rules | P1 | S | T3-02, T3-03 |  | TODO |
+| T4-01 | Template source scan | P0 | S | T3-02, S-01 |  | TODO |
+| T4-02 | Bindings confirmation check | P0 | S | T4-01 | yes | TODO |
+| T4-03 | Template conversion | P0 | M | T4-02 |  | TODO |
+| T4-04 | Content types and publication | P0 | M | T4-03 |  | TODO |
+| T4-05 | Dictionary views and completeness | P1 | S | T4-04 |  | TODO |
+| T5-01 | Solution scaffold and deployment | P0 | M | T3-03, S-03, S-04 | yes | TODO |
+| T5-02 | Numbering and document creation (F01, F02) | P0 | M | T5-01, T4-04 |  | TODO |
+| T5-03 | Fill (F03) | P0 | M | T5-02 |  | TODO |
+| T5-04 | Approval (F04) | P0 | M | T5-03, T6-02 |  | TODO |
+| T5-05 | Signature hand-off and executed filing (F05, F06) | P0 | M | T5-04 | yes | TODO |
+| T5-06 | Execution actions (F07, F08) | P0 | S | T5-05 |  | TODO |
+| T5-07 | Packages (F09) | P1 | M | T5-05 |  | TODO |
+| T5-08 | Reminders, expiry and external paper (F10, F13) | P0 | S | T5-05 |  | TODO |
+| T5-09 | Company data change and notices (F11, F12, F19) | P1 | M | T5-03 |  | TODO |
+| T6-01 | People list applied by the pipeline | P0 | S | T3-03, T1-03 |  | TODO |
+| T6-02 | Role sync and delegations | P0 | S | T6-01 |  | TODO |
+| T7-01 | Setup list and views | P0 | S | T3-03, T0-02 |  | TODO |
+| T7-02 | Drift monitors and weekly report | P0 | S | T7-01, S-02 |  | TODO |
+| T8-01 | Inbound mailbox (F14) and public forms (F15, F16) | P1 | S | T5-02 | yes | TODO |
+| T8-02 | Campaigns and leads | P1 | S | T8-01 |  | TODO |
+| T8-03 | Orders register | P1 | S | T5-06 |  | TODO |
+| T9-01 | Policy templates and rendering | P1 | M | T3-02 |  | TODO |
+| T9-02 | Publication and acknowledgement (F18) | P1 | S | T9-01, T5-01 |  | TODO |
+| T10-01 | Controls and evidence collectors | P1 | M | T3-03, T0-05 |  | TODO |
+| T10-02 | Recurring control tasks (F17) and inventories | P1 | S | T10-01, T5-01 |  | TODO |
+| T11-01 | Upgrade: fill templates including alternatives | P2 | S | T5-03 | yes | TODO |
+| T11-02 | Upgrade: signature provider | P2 | S | T5-05 | yes | TODO |
+| T11-03 | Upgrade: order system call | P2 | S | T5-06 | yes | TODO |
+| T11-04 | Upgrade: enforced retention and legal hold | P2 | S | T2-01, T3-01 | yes | TODO |
+| T11-05 | Upgrade: assistants | P2 | S | T5-09, T9-02 | yes | TODO |
+| T12-01 | Second-company dry run | P2 | M | T5-08, T7-02, T9-02 |  | TODO |
+| T12-02 | Installer guide | P2 | S | T12-01 |  | TODO |

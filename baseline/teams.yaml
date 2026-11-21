@@ -1,0 +1,9 @@
+meetings:
+  transcription: on
+  recording: on
+  recording_expiry_days: 365
+  anonymous_join: on
+  lobby: everyone_outside_organisation_waits
+external_access: {federation: allowed, consumer_teams: off}
+guest_access: off
+apps: {third_party: blocked, custom: blocked}

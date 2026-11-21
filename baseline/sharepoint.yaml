@@ -1,0 +1,13 @@
+tenant:
+  sharing_capability: existing_guests_only     # sites default to off (configuration `structure.sites`)
+  default_sharing_link: specific_people
+  default_link_permission: view
+  anyone_links: off
+  legacy_auth: off
+  unmanaged_device_access: limited_web_only
+  onedrive_sharing: off
+  idle_session_sign_out: {enabled: true, minutes: 60}
+site_defaults:
+  versioning: {major_versions: 100}
+  members_can_share: false
+  access_requests: off

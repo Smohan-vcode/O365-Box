@@ -1,0 +1,2 @@
+allowed:
+  sharepoint: {name: "SharePoint", api: [shared_sharepointonline]}

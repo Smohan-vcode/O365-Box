@@ -1,0 +1,896 @@
+site: Admin
+note: Each key under lists becomes a SharePoint list. Column types map as in docs/SPEC.md section 7. Lists marked append_only grant create-only rights to the flow owner and read to owners.
+enums:
+  domain:
+  - company
+  - partner
+  - notice
+  doc_class:
+  - signed
+  - attached
+  - published
+  - record
+  template_state:
+  - NEEDS_REVIEW
+  - ACTIVE
+  - SUPERSEDED
+  - RETIRED
+  document_state:
+  - DRAFT
+  - IN_REVIEW
+  - READY
+  - SENT
+  - EXECUTED
+  - DECLINED
+  - EXPIRED
+  - VOIDED
+  - EXTERNAL_PAPER
+  bracket_kind:
+  - deal
+  - constant
+  - choice
+  - note
+  - reference
+  - unclassified
+  value_status:
+  - EMPTY
+  - PROVISIONAL
+  - CONFIRMED
+  field_type:
+  - text
+  - long
+  - date
+  - number
+  - choice
+  - email
+  setup_kind:
+  - automated
+  - manual
+  - input
+  setup_status:
+  - NOT_STARTED
+  - WAITING_ON_INPUT
+  - IN_PROGRESS
+  - DONE
+  - FAILED
+  - DRIFTED
+  approval_state:
+  - PENDING
+  - APPROVED
+  - RETURNED
+  - EXPIRED
+  rule_condition:
+  - always
+  - external_paper
+  - value_above
+  notice_state:
+  - CURRENT
+  - PENDING_APPROVAL
+  - PENDING_PUBLICATION
+  - SUPERSEDED
+  task_state:
+  - OPEN
+  - DONE
+  - OVERDUE
+  frequency:
+  - weekly
+  - monthly
+  - quarterly
+  - annually
+  - on_event
+  lead_state:
+  - NEW
+  - QUALIFIED
+  - MEETING
+  - QUOTED
+  - WON
+  - LOST
+  campaign_state:
+  - PLANNED
+  - RUNNING
+  - CLOSED
+  plan:
+  - business_basic
+  - business_standard
+  - business_premium
+  - none
+lists:
+  People:
+    purpose: Desired state for everyone added after bootstrap. The pipeline applies it hourly.
+    columns:
+    - name: person_id
+      type: id
+      key: true
+    - name: email
+      type: email
+      required: true
+    - name: full_name
+      type: text
+      required: true
+    - name: org_unit
+      type: text
+    - name: active
+      type: bool
+    - name: joined_on
+      type: date
+    - name: left_on
+      type: date
+    - name: plan
+      type: enum
+      enum: plan
+      required: true
+    - name: roles
+      type: text
+      note: comma-separated role names
+    - name: access_groups
+      type: text
+    - name: applied_at
+      type: datetime
+    - name: apply_error
+      type: long
+  RoleAssignments:
+    purpose: Who holds which role; mirrors role-group membership.
+    columns:
+    - name: assignment_id
+      type: id
+      key: true
+    - name: person_id
+      type: ref(People)
+      required: true
+    - name: role
+      type: text
+      required: true
+    - name: granted_by
+      type: ref(People)
+    - name: granted_on
+      type: date
+    - name: revoked_on
+      type: date
+  Delegations:
+    columns:
+    - name: delegation_id
+      type: id
+      key: true
+    - name: from_person
+      type: ref(People)
+      required: true
+    - name: to_person
+      type: ref(People)
+      required: true
+    - name: role
+      type: text
+      required: true
+    - name: starts_on
+      type: date
+      required: true
+    - name: ends_on
+      type: date
+      required: true
+  ApprovalRules:
+    columns:
+    - name: rule_id
+      type: id
+      key: true
+    - name: scope_domain
+      type: enum
+      enum: domain
+    - name: scope_code
+      type: text
+      note: document code; empty means whole domain
+    - name: condition
+      type: enum
+      enum: rule_condition
+      required: true
+    - name: threshold
+      type: number
+    - name: currency
+      type: text
+    - name: approver_role
+      type: text
+      required: true
+    - name: second_approver_role
+      type: text
+    - name: fallback_role
+      type: text
+    - name: fallback_days
+      type: number
+    - name: active
+      type: bool
+  Approvals:
+    columns:
+    - name: approval_id
+      type: id
+      key: true
+    - name: document_id
+      type: ref(Documents)
+      required: true
+    - name: rule_id
+      type: ref(ApprovalRules)
+    - name: step
+      type: number
+    - name: role
+      type: text
+      required: true
+    - name: state
+      type: enum
+      enum: approval_state
+      required: true
+    - name: decided_by
+      type: ref(People)
+    - name: decided_at
+      type: datetime
+    - name: self_approval
+      type: bool
+    - name: comment
+      type: long
+  Counterparties:
+    columns:
+    - name: counterparty_id
+      type: id
+      key: true
+    - name: legal_name
+      type: text
+      required: true
+    - name: jurisdiction
+      type: text
+    - name: entity_type
+      type: text
+    - name: registered_address
+      type: long
+    - name: notice_email
+      type: email
+    - name: country
+      type: text
+    - name: kind
+      type: text
+      note: customer, partner, supplier, person
+    - name: nda_document_id
+      type: ref(Documents)
+    - name: nda_expires_on
+      type: date
+    - name: folder_url
+      type: url
+  Templates:
+    columns:
+    - name: template_id
+      type: id
+      key: true
+    - name: code
+      type: text
+      required: true
+    - name: title
+      type: text
+      required: true
+    - name: domain
+      type: enum
+      enum: domain
+      required: true
+    - name: doc_class
+      type: enum
+      enum: doc_class
+      required: true
+    - name: language
+      type: text
+    - name: framework
+      type: text
+    - name: version
+      type: text
+      required: true
+    - name: reference_pattern
+      type: text
+    - name: state
+      type: enum
+      enum: template_state
+      required: true
+    - name: source_file
+      type: text
+      required: true
+    - name: template_url
+      type: url
+    - name: signers
+      type: text
+      note: counterparty, company, both, holder
+    - name: execution_action
+      type: text
+    - name: retention_class
+      type: text
+    - name: review_months
+      type: number
+    - name: brackets_total
+      type: number
+    - name: brackets_bound
+      type: number
+    - name: supersedes
+      type: ref(Templates)
+    - name: content_type_id
+      type: text
+    - name: needs_manual_edit
+      type: bool
+  Bindings:
+    purpose: Loaded by the pipeline from the confirmed bindings file. Read-only. Gives the used-in view for company data.
+    columns:
+    - name: binding_id
+      type: id
+      key: true
+    - name: template_id
+      type: ref(Templates)
+      required: true
+    - name: bracket_text
+      type: text
+      required: true
+    - name: occurrence
+      type: number
+      required: true
+    - name: context_before
+      type: text
+    - name: context_after
+      type: text
+    - name: kind
+      type: enum
+      enum: bracket_kind
+      required: true
+    - name: dictionary_key
+      type: ref(Dictionary)
+    - name: field_id
+      type: ref(TemplateFields)
+    - name: choice_group
+      type: text
+    - name: confirmed
+      type: bool
+  TemplateFields:
+    purpose: Catalogue of the columns generated for each template content type.
+    columns:
+    - name: field_id
+      type: id
+      key: true
+    - name: template_id
+      type: ref(Templates)
+      required: true
+    - name: name
+      type: text
+      required: true
+    - name: label
+      type: text
+      required: true
+    - name: type
+      type: enum
+      enum: field_type
+      required: true
+    - name: required
+      type: bool
+    - name: options
+      type: json
+    - name: counterparty_column
+      type: text
+      note: fills from Counterparties when set
+    - name: never_store
+      type: bool
+    - name: order
+      type: number
+  Dictionary:
+    columns:
+    - name: key
+      type: text
+      key: true
+    - name: label
+      type: text
+      required: true
+    - name: kind
+      type: enum
+      enum: bracket_kind
+      note: constant or note
+    - name: question
+      type: long
+      note: 'for notes: what must be decided'
+    - name: value
+      type: long
+    - name: values_by_language
+      type: json
+    - name: status
+      type: enum
+      enum: value_status
+      required: true
+    - name: owner
+      type: text
+    - name: effective_on
+      type: date
+    - name: remove_bracket
+      type: bool
+      note: 'true: resolve by deleting the bracket'
+  Documents:
+    columns:
+    - name: document_id
+      type: id
+      key: true
+    - name: reference
+      type: text
+      required: true
+    - name: template_id
+      type: ref(Templates)
+    - name: template_version
+      type: text
+    - name: package_run_id
+      type: text
+    - name: domain
+      type: enum
+      enum: domain
+      required: true
+    - name: counterparty_id
+      type: ref(Counterparties)
+    - name: state
+      type: enum
+      enum: document_state
+      required: true
+    - name: created_by
+      type: ref(People)
+      required: true
+    - name: signer_name
+      type: text
+    - name: signer_email
+      type: email
+    - name: effective_on
+      type: date
+    - name: term_months
+      type: number
+    - name: expires_on
+      type: date
+    - name: value
+      type: number
+    - name: currency
+      type: text
+    - name: draft_file_id
+      type: text
+    - name: executed_file_id
+      type: text
+    - name: audit_file_id
+      type: text
+    - name: sent_at
+      type: datetime
+    - name: executed_at
+      type: datetime
+    - name: stale_data
+      type: bool
+      note: a value used changed after sending
+    - name: source
+      type: text
+      note: cockpit, inbound, assistant
+    - name: needs_manual_edit
+      type: bool
+    - name: manual_edit_done
+      type: bool
+    - name: file_url
+      type: url
+  Packages:
+    columns:
+    - name: package_id
+      type: id
+      key: true
+    - name: name
+      type: text
+      required: true
+    - name: lead_code
+      type: text
+      required: true
+    - name: active
+      type: bool
+  PackageItems:
+    columns:
+    - name: item_id
+      type: id
+      key: true
+    - name: package_id
+      type: ref(Packages)
+      required: true
+    - name: code
+      type: text
+      required: true
+    - name: condition
+      type: text
+      note: always, or a named condition such as regulated_customer
+    - name: order
+      type: number
+  Notices:
+    purpose: Published notices and internal records, one row per version.
+    columns:
+    - name: notice_id
+      type: id
+      key: true
+    - name: template_id
+      type: ref(Templates)
+      required: true
+    - name: version
+      type: text
+      required: true
+    - name: state
+      type: enum
+      enum: notice_state
+      required: true
+    - name: rendered_file_id
+      type: text
+    - name: owner
+      type: ref(People)
+    - name: approved_by
+      type: ref(People)
+    - name: published_on
+      type: date
+    - name: published_at_url
+      type: url
+    - name: next_review_on
+      type: date
+    - name: reason
+      type: text
+      note: data change, wording change, scheduled review
+  Events:
+    purpose: Append-only log of every state change (R10).
+    append_only: true
+    columns:
+    - name: event_id
+      type: id
+      key: true
+    - name: at
+      type: datetime
+      required: true
+    - name: actor
+      type: text
+      required: true
+    - name: on_behalf_of
+      type: text
+    - name: entity
+      type: text
+      required: true
+    - name: entity_id
+      type: text
+      required: true
+    - name: action
+      type: text
+      required: true
+    - name: from_state
+      type: text
+    - name: to_state
+      type: text
+    - name: detail
+      type: json
+  Orders:
+    columns:
+    - name: order_id
+      type: id
+      key: true
+    - name: document_id
+      type: ref(Documents)
+    - name: counterparty_id
+      type: ref(Counterparties)
+      required: true
+    - name: plan
+      type: text
+    - name: price
+      type: number
+    - name: currency
+      type: text
+    - name: billing_period
+      type: text
+    - name: external_sale_id
+      type: text
+    - name: external_licence_id
+      type: text
+    - name: external_invoice_id
+      type: text
+    - name: campaign_id
+      type: ref(Campaigns)
+  Campaigns:
+    columns:
+    - name: campaign_id
+      type: id
+      key: true
+    - name: name
+      type: text
+      required: true
+    - name: tracking_code
+      type: text
+      required: true
+    - name: objective
+      type: text
+    - name: audience
+      type: text
+    - name: channel
+      type: text
+    - name: starts_on
+      type: date
+    - name: ends_on
+      type: date
+    - name: budget
+      type: number
+    - name: currency
+      type: text
+    - name: owner
+      type: ref(People)
+    - name: state
+      type: enum
+      enum: campaign_state
+      required: true
+  Leads:
+    columns:
+    - name: lead_id
+      type: id
+      key: true
+    - name: received_at
+      type: datetime
+      required: true
+    - name: name
+      type: text
+    - name: email
+      type: email
+    - name: company
+      type: text
+    - name: source
+      type: text
+    - name: campaign_code
+      type: text
+    - name: counterparty_id
+      type: ref(Counterparties)
+    - name: state
+      type: enum
+      enum: lead_state
+      required: true
+    - name: message
+      type: long
+  Meetings:
+    columns:
+    - name: meeting_id
+      type: id
+      key: true
+    - name: held_on
+      type: date
+      required: true
+    - name: counterparty_id
+      type: ref(Counterparties)
+    - name: calendar_event_id
+      type: text
+    - name: host
+      type: ref(People)
+    - name: attendees
+      type: long
+    - name: notes_file_id
+      type: text
+    - name: recording_file_id
+      type: text
+    - name: transcript_file_id
+      type: text
+  PrivacyRequests:
+    columns:
+    - name: request_id
+      type: id
+      key: true
+    - name: received_at
+      type: datetime
+      required: true
+    - name: requester_email
+      type: email
+    - name: kind
+      type: text
+    - name: due_on
+      type: date
+      required: true
+    - name: closed_on
+      type: date
+    - name: thread_id
+      type: text
+    - name: outcome
+      type: long
+  Setup:
+    columns:
+    - name: step_id
+      type: text
+      key: true
+    - name: track
+      type: text
+      required: true
+    - name: title
+      type: text
+      required: true
+    - name: kind
+      type: enum
+      enum: setup_kind
+      required: true
+    - name: status
+      type: enum
+      enum: setup_status
+      required: true
+    - name: owner
+      type: text
+    - name: check
+      type: text
+    - name: last_checked_at
+      type: datetime
+    - name: evidence_url
+      type: url
+    - name: blocks
+      type: text
+    - name: stage
+      type: text
+  JoinerChecklists:
+    columns:
+    - name: item_id
+      type: id
+      key: true
+    - name: person_id
+      type: ref(People)
+      required: true
+    - name: kind
+      type: text
+      note: joiner or leaver
+    - name: item
+      type: text
+      required: true
+    - name: done
+      type: bool
+    - name: done_at
+      type: datetime
+    - name: evidence_url
+      type: url
+  Controls:
+    columns:
+    - name: control_id
+      type: text
+      key: true
+    - name: statement
+      type: long
+      required: true
+    - name: mappings
+      type: json
+      note: framework -> criteria references
+    - name: owner_role
+      type: text
+    - name: frequency
+      type: enum
+      enum: frequency
+    - name: evidence_source
+      type: text
+    - name: automated
+      type: bool
+    - name: policy_ref
+      type: text
+  Evidence:
+    append_only: true
+    columns:
+    - name: evidence_id
+      type: id
+      key: true
+    - name: control_id
+      type: ref(Controls)
+      required: true
+    - name: period
+      type: text
+      required: true
+    - name: artefact_url
+      type: url
+      required: true
+    - name: collected_at
+      type: datetime
+      required: true
+    - name: collected_by
+      type: text
+      required: true
+  ControlTasks:
+    columns:
+    - name: task_id
+      type: id
+      key: true
+    - name: control_id
+      type: ref(Controls)
+      required: true
+    - name: due_on
+      type: date
+      required: true
+    - name: assignee_role
+      type: text
+    - name: state
+      type: enum
+      enum: task_state
+      required: true
+    - name: output_url
+      type: url
+    - name: closed_by
+      type: ref(People)
+    - name: closed_at
+      type: datetime
+  Risks:
+    columns:
+    - name: risk_id
+      type: id
+      key: true
+    - name: description
+      type: long
+      required: true
+    - name: likelihood
+      type: number
+    - name: impact
+      type: number
+    - name: treatment
+      type: long
+    - name: owner
+      type: ref(People)
+    - name: reviewed_on
+      type: date
+  Assets:
+    columns:
+    - name: asset_id
+      type: id
+      key: true
+    - name: name
+      type: text
+      required: true
+    - name: kind
+      type: text
+    - name: owner
+      type: ref(People)
+    - name: classification
+      type: text
+    - name: location
+      type: text
+  Vendors:
+    columns:
+    - name: vendor_id
+      type: id
+      key: true
+    - name: name
+      type: text
+      required: true
+    - name: service
+      type: text
+    - name: data_shared
+      type: text
+    - name: account_address
+      type: email
+    - name: agreement_document_id
+      type: ref(Documents)
+    - name: criticality
+      type: text
+    - name: reviewed_on
+      type: date
+  Counters:
+    purpose: Next sequence number per reference pattern. Written only by the numbering flow.
+    columns:
+    - name: pattern
+      type: text
+      key: true
+    - name: year
+      type: number
+    - name: next
+      type: number
+      required: true
+  InboundLog:
+    purpose: Every structured inbound message, accepted or refused.
+    append_only: true
+    columns:
+    - name: inbound_id
+      type: id
+      key: true
+    - name: received_at
+      type: datetime
+      required: true
+    - name: type
+      type: text
+    - name: external_id
+      type: text
+    - name: accepted
+      type: bool
+    - name: reason
+      type: text
+  Acknowledgements:
+    append_only: true
+    columns:
+    - name: ack_id
+      type: id
+      key: true
+    - name: person_id
+      type: ref(People)
+      required: true
+    - name: policy_id
+      type: text
+      required: true
+    - name: version
+      type: text
+      required: true
+    - name: acknowledged_at
+      type: datetime
+      required: true

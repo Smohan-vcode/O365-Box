@@ -1,0 +1,21 @@
+# Starter control set. mappings.soc2 lists common-criteria references;
+# confirm each mapping with the auditor at readiness review.
+controls:
+  - {id: C-01, statement: "2-Step Verification is enforced for all users.", soc2: [CC6.1], frequency: monthly, source: collector.users_2sv, automated: true, policy: POL-03}
+  - {id: C-02, statement: "Super-administrator rights are held only by dedicated administrator accounts.", soc2: [CC6.1, CC6.3], frequency: monthly, source: collector.admin_roles, automated: true, policy: POL-03}
+  - {id: C-03, statement: "Access to shared drives is granted through groups.", soc2: [CC6.1, CC6.3], frequency: monthly, source: collector.drive_permissions, automated: true, policy: POL-03}
+  - {id: C-04, statement: "User access, administrator roles and drive permissions are reviewed.", soc2: [CC6.2, CC6.3], frequency: quarterly, source: task.access_review, automated: false, policy: POL-03}
+  - {id: C-05, statement: "Third-party application access is limited to an approved list.", soc2: [CC6.6], frequency: monthly, source: collector.allowed_apps, automated: true, policy: POL-11}
+  - {id: C-06, statement: "Mail authentication is published and enforced.", soc2: [CC6.6], frequency: weekly, source: collector.mail_auth, automated: true, policy: POL-04}
+  - {id: C-07, statement: "Configuration changes are made by reviewed pull request.", soc2: [CC8.1], frequency: on_event, source: collector.pull_requests, automated: true, policy: POL-14}
+  - {id: C-08, statement: "Configuration drift is detected and reported.", soc2: [CC7.1], frequency: weekly, source: collector.drift, automated: true, policy: POL-14}
+  - {id: C-09, statement: "Administrator and sign-in activity is logged and retained.", soc2: [CC7.2], frequency: weekly, source: collector.audit_logs, automated: true, policy: POL-18}
+  - {id: C-10, statement: "Policies are approved, versioned and reviewed.", soc2: [CC1.4, CC5.3], frequency: annually, source: task.policy_review, automated: false, policy: POL-01}
+  - {id: C-11, statement: "Personnel acknowledge policies on joining and each year.", soc2: [CC1.4], frequency: on_event, source: collector.acknowledgements, automated: true, policy: POL-20}
+  - {id: C-12, statement: "Joiner and leaver steps are completed and recorded.", soc2: [CC6.2], frequency: on_event, source: collector.checklists, automated: true, policy: POL-20}
+  - {id: C-13, statement: "A risk assessment is performed.", soc2: [CC3.1, CC3.2], frequency: annually, source: task.risk_assessment, automated: false, policy: POL-15}
+  - {id: C-14, statement: "Vendors are inventoried, under agreement and reviewed.", soc2: [CC9.2], frequency: annually, source: task.vendor_review, automated: false, policy: POL-11}
+  - {id: C-15, statement: "An independent penetration test is performed.", soc2: [CC4.1], frequency: annually, source: task.pen_test, automated: false, policy: POL-17}
+  - {id: C-16, statement: "Incident response is exercised.", soc2: [CC7.4], frequency: annually, source: task.incident_exercise, automated: false, policy: POL-13}
+  - {id: C-17, statement: "Continuity and restore are tested.", soc2: [CC7.5, A1.3], frequency: annually, source: task.continuity_test, automated: false, policy: POL-16}
+  - {id: C-18, statement: "Legal documents are approved under recorded rules before sending.", soc2: [CC2.3], frequency: on_event, source: collector.approvals, automated: true, policy: POL-08}

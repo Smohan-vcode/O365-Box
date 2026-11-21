@@ -1,0 +1,11 @@
+# Fixture: a fictional company whose values are planted in repo/.
+version: 1
+tenant: {tenant_id: 11111111-2222-4333-8444-555555555555}
+company:
+  legal_name: Globex Unicorns Plc
+  trading_name: Globex
+  entity_wording: Globex Unicorns Plc, a company registered in Nowhere
+  primary_domain: globexunicorns.example
+users:
+  - {id: a, given_name: Kim, family_name: Kite}
+  - {id: b, given_name: Pat, family_name: Gallowglass}

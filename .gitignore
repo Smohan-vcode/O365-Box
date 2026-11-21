@@ -1,0 +1,14 @@
+# Build output
+/bin/
+/dist/
+TestResults/
+# Local tooling, state and secrets
+.env
+*.local.*
+.terraform/
+*.tfstate
+*.tfstate.*
+.claude/settings.local.json
+/.box/
+*.box-draft
+*.box-export

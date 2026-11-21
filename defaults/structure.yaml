@@ -1,0 +1,92 @@
+# Recommended structure offered in onboarding step 5 (SPEC §7). The owner
+# can add, rename or remove sites, libraries, folders and groups; the Admin
+# site cannot be removed. Access levels: owner | member | visitor.
+# external: "off" | existing_guests | new_guests (anything but off needs a reason).
+# content_types: generated = one per template of that domain (T4).
+groups:
+  - {name: grp-staff, kind: access, title: "Everyone on staff"}
+  - {name: grp-sales, kind: access, title: "Sales"}
+  - {name: grp-legal, kind: access, title: "Legal"}
+  - {name: grp-finance, kind: access, title: "Finance"}
+  - {name: grp-engineering, kind: access, title: "Engineering"}
+  - {name: grp-admins, kind: access, title: "Administrators"}
+  - {name: grp-break-glass, kind: system, fixed: true, note: "excluded from every Conditional Access policy"}
+
+hub: {name: "Company", url: "company"}
+
+sites:
+  - name: Corporate
+    url: corporate
+    external: "off"
+    classification: Restricted
+    access: {grp-admins: owner}
+    libraries:
+      - {name: Formation}
+      - {name: Board and shareholders}
+      - {name: Equity}
+      - {name: Company documents, content_types: generated, domain: company, folders_by: counterparty}
+  - name: Legal
+    url: legal
+    external: "off"
+    classification: Confidential
+    access: {grp-legal: owner}
+    libraries:
+      - {name: Templates, access: {grp-legal: owner, grp-sales: visitor}, access_reason: "Sales reads approved templates", versioning: major, folders: [Source]}
+      - {name: Agreements, content_types: generated, domain: partner, folders_by: counterparty}
+      - {name: Executed inbox, access: {role-signer: member}, access_reason: "Signers upload executed copies"}
+      - {name: External paper}
+      - {name: Notices and records, content_types: generated, domain: notice}
+      - {name: Pack exports}
+  - name: Finance
+    url: finance
+    external: "off"
+    classification: Confidential
+    access: {grp-finance: owner}
+    libraries: [{name: Invoices issued}, {name: Bills}, {name: Tax}, {name: Bank statements}]
+  - name: Sales
+    url: sales
+    external: "off"
+    classification: Internal
+    access: {grp-sales: member, grp-staff: visitor}
+    libraries: [{name: Accounts, folders_by: counterparty}, {name: Collateral}]
+  - name: Marketing
+    url: marketing
+    external: "off"
+    classification: Internal
+    access: {grp-staff: member}
+    libraries: [{name: Brand}, {name: Content}, {name: Campaigns}]
+  - name: Product
+    url: product
+    external: "off"
+    classification: Internal
+    access: {grp-engineering: member, grp-staff: visitor}
+    libraries: [{name: Specifications}, {name: Roadmap}]
+  - name: Compliance
+    url: compliance
+    external: "off"
+    classification: Internal
+    access: {grp-admins: owner, grp-staff: visitor}
+    libraries:
+      - {name: Policies, access: {grp-admins: owner, grp-staff: visitor}}
+      - {name: Evidence}
+      - {name: Audits}
+      - {name: Questionnaires}
+  - name: People
+    url: people
+    external: "off"
+    classification: Restricted
+    access: {grp-admins: owner}
+    libraries:
+      - {name: Agreements, content_types: generated, domain: company, template_tag: people}
+      - {name: Hiring}
+  - name: Admin
+    url: admin
+    external: "off"
+    classification: Confidential
+    access: {grp-admins: owner}
+    fixed: true
+    libraries:
+      - {name: Configuration, versioning: major, access: {grp-admins: owner}}
+      - {name: Setup evidence}
+      - {name: Automation logs}
+      - {name: Configuration exports}

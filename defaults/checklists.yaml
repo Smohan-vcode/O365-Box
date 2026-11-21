@@ -1,0 +1,14 @@
+joiner:
+  - {item: "Account created and plan assigned", auto: people_applied}
+  - {item: "Role and access groups assigned", auto: people_applied}
+  - {item: "Multi-factor method registered", auto: mfa_registered}
+  - {item: "Device enrolled and compliant", auto: device_compliant, when_plan: business_premium}
+  - {item: "Policies acknowledged", auto: acknowledgements_complete}
+  - {item: "Agreements executed", auto: joiner_documents_executed}
+leaver:
+  - {item: "Sign-in blocked"}
+  - {item: "Groups removed"}
+  - {item: "Open approvals reassigned"}
+  - {item: "Mailbox converted or forwarded as decided"}
+  - {item: "Devices retired"}
+  - {item: "Licence released"}

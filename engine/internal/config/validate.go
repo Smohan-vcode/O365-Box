@@ -12,10 +12,11 @@ import (
 // Options carries engine data the semantic checks compare against. A nil
 // slice means "not available yet" and skips that check.
 type Options struct {
-	Roles         []string       // defaults/roles.yaml role names
-	Policy        *PolicyCatalog // ids in policy/; nil skips the catalogue checks
-	Jurisdictions []string       // defaults/jurisdictions/*.yaml codes
-	Today         time.Time      // date exceptions are compared with; zero means now
+	Roles         []string              // defaults/roles.yaml role names
+	Policy        *PolicyCatalog        // ids in policy/; nil skips the catalogue checks
+	Jurisdictions []string              // defaults/jurisdictions/*.yaml codes
+	Today         time.Time             // date exceptions are compared with; zero means now
+	Choices       map[string]ChoiceInfo // defaults/choices.yaml by id; nil skips the check
 }
 
 // PolicyCatalog lists the ids the policy section may refer to.
@@ -23,6 +24,12 @@ type PolicyCatalog struct {
 	Frameworks   []string // policy/frameworks/<id>.yaml
 	Settings     []string // policy/settings/*.yaml setting ids
 	Requirements []string // policy/requirements.yaml ids
+}
+
+// ChoiceInfo is what validation needs of one choice.
+type ChoiceInfo struct {
+	Options []string
+	Module  string // the module the choice is asked for; "" when always
 }
 
 // DateLayout is the form of policy.exceptions[].ends.
@@ -67,6 +74,38 @@ func (v *validator) run() {
 	v.structure(groups, roles)
 	v.policy(groups)
 	v.jurisdictions()
+	v.choices()
+}
+
+// choices checks every answer names a known choice and one of its options.
+func (v *validator) choices() {
+	if v.opt.Choices == nil {
+		return
+	}
+	ids := make([]string, 0, len(v.c.Choices))
+	for id := range v.c.Choices {
+		ids = append(ids, id)
+	}
+	sort.Strings(ids)
+	for _, id := range ids {
+		info, ok := v.opt.Choices[id]
+		opts := info.Options
+		if !ok {
+			v.add("choices."+id, "unknown choice %q (defaults/choices.yaml)", id)
+			continue
+		}
+		val := v.c.Choices[id]
+		found := false
+		for _, o := range opts {
+			found = found || o == val
+		}
+		if !found {
+			v.add("choices."+id, "choice %s has no option %q (options: %s)", id, val, strings.Join(opts, ", "))
+		}
+		if m := info.Module; m != "" && !v.c.Modules.Map()[m] {
+			v.add("choices."+id, "choice %s applies only with the %s module, which is off; remove the answer or switch the module on", id, m)
+		}
+	}
 }
 
 func (v *validator) users() map[string]User {

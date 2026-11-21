@@ -30,7 +30,7 @@ func TestPolicyResolve(t *testing.T) {
 	if code != ExitOK {
 		t.Fatalf("exit %d\n%s", code, out)
 	}
-	for _, want := range []string{"plan business_premium, tier core, stage audit", "applied 303 settings in 12 centres", "not applied 30"} {
+	for _, want := range []string{"plan business_premium, tier core, stage audit", "applied 302 settings in 12 centres", "not applied 31"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("output lacks %q\n%s", want, out)
 		}
@@ -109,5 +109,93 @@ func TestPolicyRefusesInvalidConfig(t *testing.T) {
 				t.Errorf("%v: output lacks %q\n%s", args, want, out)
 			}
 		}
+	}
+}
+
+func TestChoicesValidateAndList(t *testing.T) {
+	if code, out := box(t, "choices", "validate"); code != ExitOK {
+		t.Fatalf("exit %d\n%s", code, out)
+	}
+	code, out := box(t, "choices", "list", "--config", acmeConfig)
+	if code != ExitOK || !strings.Contains(out, "signin.device_code") || !strings.Contains(out, "(default)") {
+		t.Fatalf("exit %d\n%s", code, out)
+	}
+	if code, out := box(t, "choices", "show", "azure.subscription"); code != ExitOK || !strings.Contains(out, "G-08") {
+		t.Fatalf("show: exit %d\n%s", code, out)
+	}
+	if code, _ := box(t, "choices", "show", "nope"); code == ExitOK {
+		t.Fatal("show of an unknown choice should fail")
+	}
+}
+
+func TestChoiceChangesOnlyItsSettings(t *testing.T) {
+	cfg, err := os.ReadFile(acmeConfig)
+	if err != nil {
+		t.Fatal(err)
+	}
+	applied := func(extra string) map[string]string {
+		p := filepath.Join(t.TempDir(), "box-config.yaml")
+		if err := os.WriteFile(p, append(append([]byte{}, cfg...), []byte(extra)...), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		code, out := box(t, "policy", "resolve", "--config", p, "--json")
+		var res struct {
+			Applied []struct {
+				Settings []struct{ ID, Mode, Variant string }
+			}
+		}
+		if code != ExitOK || json.Unmarshal([]byte(out), &res) != nil {
+			t.Fatalf("exit %d\n%s", code, out)
+		}
+		m := map[string]string{}
+		for _, c := range res.Applied {
+			for _, s := range c.Settings {
+				m[s.ID] = s.Mode + "/" + s.Variant
+			}
+		}
+		return m
+	}
+	base := applied("")
+	changed := applied("\nchoices:\n  mail.safe_attachments: dynamic\n  session.idle_timeout: unmanaged_only\n")
+	for id, v := range base {
+		w, ok := changed[id]
+		switch id {
+		case "DEF-013":
+			if w != "enforce/dynamic" && !strings.HasSuffix(w, "/dynamic") {
+				t.Errorf("DEF-013 = %q, want the dynamic variant", w)
+			}
+		case "ADM-003":
+			if ok {
+				t.Error("ADM-003 should be left out")
+			}
+		default:
+			if w != v {
+				t.Errorf("%s changed from %q to %q", id, v, w)
+			}
+		}
+	}
+	if len(changed) != len(base)-1 {
+		t.Errorf("applied %d, want %d", len(changed), len(base)-1)
+	}
+}
+
+func TestConfigValidateChecksChoices(t *testing.T) {
+	cfg, err := os.ReadFile(acmeConfig)
+	if err != nil {
+		t.Fatal(err)
+	}
+	p := filepath.Join(t.TempDir(), "box-config.yaml")
+	bad := "\nchoices:\n  ai.copilot: everything\n  no.such: x\n"
+	if err := os.WriteFile(p, append(cfg, []byte(bad)...), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	code, out := box(t, "config", "validate", p)
+	for _, want := range []string{`choice ai.copilot has no option "everything"`, `unknown choice "no.such"`} {
+		if !strings.Contains(out, want) {
+			t.Errorf("missing %q (exit %d)\n%s", want, code, out)
+		}
+	}
+	if code != ExitValidation {
+		t.Errorf("exit %d", code)
 	}
 }

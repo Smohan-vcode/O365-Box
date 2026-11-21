@@ -3219,7 +3219,12 @@
       "note": "S-02 is not done; resource type is the Microsoft365DSC/UTCM name expected to cover this object, not verified"
     },
     "verified": "definition device_vendor_msft_policy_config_admx_windowsstore_removewindowsstore_2 (options _0 Disabled, _1 Enabled) read on the test tenant; automatic updates as recorded earlier",
-    "notes": "Decided by the owner (2026-11-21, SC-22): turn off the Store application; required apps are deployed by Intune from the Microsoft Store integration, which keeps working with the Store app off; automatic app updates on. The retired private store is not used."
+    "notes": "Decided by the owner (2026-11-21, SC-22): turn off the Store application; required apps are deployed by Intune from the Microsoft Store integration, which keeps working with the Store app off; automatic app updates on. The retired private store is not used.",
+    "variants": {
+      "intune": {
+        "notes": "Store app removed; private store only; apps delivered by Intune (the default payload)."
+      }
+    }
   },
   "WIN-059": {
     "status": "resolved",

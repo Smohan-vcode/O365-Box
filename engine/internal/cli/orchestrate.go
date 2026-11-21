@@ -117,9 +117,7 @@ func (g *globals) open(f *runFlags, out io.Writer, exact bool) (*session, error)
 	if s.caps, err = capabilities(root, doc, f.capabilities); err != nil {
 		return nil, err
 	}
-	m := doc.Config.Modules
-	mods := map[string]bool{"records": m.Records, "people": m.People, "legal": m.Legal, "sales": m.Sales,
-		"policies": m.Policies, "compliance": m.Compliance, "devices": m.Devices}
+	mods := doc.Config.Modules.Map()
 	if s.graph, err = plan.Build(s.catalog, plan.Options{Modules: mods, Capabilities: s.caps, Only: f.only, Exact: exact}); err != nil {
 		return nil, err
 	}
@@ -241,7 +239,11 @@ func (s *session) policyInput() (map[string]any, error) {
 	for _, c := range plans[planName] {
 		caps[c] = true
 	}
-	res, err := cat.Resolve(selection(s.doc.Config.Policy), planName, caps)
+	sel, err := selection(s.root, &s.doc.Config)
+	if err != nil {
+		return nil, err
+	}
+	res, err := cat.Resolve(sel, planName, caps)
 	if err != nil {
 		return nil, err
 	}

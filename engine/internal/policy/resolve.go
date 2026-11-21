@@ -12,6 +12,14 @@ type Selection struct {
 	Tier       string      `json:"tier"`  // core | enhanced
 	Stage      string      `json:"stage"` // audit | enforce
 	Exceptions []Exception `json:"exceptions"`
+	// Set from the company's choices (SPEC §24): settings a choice leaves
+	// out (with "choice=value" as the reason) and the variant to apply.
+	LeftOut  map[string]string `json:"left_out,omitempty"`
+	Variants map[string]string `json:"variants,omitempty"`
+	// Choices are the answers in effect; Defaulted the ones taken from
+	// the recommended option because the configuration does not answer them.
+	Choices   map[string]string `json:"choices,omitempty"`
+	Defaulted []string          `json:"defaulted_choices,omitempty"`
 }
 
 // Exception removes one setting, or every setting that serves only
@@ -44,6 +52,7 @@ type AppliedSetting struct {
 	Value        string   `yaml:"value" json:"value"`
 	Mode         string   `yaml:"mode" json:"mode"` // enforce | audit | report
 	Requirements []string `yaml:"requirements" json:"requirements"`
+	Variant      string   `yaml:"variant,omitempty" json:"variant,omitempty"`
 }
 
 // AppliedCentre groups the applied settings of one admin centre.
@@ -165,6 +174,10 @@ func (c *Catalogue) Resolve(sel Selection, plan string, caps map[string]bool) (*
 				skip(fmt.Sprintf("tier %s not selected", s.Tier))
 				continue
 			}
+			if why, ok := sel.LeftOut[s.ID]; ok {
+				skip("choice " + why)
+				continue
+			}
 			if e, ok := exSetting[s.ID]; ok {
 				skip("exception " + e.Reference)
 				continue
@@ -181,7 +194,7 @@ func (c *Catalogue) Resolve(sel Selection, plan string, caps map[string]bool) (*
 				}
 			}
 			ac.Settings = append(ac.Settings, AppliedSetting{ID: s.ID, Platform: s.Platform, Name: s.Name,
-				Value: s.Value, Mode: mode, Requirements: append([]string(nil), s.Requirements...)})
+				Value: s.Value, Mode: mode, Requirements: append([]string(nil), s.Requirements...), Variant: sel.Variants[s.ID]})
 			applied[s.ID] = true
 		}
 		if len(ac.Settings) > 0 {

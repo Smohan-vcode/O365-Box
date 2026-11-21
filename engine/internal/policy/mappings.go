@@ -30,6 +30,16 @@ type Mapping struct {
 	TCM          map[string]any `json:"tcm"`
 	Verified     string         `json:"verified"`
 	Notes        string         `json:"notes"`
+	// Variants are the forms a choice can select (SPEC §24); each may
+	// replace the payload and check. Absent fields keep the defaults.
+	Variants map[string]Variant `json:"variants,omitempty"`
+}
+
+// Variant is one choice-selected form of a mapping.
+type Variant struct {
+	Payload any    `json:"payload,omitempty"`
+	Check   string `json:"check,omitempty"`
+	Notes   string `json:"notes"`
 }
 
 // Mapping statuses.

@@ -29,7 +29,7 @@ CI runs `box backlog check`.
 | T13-06 | Structure, modules and permissions screen | P0 | M | T13-02 |  | TODO |
 | T13-07 | Review and confirmation screen | P0 | S | T13-03, T13-04, T13-05, T13-06 |  | TODO |
 | T13-08 | Run view, report and home screen | P0 | M | T13-07, T0-05, T0-06 |  | TODO |
-| T13-09 | Choices engine | P0 | M | T14-01 |  | TODO |
+| T13-09 | Choices engine | P0 | M | T14-01 |  | DONE |
 | T13-10 | Choices screens | P0 | M | T13-09, T13-02 |  | TODO |
 | T1-01 | Break-glass accounts and exclusion group | P0 | S | T0-04 | yes | BLOCKED |
 | T1-02 | Users and licences | P0 | S | T1-01 |  | TODO |

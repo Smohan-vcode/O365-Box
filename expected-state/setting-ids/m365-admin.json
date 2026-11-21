@@ -69,7 +69,12 @@
       "note": "S-02 not done; TCM support for this resource type not confirmed"
     },
     "verified": "read-only GET /v1.0/policies/activityBasedTimeoutPolicies returned 200 (no policy)",
-    "notes": "Decided by the owner (2026-11-21, SC-22): 1 hour for every device: the policy cannot be limited to unmanaged devices. Needs Policy.ReadWrite.ApplicationConfiguration (SC-21)."
+    "notes": "Decided by the owner (2026-11-21, SC-22): 1 hour for every device: the policy cannot be limited to unmanaged devices. Needs Policy.ReadWrite.ApplicationConfiguration (SC-21).",
+    "variants": {
+      "one-hour": {
+        "notes": "WebSessionIdleTimeout 01:00:00 for every device (the default payload)."
+      }
+    }
   },
   "ADM-004": {
     "status": "resolved",
@@ -244,7 +249,16 @@
       "note": "S-02 not done; TCM support for this resource type not confirmed"
     },
     "verified": "not verified: the Cloud Policy service host is blocked here and has no app-only Graph API",
-    "notes": "Decided by the owner (2026-11-21, SC-22): off until the AI policy names what is allowed. Cloud Policy has no write API, so this is a gate."
+    "notes": "Decided by the owner (2026-11-21, SC-22): off until the AI policy names what is allowed. Cloud Policy has no write API, so this is a gate.",
+    "variants": {
+      "off": {
+        "notes": "Gate confirms Copilot Chat web search and agents are off."
+      },
+      "chat-no-web": {
+        "check": "a person confirms Copilot Chat is on and web search is off",
+        "notes": "Copilot Chat allowed; web grounding off."
+      }
+    }
   },
   "ADM-011": {
     "status": "not-applicable",

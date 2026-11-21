@@ -39,3 +39,24 @@ gates:
     guide: Add the DNS records shown at your DNS host.
     expected: Records resolve to the expected values
     check_task: T2-03
+  # Gates a choice adds (defaults/choices.yaml effects.gates, SPEC §24).
+  - id: G-07
+    title: Cloud Sync agent installed
+    guide: On a server joined to your Active Directory, install the Microsoft Entra Cloud Sync agent and sign it in, then return.
+    expected: The Cloud Sync configuration reports a healthy agent
+    check_task: T15-01
+  - id: G-08
+    title: Azure subscription created
+    guide: Create a pay-as-you-go Azure subscription in the Azure portal, signed in as a Global Administrator, then return.
+    expected: One enabled Azure subscription in the tenant
+    check_task: T15-03
+  - id: G-09
+    title: Domain registrar locked down
+    guide: At the company that sold your domain, turn on registrar lock, two-step sign-in and auto-renew.
+    expected: Registrar lock on (checked from WHOIS where the registrar publishes it); two-step sign-in and auto-renew confirmed
+    check_task: T15-02
+  - id: G-10
+    title: Setup app registered in Power Platform
+    guide: In the Power Platform admin centre, register the setup app as a management application (a two-minute step).
+    expected: The pipeline app is listed as a Power Platform management application
+    check_task: T0-07

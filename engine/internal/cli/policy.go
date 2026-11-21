@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"github.com/Smohan-vcode/O365-Box/engine/internal/choices"
 	"os"
 	"path/filepath"
 	"strings"
@@ -81,6 +82,10 @@ func newPolicyCmd(g *globals) *cobra.Command {
 					modes[s.Mode]++
 				}
 				fmt.Fprintf(w, "  %-16s %3d applied (%s)\n", ac.ID, len(ac.Settings), modeList(modes))
+			}
+			if n := len(res.Selection.Defaulted); n > 0 {
+				fmt.Fprintf(w, "  choices: %d answered, %d on the recommended default (%s); see box choices list\n",
+					len(res.Selection.Choices)-n, n, strings.Join(res.Selection.Defaulted, ", "))
 			}
 			fmt.Fprintf(w, "✓ policy resolve: plan %s, tier %s, stage %s: %s\n",
 				res.Plan, res.Selection.Tier, res.Selection.Stage, res.Summary())
@@ -175,7 +180,11 @@ func (f *resolveFlags) resolve(g *globals, cmd *cobra.Command) (string, *policy.
 	for _, c := range list {
 		caps[c] = true
 	}
-	res, err := cat.Resolve(selection(doc.Config.Policy), planName, caps)
+	sel, err := selection(root, &doc.Config)
+	if err != nil {
+		return "", nil, nil, err
+	}
+	res, err := cat.Resolve(sel, planName, caps)
 	if err != nil {
 		return "", nil, nil, err
 	}
@@ -235,16 +244,35 @@ func newPolicyMappingsCmd(g *globals) *cobra.Command {
 	return c
 }
 
-func selection(p config.Policy) policy.Selection {
+// selection is the configuration's policy section with the effects of its
+// choices (SPEC §24) applied.
+func selection(root string, cfg *config.Config) (policy.Selection, error) {
+	p := cfg.Policy
 	sel := policy.Selection{Frameworks: p.Frameworks, Tier: p.Tier, Stage: p.Rollout.Stage,
 		Exceptions: []policy.Exception{}}
+	cc, err := choices.Load(filepath.Join(root, "defaults", "choices.yaml"))
+	if err != nil {
+		return sel, err
+	}
+	r, err := cc.Resolve(cfg.Choices, choices.Context{Modules: cfg.Modules.Map()})
+	if err != nil {
+		return sel, err
+	}
+	sel.Choices = r.Answers
+	sel.Defaulted = keys(r.Defaulted)
+	if len(r.LeftOut) > 0 {
+		sel.LeftOut = r.LeftOut
+	}
+	if len(r.Variants) > 0 {
+		sel.Variants = r.Variants
+	}
 	if sel.Frameworks == nil {
 		sel.Frameworks = []string{}
 	}
 	for _, e := range p.Exceptions {
 		sel.Exceptions = append(sel.Exceptions, policy.Exception{ID: e.ID, Reason: e.Reason, Reference: e.Reference, Ends: e.Ends})
 	}
-	return sel
+	return sel, nil
 }
 
 // loadCatalogue loads policy/ and checks it against engine/capabilities.yaml.

@@ -11,7 +11,7 @@
 #   variants:    setting id -> variant key in expected-state/setting-ids
 #   exceptions:  setting ids not applied while this option holds
 #   bundles:     permission bundles the pipeline app needs (expected-state/app-permissions.yaml)
-#   gates:       manual steps the option adds (SPEC §22)
+#   gates:       manual steps the option adds (engine/gates.yaml, SPEC §22)
 # `when` limits a choice to companies where it applies (a module or a detected fact).
 # `recommended_when` overrides `recommended` for a condition.
 # Engine data: no company values.
@@ -33,7 +33,7 @@ choices:
         label: Also on our own Active Directory servers
         detail: Adds Microsoft Entra Cloud Sync, which copies accounts and passwords from your servers. Hardening the servers themselves stays a checklist.
         cost: none (needs an existing server for the sync agent)
-        effects: {modules: [hybrid], gates: [cloud-sync-agent]}
+        effects: {modules: [hybrid], gates: [G-07]}
 
   - id: azure.subscription
     step: structure
@@ -52,7 +52,7 @@ choices:
         label: Not yet, help me create one
         detail: We show you how to create a pay-as-you-go subscription, then secure it. Nothing is billed until you create resources.
         cost: none until resources are created
-        effects: {modules: [azure], bundles: [azure], gates: [azure-subscription]}
+        effects: {modules: [azure], bundles: [azure], gates: [G-08]}
       - value: none
         label: No, we do not use Azure
         detail: Azure settings are left out. You can add them later.
@@ -69,7 +69,7 @@ choices:
         detail: Registrar lock, two-step sign-in on the registrar account, and auto-renew. A short checklist, checked by us where the registrar allows.
         recommended: true
         cost: none
-        effects: {gates: [registrar-lockdown]}
+        effects: {gates: [G-09]}
       - value: later
         label: I will do this later
         detail: Listed as an open item on the home screen.
@@ -85,7 +85,7 @@ choices:
         detail: An administrator registers the setup app once in Power Platform (a two-minute step we guide).
         recommended: true
         cost: none
-        effects: {bundles: [powerplatform], gates: [powerplatform-registration]}
+        effects: {bundles: [powerplatform], gates: [G-10]}
       - value: later
         label: Later
         detail: The Power Platform settings are listed as not applied.

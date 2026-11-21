@@ -54,3 +54,4 @@ jobs:
           ./bin/box runbook --check
           ./bin/box policy validate
           ./bin/box policy mappings --check
+          ./bin/box choices validate

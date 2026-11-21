@@ -637,7 +637,12 @@
       "com.apple.managedclient.preferences_defaultstolocalopensave",
       "device_vendor_msft_policy_config_onedrivengscv2~policy~onedrivengsc_kfmoptinnowizard (KFM silent opt-in; id family seen in catalogue)",
       "user_vendor_msft_policy_config_office16v2~policy~l_microsoftofficesystem~l_miscellaneous437_l_onlinestoragefilter"
-    ]
+    ],
+    "variants": {
+      "kfm": {
+        "notes": "Known folder move silently, Desktop and Documents (the default payload)."
+      }
+    }
   },
   "OFC-012": {
     "status": "resolved",

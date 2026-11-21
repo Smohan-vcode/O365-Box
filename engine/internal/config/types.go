@@ -4,18 +4,19 @@ package config
 // semantic checks. The JSON schema is the authority on shape; fields not
 // needed for cross-checks are left out.
 type Config struct {
-	Version       int           `yaml:"version"`
-	Tenant        Tenant        `yaml:"tenant"`
-	Company       Company       `yaml:"company"`
-	Jurisdictions Jurisdictions `yaml:"jurisdictions"`
-	Modules       Modules       `yaml:"modules"`
-	DNS           DNS           `yaml:"dns"`
-	Mail          Mail          `yaml:"mail"`
-	Users         []User        `yaml:"users"`
-	Groups        []Group       `yaml:"groups"`
-	Structure     Structure     `yaml:"structure"`
-	Policy        Policy        `yaml:"policy"`
-	Integrations  Integrations  `yaml:"integrations"`
+	Version       int               `yaml:"version"`
+	Tenant        Tenant            `yaml:"tenant"`
+	Company       Company           `yaml:"company"`
+	Jurisdictions Jurisdictions     `yaml:"jurisdictions"`
+	Modules       Modules           `yaml:"modules"`
+	DNS           DNS               `yaml:"dns"`
+	Mail          Mail              `yaml:"mail"`
+	Users         []User            `yaml:"users"`
+	Groups        []Group           `yaml:"groups"`
+	Structure     Structure         `yaml:"structure"`
+	Policy        Policy            `yaml:"policy"`
+	Choices       map[string]string `yaml:"choices"`
+	Integrations  Integrations      `yaml:"integrations"`
 }
 
 type Tenant struct {
@@ -37,6 +38,12 @@ type Company struct {
 type Jurisdictions struct {
 	Registered string   `yaml:"registered"`
 	Operating  []string `yaml:"operating"`
+}
+
+// Map returns the modules by name.
+func (m Modules) Map() map[string]bool {
+	return map[string]bool{"records": m.Records, "people": m.People, "legal": m.Legal, "sales": m.Sales,
+		"policies": m.Policies, "compliance": m.Compliance, "devices": m.Devices}
 }
 
 type Modules struct {

@@ -355,7 +355,20 @@
       "note": "S-02 not done; Microsoft365DSC equivalent: EXOSafeAttachmentPolicy, EXOSafeAttachmentRule"
     },
     "verified": "cmdlets and parameters visible in the app-only Exchange session (T14-03 devices-defender)",
-    "notes": "Decided by the owner (2026-11-21, SC-22): Safe Attachments blocks malicious attachments (preset Action Block); Dynamic Delivery is not used. Depends on the presets' first turn-on (gate, DEF-009)."
+    "notes": "Decided by the owner (2026-11-21, SC-22): Safe Attachments blocks malicious attachments (preset Action Block); Dynamic Delivery is not used. Depends on the presets' first turn-on (gate, DEF-009).",
+    "variants": {
+      "block": {
+        "notes": "Hold the message until the attachment is scanned (the default payload)."
+      },
+      "dynamic": {
+        "payload": {
+          "preset": "Standard",
+          "Action": "DynamicDelivery"
+        },
+        "check": "Action == DynamicDelivery and Enable == true; preset rule enabled (Get-ATPProtectionPolicyRule -Identity 'Standard Preset Security Policy').State == Enabled",
+        "notes": "Dynamic delivery; applies only outside the preset policies."
+      }
+    }
   },
   "DEF-014": {
     "status": "resolved",

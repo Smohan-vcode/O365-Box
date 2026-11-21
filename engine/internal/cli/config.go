@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"github.com/Smohan-vcode/O365-Box/engine/internal/choices"
 	"os"
 	"path/filepath"
 	"sort"
@@ -112,6 +113,18 @@ func engineOptions(root string) (config.Options, error) {
 		}
 		fws, settings, reqs := cat.IDs()
 		opt.Policy = &config.PolicyCatalog{Frameworks: fws, Settings: settings, Requirements: reqs}
+	}
+	if cc, err := choices.Load(filepath.Join(root, "defaults", "choices.yaml")); err == nil {
+		opt.Choices = map[string]config.ChoiceInfo{}
+		for _, ch := range cc.Choices {
+			info := config.ChoiceInfo{Module: strings.TrimPrefix(ch.When, "module ")}
+			for _, o := range ch.Options {
+				info.Options = append(info.Options, o.Value)
+			}
+			opt.Choices[ch.ID] = info
+		}
+	} else if !os.IsNotExist(err) {
+		return opt, err
 	}
 	jdir := filepath.Join(root, "defaults", "jurisdictions")
 	if entries, err := os.ReadDir(jdir); err == nil {

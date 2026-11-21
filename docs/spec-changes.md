@@ -786,6 +786,26 @@ responses.
 3. **Repository visibility:** the repository is public. The first
    deployment's data is removed from it.
 
+## SC-17  SharePoint resource permission for the pipeline app (2026-11-21)
+
+Found while building T0-04 and T3. PnP.PowerShell app-only sign-in with a
+certificate calls SharePoint's own API. That API needs `Sites.FullControl.All`
+on the **Office 365 SharePoint Online** resource; the Graph permission of
+the same name does not cover it. `expected-state/app-permissions.yaml`
+gains `sharepoint: ["Sites.FullControl.All"]`. The intent, full control of
+the company's sites, is unchanged. Recorded here so the widening is
+visible; the owner asked for the remaining work to be completed.
+
+## Exceptions on the test tenant (2026-11-21)
+
+- **No FIDO2 keys** for the break-glass accounts this round (owner's
+  decision). Gate G-02 stays open. The accounts are created with a random
+  password that is discarded, so nobody can sign in with them until keys
+  are registered. Because `box check break-glass` cannot pass, T1-05
+  creates every Conditional Access policy in **report-only** mode (SPEC
+  §20.2 forbids enabling blocking policies without working break-glass
+  accounts). Security defaults stay on until then.
+
 ## Decision
 
 | Change | Decision | Date | By |

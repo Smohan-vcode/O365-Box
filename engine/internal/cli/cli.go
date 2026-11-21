@@ -2,6 +2,7 @@
 package cli
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -69,7 +70,7 @@ func New(out, errOut io.Writer) *cobra.Command {
 	root.SetErr(errOut)
 	root.PersistentFlags().StringVar(&g.repo, "repo", "", "path inside the engine repository (default: current directory)")
 	root.PersistentFlags().BoolVar(&g.asJSON, "json", false, "print machine-readable JSON")
-	root.AddCommand(newConfigCmd(g), newCheckLiteralsCmd(g), newCheckConnectorsCmd(g), newBacklogCmd(g), newDoctorCmd(g), newOnboardCmd(), newSpikeCmd(g))
+	root.AddCommand(newConfigCmd(g), newCheckLiteralsCmd(g), newCheckConnectorsCmd(g), newBacklogCmd(g), newDoctorCmd(g), newOnboardCmd(), newSpikeCmd(g), newBootstrapCmd(g))
 	root.AddCommand(newRunCommands(g)...)
 	return root
 }
@@ -78,6 +79,7 @@ func New(out, errOut io.Writer) *cobra.Command {
 func Run(args []string, out, errOut io.Writer) int {
 	cmd := New(out, errOut)
 	cmd.SetArgs(args)
+	cmd.SetContext(context.Background())
 	err := cmd.Execute()
 	if err == nil {
 		return ExitOK

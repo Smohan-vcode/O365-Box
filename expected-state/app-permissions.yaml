@@ -15,5 +15,8 @@ graph:
   - Reports.Read.All
   - SecurityEvents.Read.All
 exchange: ["Exchange.ManageAsApp"]
+# PnP.PowerShell app-only needs the SharePoint resource's own permission;
+# the Graph entry above does not cover SharePoint's API (SC-17).
+sharepoint: ["Sites.FullControl.All"]
 entra_roles: ["Exchange Administrator", "SharePoint Administrator", "User Administrator", "Teams Administrator"]
 never: ["Global Administrator", "Mail.ReadWrite", "Mail.Send"]

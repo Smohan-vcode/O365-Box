@@ -331,9 +331,40 @@ func newRunCommands(g *globals) []*cobra.Command {
 	}
 	cmds = append(cmds,
 		single("apply", "Run one step (its dependencies are assumed done)", run.ModeApply),
-		single("check", "Verify one step against the tenant", run.ModeCheck),
+		newCheckCmd(g),
 		newStatusCmd(g), newGateCmd(g))
 	return cmds
+}
+
+// newCheckCmd verifies one step, or with "identity" the pipeline app.
+func newCheckCmd(g *globals) *cobra.Command {
+	f := &runFlags{}
+	c := &cobra.Command{Use: "check <step|identity>", Short: "Verify one step against the tenant, or the pipeline app (identity)", Args: cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if args[0] != "identity" {
+				f.only = []string{args[0]}
+				return runMode(g, f, run.ModeCheck, true, cmd)
+			}
+			root, err := g.root()
+			if err != nil {
+				return err
+			}
+			doc, err := loadValidConfig(root, f.config, cmd.OutOrStdout())
+			if err != nil {
+				return err
+			}
+			perms, err := loadPermissions(root)
+			if err != nil {
+				return err
+			}
+			ks, err := openKeystore()
+			if err != nil {
+				return err
+			}
+			return checkIdentity(cmd.Context(), cmd.OutOrStdout(), doc.Config.Tenant.TenantID, ks, perms, 0)
+		}}
+	f.bind(c, false)
+	return c
 }
 
 func newStatusCmd(g *globals) *cobra.Command {

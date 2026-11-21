@@ -131,3 +131,36 @@ func TestResolveDefaultsAndAnswers(t *testing.T) {
 		t.Error("unknown choice should fail")
 	}
 }
+
+func TestValidateListValues(t *testing.T) {
+	text := fixture + `  - id: d.domains
+    step: security
+    question: Domains?
+    options:
+      - value: list
+        label: List
+        recommended: true
+        cost: none
+        effects: {values: {policy.consumer_mail_domains: "mail.example, other.example"}}
+      - value: bad
+        label: Bad
+        cost: none
+        effects: {values: {policy.consumer_mail_domains: "mail.example, not a domain", policy.tier: enhanced}}
+`
+	var msgs []string
+	for _, i := range load(t, text).Validate(known()) {
+		msgs = append(msgs, i.Path+": "+i.Message)
+	}
+	all := strings.Join(msgs, "\n")
+	if strings.Contains(all, "choices.d.domains.list") {
+		t.Errorf("a valid list is refused:\n%s", all)
+	}
+	for _, want := range []string{
+		`choices.d.domains.bad: value policy.consumer_mail_domains: "not a domain" is not a valid item`,
+		`choices.d.domains.bad: value key "policy.tier" is not`,
+	} {
+		if !strings.Contains(all, want) {
+			t.Errorf("missing %q in\n%s", want, all)
+		}
+	}
+}

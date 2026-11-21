@@ -122,45 +122,19 @@
     "provider": "exchange",
     "step": "policy.purview",
     "method": "cmdlet",
-    "apply": "after Connect-IPPSSession (certificate, app-only): New-Label -Name Confidential ... ; then New-Label -ParentId <Confidential id> for Sales, Legal and People (each with the same header marking)",
+    "apply": "after Connect-IPPSSession (certificate, app-only): New-Label -Name Confidential -DisplayName Confidential -ContentType 'File, Email, Site, UnifiedGroup' -ApplyContentMarkingHeaderEnabled $true -ApplyContentMarkingHeaderText 'Confidential' (Set-Label when it exists)",
     "payload": {
-      "New-Label(parent)": {
+      "New-Label": {
         "Name": "Confidential",
         "DisplayName": "Confidential",
         "ContentType": "File, Email, Site, UnifiedGroup",
         "Priority": 2,
         "ApplyContentMarkingHeaderEnabled": true,
         "ApplyContentMarkingHeaderText": "Confidential"
-      },
-      "New-Label(sub-labels)": [
-        {
-          "Name": "Confidential-Sales",
-          "DisplayName": "Sales",
-          "ParentId": "{label:Confidential}",
-          "ContentType": "File, Email",
-          "ApplyContentMarkingHeaderEnabled": true,
-          "ApplyContentMarkingHeaderText": "Confidential - Sales"
-        },
-        {
-          "Name": "Confidential-Legal",
-          "DisplayName": "Legal",
-          "ParentId": "{label:Confidential}",
-          "ContentType": "File, Email",
-          "ApplyContentMarkingHeaderEnabled": true,
-          "ApplyContentMarkingHeaderText": "Confidential - Legal"
-        },
-        {
-          "Name": "Confidential-People",
-          "DisplayName": "People",
-          "ParentId": "{label:Confidential}",
-          "ContentType": "File, Email",
-          "ApplyContentMarkingHeaderEnabled": true,
-          "ApplyContentMarkingHeaderText": "Confidential - People"
-        }
-      ]
+      }
     },
-    "read": "Get-Label | Where-Object { $_.Name -like 'Confidential*' } | Select-Object Name, ParentId, LabelActions",
-    "check": "parent and three sub-labels exist; each has a header marking; no encryption",
+    "read": "Get-Label -Identity Confidential | Select-Object Name, ContentType, EncryptionEnabled, LabelActions, IsLabelGroup",
+    "check": "label exists; not a label group; header marking with text 'Confidential'; no encryption",
     "permissions": [
       "exchange:Exchange.ManageAsApp"
     ],
@@ -172,7 +146,7 @@
       "note": "S-02 not done; candidate resource name, unconfirmed"
     },
     "verified": "not verified: Security & Compliance PowerShell app-only did not connect on the test tenant. With ExchangeOnlineManagement 3.6.0, Connect-IPPSSession has no -AccessToken parameter; Connect-IPPSSession -Certificate -AppId -Organization and Connect-ExchangeOnline -AccessToken -ConnectionUri https://ps.compliance.protection.outlook.com/powershell-liveid/ both fail with 'Could not find the organization container'. The pipeline app holds no Compliance Administrator role, so cmdlet and parameter existence could not be checked",
-    "notes": "'External sharing subject to data loss prevention' is PVW-011 (DLP-02), which matches this label and its sub-labels."
+    "notes": "One label, no sub-labels (SC-31, approved by the owner 2026-11-21): in Microsoft's modern label scheme sub-labels sit only under a label group, and a group carries no marking and cannot label sites, so Confidential with its header and site protection (PVW-008) cannot be their parent. The engine creates no sub-labels and does not change or remove any that exist on a tenant. 'External sharing subject to data loss prevention' is PVW-011 (DLP-02), which matches this label."
   },
   "PVW-006": {
     "status": "resolved",
@@ -225,9 +199,6 @@
           "Public",
           "Internal",
           "Confidential",
-          "Confidential-Sales",
-          "Confidential-Legal",
-          "Confidential-People",
           "Restricted"
         ],
         "ExchangeLocation": "All",
@@ -242,7 +213,7 @@
       }
     },
     "read": "Get-LabelPolicy -Identity 'Default label policy' | Select-Object Labels, ExchangeLocation, Settings, DistributionStatus",
-    "check": "Labels lists all seven; ExchangeLocation == All; Settings has defaultlabelid = Internal id, mandatory = true, requiredowngradejustification = true; DistributionStatus == Success",
+    "check": "Labels lists the four labels; ExchangeLocation == All; Settings has defaultlabelid = Internal id, mandatory = true, requiredowngradejustification = true; DistributionStatus == Success",
     "permissions": [
       "exchange:Exchange.ManageAsApp"
     ],
@@ -262,9 +233,6 @@
           "Public",
           "Internal",
           "Confidential",
-          "Confidential-Sales",
-          "Confidential-Legal",
-          "Confidential-People",
           "Restricted"
         ],
         "ExchangeLocation": "{group:pilot_group}",
@@ -485,18 +453,6 @@
                   {
                     "name": "{label:Confidential}",
                     "type": "Sensitivity"
-                  },
-                  {
-                    "name": "{label:Confidential-Sales}",
-                    "type": "Sensitivity"
-                  },
-                  {
-                    "name": "{label:Confidential-Legal}",
-                    "type": "Sensitivity"
-                  },
-                  {
-                    "name": "{label:Confidential-People}",
-                    "type": "Sensitivity"
                   }
                 ]
               }
@@ -530,7 +486,7 @@
       "note": "S-02 not done; candidate resource name, unconfirmed"
     },
     "verified": "not verified: Security & Compliance PowerShell app-only did not connect on the test tenant. With ExchangeOnlineManagement 3.6.0, Connect-IPPSSession has no -AccessToken parameter; Connect-IPPSSession -Certificate -AppId -Organization and Connect-ExchangeOnline -AccessToken -ConnectionUri https://ps.compliance.protection.outlook.com/powershell-liveid/ both fail with 'Could not find the organization container'. The pipeline app holds no Compliance Administrator role, so cmdlet and parameter existence could not be checked",
-    "notes": "'Notify sender and alerts address': NotifyUser (sender/owner) plus GenerateAlert to the alerts address. Staged: policy Mode TestWithNotifications (simulation with policy tips, no blocking) for audit_days, reviewed at gate G-08, then Mode Enable.",
+    "notes": "'Notify sender and alerts address': NotifyUser (sender/owner) plus GenerateAlert to the alerts address. Staged: policy Mode TestWithNotifications (simulation with policy tips, no blocking) for audit_days, reviewed at gate G-08, then Mode Enable. Matches the Confidential label only: there are no sub-labels (SC-31).",
     "payload_audit": {
       "New-DlpCompliancePolicy": {
         "Name": "DLP-02 Confidential outside",
@@ -551,18 +507,6 @@
                 "labels": [
                   {
                     "name": "{label:Confidential}",
-                    "type": "Sensitivity"
-                  },
-                  {
-                    "name": "{label:Confidential-Sales}",
-                    "type": "Sensitivity"
-                  },
-                  {
-                    "name": "{label:Confidential-Legal}",
-                    "type": "Sensitivity"
-                  },
-                  {
-                    "name": "{label:Confidential-People}",
                     "type": "Sensitivity"
                   }
                 ]
@@ -1029,31 +973,34 @@
     "provider": "exchange",
     "step": "policy.purview",
     "method": "cmdlet",
-    "apply": "after Connect-IPPSSession (certificate, app-only): New-DlpCompliancePolicy (Set- when it exists) then New-DlpComplianceRule for each rule",
+    "apply": "after Connect-IPPSSession (certificate, app-only): New-DlpCompliancePolicy -ExchangeLocation All (Set- when it exists; SharePoint and OneDrive locations removed) then New-DlpComplianceRule with From = the site members, AccessScope NotInOrganization and DocumentNameMatchesPatterns '.' (an attachment is present)",
     "payload": {
       "New-DlpCompliancePolicy": {
         "Name": "DLP-06 Protected sites outside",
         "Mode": "Enable",
-        "SharePointLocation": [
-          "{site:legal}",
-          "{site:finance}",
-          "{site:people}",
-          "{site:corporate}"
-        ]
+        "ExchangeLocation": "All"
       },
       "New-DlpComplianceRule": [
         {
           "Name": "DLP-06 block",
+          "From": [
+            "{site_members:legal}",
+            "{site_members:finance}",
+            "{site_members:people}",
+            "{site_members:corporate}"
+          ],
           "AccessScope": "NotInOrganization",
           "BlockAccess": true,
-          "BlockAccessScope": "PerUser",
           "GenerateAlert": "{mailbox:alerts}",
-          "GenerateIncidentReport": "{mailbox:security}"
+          "GenerateIncidentReport": "{mailbox:security}",
+          "DocumentNameMatchesPatterns": [
+            "."
+          ]
         }
       ]
     },
     "read": "Get-DlpCompliancePolicy -Identity 'DLP-06 Protected sites outside' | Select-Object Mode, DistributionStatus, *Location; Get-DlpComplianceRule -Policy 'DLP-06 Protected sites outside'",
-    "check": "Mode == Enable (stage enforce) or TestWithNotifications (stage audit); DistributionStatus == Success; block; alert",
+    "check": "Mode == Enable (stage enforce) or TestWithNotifications (stage audit); DistributionStatus == Success; Exchange location only; rule From lists the site members; mail with an attachment to outside recipients is blocked; alert",
     "permissions": [
       "exchange:Exchange.ManageAsApp"
     ],
@@ -1065,26 +1012,29 @@
       "note": "S-02 not done; candidate resource name, unconfirmed"
     },
     "verified": "not verified: Security & Compliance PowerShell app-only did not connect on the test tenant. With ExchangeOnlineManagement 3.6.0, Connect-IPPSSession has no -AccessToken parameter; Connect-IPPSSession -Certificate -AppId -Organization and Connect-ExchangeOnline -AccessToken -ConnectionUri https://ps.compliance.protection.outlook.com/powershell-liveid/ both fail with 'Could not find the organization container'. The pipeline app holds no Compliance Administrator role, so cmdlet and parameter existence could not be checked",
-    "notes": "Sites come from configuration structure.sites (urls legal, finance, people, corporate by default). A rule whose only condition is 'shared outside' is valid in the portal; to be confirmed in PowerShell when IPPS connects. Site sharing is already off for these sites (SPO-002); this is the second line. Staged: policy Mode TestWithNotifications (simulation with policy tips, no blocking) for audit_days, reviewed at gate G-08, then Mode Enable.",
+    "notes": "Sites come from configuration structure.sites (urls legal, finance, people, corporate by default). Exchange only (SC-31, approved by the owner 2026-11-21): a SharePoint or OneDrive DLP rule needs a content condition and none matches every file (DocumentNameMatchesPatterns is Exchange and Endpoint only; DocumentSizeOver starts at 10 KB on SharePoint), so the policy covers mail. {site_members:<url>} is the users in the groups that structure.sites[url].access makes owner or member of that site, expanded on every apply (the access groups are security groups, which a DLP rule cannot take as senders); a site the configuration does not have adds no one, and the rule is left out while the sites have no members. 'Has an attachment' is DocumentNameMatchesPatterns '.' (any attachment name); DocumentSizeOver starts at 10 KB on Exchange too (tested). Sharing files from the site itself follows SPO-002. An existing policy's SharePoint and OneDrive locations are removed. Staged: policy Mode TestWithNotifications (simulation with policy tips, no blocking) for audit_days, reviewed at gate G-08, then Mode Enable.",
     "payload_audit": {
       "New-DlpCompliancePolicy": {
         "Name": "DLP-06 Protected sites outside",
         "Mode": "TestWithNotifications",
-        "SharePointLocation": [
-          "{site:legal}",
-          "{site:finance}",
-          "{site:people}",
-          "{site:corporate}"
-        ]
+        "ExchangeLocation": "All"
       },
       "New-DlpComplianceRule": [
         {
           "Name": "DLP-06 block",
+          "From": [
+            "{site_members:legal}",
+            "{site_members:finance}",
+            "{site_members:people}",
+            "{site_members:corporate}"
+          ],
           "AccessScope": "NotInOrganization",
           "BlockAccess": true,
-          "BlockAccessScope": "PerUser",
           "GenerateAlert": "{mailbox:alerts}",
-          "GenerateIncidentReport": "{mailbox:security}"
+          "GenerateIncidentReport": "{mailbox:security}",
+          "DocumentNameMatchesPatterns": [
+            "."
+          ]
         }
       ]
     }
@@ -1094,32 +1044,35 @@
     "provider": "exchange",
     "step": "policy.purview",
     "method": "cmdlet",
-    "apply": "after Connect-IPPSSession (certificate, app-only): New-DlpCompliancePolicy (Set- when it exists) then New-DlpComplianceRule for each rule",
+    "apply": "after Connect-IPPSSession (certificate, app-only): New-DlpCompliancePolicy -ExchangeLocation All (Set- when it exists; SharePoint and OneDrive locations removed) then New-DlpComplianceRule with From = the site members, AccessScope NotInOrganization and DocumentNameMatchesPatterns '.' (an attachment is present)",
     "payload": {
       "New-DlpCompliancePolicy": {
         "Name": "DLP-07 Sales site outside",
         "Mode": "Enable",
-        "SharePointLocation": [
-          "{site:sales}"
-        ]
+        "ExchangeLocation": "All"
       },
       "New-DlpComplianceRule": [
         {
           "Name": "DLP-07 override",
+          "From": [
+            "{site_members:sales}"
+          ],
           "AccessScope": "NotInOrganization",
           "BlockAccess": true,
-          "BlockAccessScope": "PerUser",
           "NotifyUser": [
             "Owner",
             "LastModifier"
           ],
           "NotifyAllowOverride": "WithJustification",
-          "GenerateIncidentReport": "{mailbox:security}"
+          "GenerateIncidentReport": "{mailbox:security}",
+          "DocumentNameMatchesPatterns": [
+            "."
+          ]
         }
       ]
     },
     "read": "Get-DlpCompliancePolicy -Identity 'DLP-07 Sales site outside' | Select-Object Mode, DistributionStatus, *Location; Get-DlpComplianceRule -Policy 'DLP-07 Sales site outside'",
-    "check": "Mode == Enable (stage enforce) or TestWithNotifications (stage audit); DistributionStatus == Success; block with justified override",
+    "check": "Mode == Enable (stage enforce) or TestWithNotifications (stage audit); DistributionStatus == Success; Exchange location only; rule From lists the sales site members; block with justified override",
     "permissions": [
       "exchange:Exchange.ManageAsApp"
     ],
@@ -1131,27 +1084,30 @@
       "note": "S-02 not done; candidate resource name, unconfirmed"
     },
     "verified": "not verified: Security & Compliance PowerShell app-only did not connect on the test tenant. With ExchangeOnlineManagement 3.6.0, Connect-IPPSSession has no -AccessToken parameter; Connect-IPPSSession -Certificate -AppId -Organization and Connect-ExchangeOnline -AccessToken -ConnectionUri https://ps.compliance.protection.outlook.com/powershell-liveid/ both fail with 'Could not find the organization container'. The pipeline app holds no Compliance Administrator role, so cmdlet and parameter existence could not be checked",
-    "notes": "'Weekly report to owner' has no DLP setting: the engine's weekly evidence job exports the policy's matches (Export-ActivityExplorerData or the DLP incident reports in the security mailbox) and mails the summary to the site owner. Export-ActivityExplorerData existence not verified (no IPPS connection). Staged: policy Mode TestWithNotifications (simulation with policy tips, no blocking) for audit_days, reviewed at gate G-08, then Mode Enable.",
+    "notes": "'Weekly report to owner' has no DLP setting: the engine's weekly evidence job exports the policy's matches (Export-ActivityExplorerData or the DLP incident reports in the security mailbox) and mails the summary to the site owner. Export-ActivityExplorerData existence not verified. Exchange only (SC-31, approved by the owner 2026-11-21): a SharePoint or OneDrive DLP rule needs a content condition and none matches every file (DocumentNameMatchesPatterns is Exchange and Endpoint only; DocumentSizeOver starts at 10 KB on SharePoint), so the policy covers mail. {site_members:<url>} is the users in the groups that structure.sites[url].access makes owner or member of that site, expanded on every apply (the access groups are security groups, which a DLP rule cannot take as senders); a site the configuration does not have adds no one, and the rule is left out while the sites have no members. 'Has an attachment' is DocumentNameMatchesPatterns '.' (any attachment name); DocumentSizeOver starts at 10 KB on Exchange too (tested). Sharing files from the site itself follows SPO-002. An existing policy's SharePoint and OneDrive locations are removed. Staged: policy Mode TestWithNotifications (simulation with policy tips, no blocking) for audit_days, reviewed at gate G-08, then Mode Enable.",
     "payload_audit": {
       "New-DlpCompliancePolicy": {
         "Name": "DLP-07 Sales site outside",
         "Mode": "TestWithNotifications",
-        "SharePointLocation": [
-          "{site:sales}"
-        ]
+        "ExchangeLocation": "All"
       },
       "New-DlpComplianceRule": [
         {
           "Name": "DLP-07 override",
+          "From": [
+            "{site_members:sales}"
+          ],
           "AccessScope": "NotInOrganization",
           "BlockAccess": true,
-          "BlockAccessScope": "PerUser",
           "NotifyUser": [
             "Owner",
             "LastModifier"
           ],
           "NotifyAllowOverride": "WithJustification",
-          "GenerateIncidentReport": "{mailbox:security}"
+          "GenerateIncidentReport": "{mailbox:security}",
+          "DocumentNameMatchesPatterns": [
+            "."
+          ]
         }
       ]
     }
@@ -1172,14 +1128,16 @@
         {
           "Name": "DLP-08 justify",
           "RecipientDomainIs": "{config:policy.consumer_mail_domains}",
-          "DocumentSizeOver": "0B (attachment present; condition to confirm)",
           "BlockAccess": true,
           "NotifyUser": [
-            "SiteAdmin"
+            "LastModifier"
           ],
           "NotifyAllowOverride": "WithJustification",
           "GenerateIncidentReport": "{mailbox:security}",
-          "IncidentReportContent": "All"
+          "IncidentReportContent": "All",
+          "DocumentNameMatchesPatterns": [
+            "."
+          ]
         }
       ]
     },
@@ -1196,7 +1154,7 @@
       "note": "S-02 not done; candidate resource name, unconfirmed"
     },
     "verified": "not verified: Security & Compliance PowerShell app-only did not connect on the test tenant. With ExchangeOnlineManagement 3.6.0, Connect-IPPSSession has no -AccessToken parameter; Connect-IPPSSession -Certificate -AppId -Organization and Connect-ExchangeOnline -AccessToken -ConnectionUri https://ps.compliance.protection.outlook.com/powershell-liveid/ both fail with 'Could not find the organization container'. The pipeline app holds no Compliance Administrator role, so cmdlet and parameter existence could not be checked",
-    "notes": "Uses policy.consumer_mail_domains (SPEC 20.1). The 'has an attachment' condition for Exchange DLP rules is not confirmed (DocumentSizeOver vs a dedicated attachment predicate); recorded for T14-11 to settle once IPPS connects. Staged: policy Mode TestWithNotifications (simulation with policy tips, no blocking) for audit_days, reviewed at gate G-08, then Mode Enable.",
+    "notes": "'Has an attachment' is DocumentNameMatchesPatterns '.' (any attachment name): DocumentSizeOver starts at 10 KB on Exchange (tested). Staged: policy Mode TestWithNotifications (simulation with policy tips, no blocking) for audit_days, reviewed at gate G-08, then Mode Enable. The domains are policy.consumer_mail_domains: a list in the configuration or, when the configuration leaves it empty, the comma-separated list the choice data.personal_mail_domains supplies (SC-31); its option none leaves PVW-017 and PVW-018 out.",
     "payload_audit": {
       "New-DlpCompliancePolicy": {
         "Name": "DLP-08 Attachments to consumer mail",
@@ -1207,14 +1165,16 @@
         {
           "Name": "DLP-08 justify",
           "RecipientDomainIs": "{config:policy.consumer_mail_domains}",
-          "DocumentSizeOver": "0B (attachment present; condition to confirm)",
           "BlockAccess": true,
           "NotifyUser": [
-            "SiteAdmin"
+            "LastModifier"
           ],
           "NotifyAllowOverride": "WithJustification",
           "GenerateIncidentReport": "{mailbox:security}",
-          "IncidentReportContent": "All"
+          "IncidentReportContent": "All",
+          "DocumentNameMatchesPatterns": [
+            "."
+          ]
         }
       ]
     }
@@ -1235,7 +1195,7 @@
         {
           "Name": "DLP-09 <user>",
           "From": "{user:<each user>}",
-          "AnyOfRecipientAddressMatchesPatterns": "^({given}|{family}|{given}.?{family}|{family}.?{given})[._-]?[0-9]*@({consumer domains})$ (generated per user from configuration users)",
+          "AnyOfRecipientAddressMatchesPatterns": "one pattern per consumer domain, ^({given}|{family}|{given}[._-]?{family}|{family}[._-]?{given})[._-]?[0-9]*@{domain}$, split per name form when longer than 128 characters (generated per user from configuration users)",
           "BlockAccess": true,
           "NotifyAllowOverride": "WithJustification",
           "GenerateAlert": "{mailbox:alerts}",
@@ -1256,7 +1216,7 @@
       "note": "S-02 not done; candidate resource name, unconfirmed"
     },
     "verified": "not verified: Security & Compliance PowerShell app-only did not connect on the test tenant. With ExchangeOnlineManagement 3.6.0, Connect-IPPSSession has no -AccessToken parameter; Connect-IPPSSession -Certificate -AppId -Organization and Connect-ExchangeOnline -AccessToken -ConnectionUri https://ps.compliance.protection.outlook.com/powershell-liveid/ both fail with 'Could not find the organization container'. The pipeline app holds no Compliance Administrator role, so cmdlet and parameter existence could not be checked",
-    "notes": "DLP cannot compare a sender's name with the recipient address at run time, so the engine generates one rule (or condition group) per user from the configuration's users and policy.consumer_mail_domains. Names are company data: the patterns are built at plan time and never written to the repository. Limits on rules per policy apply to large companies. Staged: policy Mode TestWithNotifications (simulation with policy tips, no blocking) for audit_days, reviewed at gate G-08, then Mode Enable.",
+    "notes": "DLP cannot compare a sender's name with the recipient address at run time, so the engine generates one rule (or condition group) per user from the configuration's users and policy.consumer_mail_domains. Names are company data: the patterns are built at plan time and never written to the repository. Limits on rules per policy apply to large companies. Staged: policy Mode TestWithNotifications (simulation with policy tips, no blocking) for audit_days, reviewed at gate G-08, then Mode Enable. The domains are policy.consumer_mail_domains: a list in the configuration or, when the configuration leaves it empty, the comma-separated list the choice data.personal_mail_domains supplies (SC-31); its option none leaves PVW-017 and PVW-018 out. Each pattern in AnyOfRecipientAddressMatchesPatterns is at most 128 characters (tested), so the engine writes one per domain.",
     "payload_audit": {
       "New-DlpCompliancePolicy": {
         "Name": "DLP-09 Mail to own consumer address",
@@ -1267,7 +1227,7 @@
         {
           "Name": "DLP-09 <user>",
           "From": "{user:<each user>}",
-          "AnyOfRecipientAddressMatchesPatterns": "^({given}|{family}|{given}.?{family}|{family}.?{given})[._-]?[0-9]*@({consumer domains})$ (generated per user from configuration users)",
+          "AnyOfRecipientAddressMatchesPatterns": "one pattern per consumer domain, ^({given}|{family}|{given}[._-]?{family}|{family}[._-]?{given})[._-]?[0-9]*@{domain}$, split per name form when longer than 128 characters (generated per user from configuration users)",
           "BlockAccess": true,
           "NotifyAllowOverride": "WithJustification",
           "GenerateAlert": "{mailbox:alerts}",

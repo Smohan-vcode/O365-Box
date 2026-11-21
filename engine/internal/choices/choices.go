@@ -104,6 +104,12 @@ type Known struct {
 
 var valueKey = regexp.MustCompile(`^(devices|ai_policy|values)(\.[a-z0-9_]+)+$`)
 
+// listKeys are the configuration lists a choice may fill: the value is a
+// comma-separated list, each item matching the pattern (SC-31).
+var listKeys = map[string]*regexp.Regexp{
+	"policy.consumer_mail_domains": regexp.MustCompile(`^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*\.[a-z]{2,}$`),
+}
+
 var steps = map[string]bool{"start": true, "company": true, "addresses": true, "security": true, "structure": true, "people": true}
 
 // Validate checks the catalogue's shape and every reference its effects make.
@@ -158,9 +164,15 @@ func (c *Catalogue) Validate(k Known) []report.Issue {
 					add(op, fmt.Sprintf("setting %s has no variant %q in expected-state/setting-ids", s, v))
 				}
 			}
-			for key := range o.Effects.Values {
-				if !valueKey.MatchString(key) {
-					add(op, fmt.Sprintf("value key %q is not devices.*, ai_policy.* or values.*", key))
+			for key, v := range o.Effects.Values {
+				if item, ok := listKeys[key]; ok {
+					for _, x := range strings.Split(v, ",") {
+						if !item.MatchString(strings.TrimSpace(x)) {
+							add(op, fmt.Sprintf("value %s: %q is not a valid item", key, strings.TrimSpace(x)))
+						}
+					}
+				} else if !valueKey.MatchString(key) {
+					add(op, fmt.Sprintf("value key %q is not devices.*, ai_policy.*, values.* or policy.consumer_mail_domains", key))
 				}
 			}
 			if k.Gates != nil {

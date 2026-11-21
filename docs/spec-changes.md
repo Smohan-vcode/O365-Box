@@ -1353,3 +1353,66 @@ approves" (choice `devices.browser_extensions`), while Macs (MAC-030) did.
 WIN-069 moves to the core tier; the choice still decides it: option
 `store` leaves WIN-069 out. Owner direction: "Agree with the open items
 recommendations".
+
+## SC-31  Four labels, mail-only DLP-06 and DLP-07, personal mail domains as a choice (approved by the owner 2026-11-21, T14-10, T14-11)
+
+**Why.** Applying `policy.purview` on the test tenant found three things the
+catalogue assumed and Microsoft does not offer:
+
+1. **Sub-labels (PVW-005).** The tenant uses Microsoft's modern label
+   scheme: a sub-label can sit only under a label group, and a label group
+   carries no marking and cannot label sites. Confidential, with its header
+   marking and site protection (PVW-008), cannot be the parent of Sales,
+   Legal and People.
+2. **Site rules (PVW-015, PVW-016).** Every SharePoint or OneDrive DLP rule
+   needs a content condition, and none matches every file:
+   `DocumentNameMatchesPatterns` is Exchange and Endpoint only, and
+   `DocumentSizeOver` starts at 10 KB on SharePoint (tested).
+3. **Personal mail domains (PVW-017, PVW-018).** DLP-08 and DLP-09 need
+   `policy.consumer_mail_domains`, which no step of onboarding asked for, so
+   the settings were skipped.
+
+**Decision (approved by the owner 2026-11-21).**
+
+1. Four labels: Public, Internal, Confidential, Restricted. The Sales, Legal
+   and People sub-labels are dropped from PVW-005, the label policy
+   (PVW-007) and DLP-02 (PVW-011). The engine does not create, change or
+   remove sub-labels a tenant already has.
+2. DLP-06 and DLP-07 are mail-only: the policy location is Exchange
+   (`ExchangeLocation All`; an existing policy's SharePoint and OneDrive
+   locations are removed). The rule covers mail with an attachment
+   (`DocumentNameMatchesPatterns '.'`, any attachment name;
+   `DocumentSizeOver` starts at 10 KB on Exchange too) sent outside the organisation (`AccessScope
+   NotInOrganization`) by the members of the sites: the users in the groups
+   that `structure.sites[*].access` makes owner or member of the legal,
+   finance, people and corporate sites (DLP-06) or the sales site (DLP-07),
+   expanded on every apply because the access groups are security groups.
+   Sharing files from the sites themselves stays with SPO-002.
+3. A choice `data.personal_mail_domains` (Security step) asks whether to
+   watch mail to personal accounts. The recommended option `common` supplies
+   `policy.consumer_mail_domains` = gmail.com, outlook.com, hotmail.com,
+   live.com, yahoo.com, icloud.com, proton.me, aol.com; the option `none`
+   leaves PVW-017 and PVW-018 out. A list in the configuration still wins.
+   A choice's `values` may now fill `policy.consumer_mail_domains` as a
+   comma-separated list (each item a domain, checked by `box choices
+   validate`); the purview step splits it.
+
+**Found while applying (no decision needed).** DLP-08 uses the same
+attachment condition (`DocumentSizeOver 1` was refused: minimum 10 KB).
+DLP-09's recipient patterns are limited to 128 characters each, so the
+engine writes one pattern per consumer domain (split per name form if still
+too long). DLP-06 and DLP-07 drop `BlockAccessScope`, which applies only to
+SharePoint and OneDrive (Microsoft warns that `PerUser` acts as a plain
+block in Exchange).
+
+**Files.** `policy/settings/purview.yaml` (PVW-005 name, PVW-015 and
+PVW-016 values), `expected-state/setting-ids/purview.json` (PVW-005,
+PVW-007, PVW-011, PVW-015 to PVW-018), `defaults/choices.yaml`,
+`engine/internal/choices/choices.go`,
+`engine/providers/exchange/Box.exchange.policy.ps1`, `tasks/T14-10.md`,
+`tasks/T14-11.md`. No policy document named the sub-labels (POL-05 and
+PRC-10 already speak of four labels).
+
+**Proposed §25.1 wording** (SPEC not edited): "Choices may carry `values`
+that fill configuration keys the settings read (`devices.*`,
+`ai_policy.*`, `values.*`, and the list `policy.consumer_mail_domains`)."

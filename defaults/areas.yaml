@@ -31,7 +31,7 @@ areas:
     title: Computers and phones
     plain: Encryption, updates, antivirus and what happens to a lost laptop or phone.
     behind: [Intune, Defender for Endpoint]
-    steps: [intune., policy.intune-, policy.sharepoint.intune]
+    steps: [intune., policy.intune-, policy.sharepoint.intune, sharepoint.extension-requests]
   - id: sensitive-info
     title: Sensitive information
     plain: Labels, leak prevention and the audit trail of who did what.

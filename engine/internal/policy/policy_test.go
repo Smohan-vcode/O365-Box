@@ -74,7 +74,7 @@ func TestCatalogueIsValid(t *testing.T) {
 	for _, i := range c.Validate(plans(t)) {
 		t.Error(i)
 	}
-	if len(c.Requirements) != 90 || c.SettingCount() != 334 || len(c.Centres) != 12 || len(c.Frameworks) != 5 {
+	if len(c.Requirements) != 90 || c.SettingCount() != 336 || len(c.Centres) != 12 || len(c.Frameworks) != 5 {
 		t.Errorf("got %d requirements, %d settings, %d centres, %d frameworks",
 			len(c.Requirements), c.SettingCount(), len(c.Centres), len(c.Frameworks))
 	}
@@ -122,8 +122,8 @@ func TestResolveMatchesReferenceCoverage(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.AppliedCount() != 305 || len(res.NotApplied) != 29 {
-		t.Errorf("applied %d, not applied %d; want 305 and 29", res.AppliedCount(), len(res.NotApplied))
+	if res.AppliedCount() != 307 || len(res.NotApplied) != 29 {
+		t.Errorf("applied %d, not applied %d; want 307 and 29 (305 before T14-19 added WIN-091 and MAC-032, which a choice leaves out by default)", res.AppliedCount(), len(res.NotApplied))
 	}
 	want := map[string]int{StatusEnforced: 62, StatusEnforcedProcedure: 11, StatusProcedure: 11, StatusAddon: 5, StatusNotSelected: 1}
 	for st, n := range want {

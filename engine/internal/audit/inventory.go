@@ -1164,5 +1164,16 @@ func NotReadInventories(at time.Time) []*Inventory {
 		}
 		out = append(out, inv)
 	}
+	// Browser extensions in use (T14-20): Microsoft Graph lists them only
+	// through Advanced hunting, a POST the read-only audit never sends, and
+	// only with the Defender Vulnerability Management add-on. It answers no
+	// requirement's collector, so it informs and never lowers a status.
+	out = append(out, &Inventory{ID: "browser_extensions", Title: "Browser extensions in use on company devices", Status: NotRead, ReadAt: at, Summary: "not read",
+		Collectors: []string{},
+		Reason: "needs Microsoft Defender Vulnerability Management's browser extensions assessment (the Defender Vulnerability Management add-on) " +
+			"read with Advanced hunting (DeviceTvmBrowserExtensions, POST /security/runHuntingQuery, ThreatHunting.Read.All), which a read-only " +
+			"GET sign-in cannot send; Intune's discovered apps do not list browser extensions. With the box built, box extensions report lists " +
+			"the Edge policy's allowed and blocked extensions",
+		Queries: []string{"none sent: Advanced hunting is a POST, and the audit sends GET only"}})
 	return out
 }

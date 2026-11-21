@@ -446,13 +446,41 @@ choices:
     help: Extensions can read everything on a web page, including company data.
     when: module devices
     options:
+      # Staff ask in the Admin site's ExtensionRequests list; each approval
+      # (box extensions approve, or the home screen) adds the id to the
+      # configuration's devices.browser.extension_allowlist (T14-18).
       - value: approved
         label: Only extensions the company approves
-        detail: None at first; add any you need from the home screen.
+        detail: None at first. Staff ask for one with a short form; you approve or turn down each request from the home screen.
         recommended: true
         cost: none
-        effects: {values: {values.edge_extension_allowlist: ""}}
+        effects: {values: {values.edge_extension_blocklist: "*", devices.browser.extension_allowlist: ""}}
       - value: store
         label: Anything from the Microsoft Edge store
         cost: none
-        effects: {exceptions: [MAC-030]}
+        # Only the extension block and allow lists are left out: SmartScreen
+        # and the other Edge settings of MAC-030 still apply.
+        effects: {exceptions: [WIN-069], values: {values.edge_extension_blocklist: "", devices.browser.extension_allowlist: ""}}
+
+  # T14-19: extensions Edge installs for everyone (ExtensionInstallForcelist,
+  # WIN-091 and MAC-032). The list is devices.browser.forced_extensions:
+  # approved extensions the owner marks "install for everyone" when
+  # approving a request (box extensions approve --install-for-everyone, or
+  # "i" on the home screen). Each must also be in the allow list.
+  - id: devices.browser_forced_extensions
+    step: security
+    question: Install some approved browser extensions for everyone?
+    help: Edge installs these on every company computer and staff cannot remove them. Use it for an extension everyone needs, such as the company's password manager. You pick which ones when you approve a request.
+    when: module devices
+    options:
+      - value: none
+        label: No, staff add approved extensions themselves
+        detail: Recommended. Nothing is installed without the person choosing it.
+        recommended: true
+        cost: none
+        effects: {exceptions: [WIN-091, MAC-032]}
+      - value: everyone
+        label: Yes, install the ones I mark for everyone
+        detail: None at first. When you approve a request you can mark it "install for everyone"; Edge then installs it on every company computer.
+        cost: none
+        effects: {values: {devices.browser.forced_extensions: ""}}

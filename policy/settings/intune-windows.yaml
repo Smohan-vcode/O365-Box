@@ -826,3 +826,12 @@ settings:
   requirements:
   - MAL-03
   - BCK-01
+- id: WIN-091
+  platform: windows
+  name: 'Browser: extensions installed for everyone'
+  value: the approved extensions the owner chose to install for everyone; none unless the owner chooses it
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - CFG-05

@@ -966,7 +966,9 @@ requirements:
   - WIN-068
   - WIN-069
   - WIN-070
+  - WIN-091
   - MAC-030
+  - MAC-032
   evidence: collector.device_config
 - id: CFG-06
   domain: Configuration and patching

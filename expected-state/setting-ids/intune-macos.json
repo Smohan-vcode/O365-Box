@@ -1932,7 +1932,7 @@
             "simpleSettingCollectionValue": [
               {
                 "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue",
-                "value": "*"
+                "value": "{list:edge_extension_blocklist}"
               }
             ]
           }
@@ -1945,7 +1945,7 @@
             "simpleSettingCollectionValue": [
               {
                 "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue",
-                "value": "{list:edge_extension_allowlist}"
+                "value": "{list:devices.browser.extension_allowlist}"
               }
             ]
           }
@@ -1972,7 +1972,7 @@
       ]
     },
     "read": "GET /beta/deviceManagement/configurationPolicies/{id}?$expand=settings",
-    "check": "smartscreenenabled == _true, preventsmartscreenpromptoverride == _true, preventsmartscreenpromptoverrideforfiles == _true, smartscreenpuaenabled == _true, sslversionmin == _2 (tls1.2), restrictsignintopattern == {text:edge_signin_pattern}; enhanced: extensioninstallblocklist == ['*'] with the allow list, passwordmanagerenabled == _false",
+    "check": "smartscreenenabled == _true, preventsmartscreenpromptoverride == _true, preventsmartscreenpromptoverrideforfiles == _true, smartscreenpuaenabled == _true, sslversionmin == _2 (tls1.2), restrictsignintopattern == {text:edge_signin_pattern}; enhanced: extensioninstallblocklist == {list:edge_extension_blocklist} ('*' unless the choice is store) with extensioninstallallowlist == devices.browser.extension_allowlist, passwordmanagerenabled == _false",
     "permissions": [
       "graph:DeviceManagementConfiguration.ReadWrite.All"
     ],
@@ -1982,7 +1982,7 @@
       "note": "S-02 not done; Microsoft365DSC equivalent: IntuneSettingCatalogCustomPolicy (macOS)"
     },
     "verified": "settings catalogue definition id GET /beta/deviceManagement/configurationSettings/{id} returned 200 on the test tenant (2026-11-21); option ids recorded from the definition",
-    "notes": "Mirrors WIN-065..WIN-070 (Edge policies) with the macOS Edge definitions under com.apple.managedclient.preferences_*, all verified (200). The extension and password-manager items follow the tier of WIN-069/WIN-070 (enhanced) and the password manager only where a company password manager is named. 'Sync of work data to personal profiles blocked' follows whatever Edge policy the Windows resolution picks; the macOS id is the same policy name lower-cased under the com.apple.managedclient.preferences_ prefix. Keep this entry in step with the intune-windows resolution."
+    "notes": "Mirrors WIN-065..WIN-070 (Edge policies) with the macOS Edge definitions under com.apple.managedclient.preferences_*, all verified (200). The extension and password-manager items follow the tier of WIN-069/WIN-070 (enhanced) and the password manager only where a company password manager is named. 'Sync of work data to personal profiles blocked' follows whatever Edge policy the Windows resolution picks; the macOS id is the same policy name lower-cased under the com.apple.managedclient.preferences_ prefix. Keep this entry in step with the intune-windows resolution. Extensions (T14-18): the block list comes from the choice devices.browser_extensions (values.edge_extension_blocklist: \"*\" for approved, empty for store, which leaves the setting out) and the allow list from devices.browser.extension_allowlist, which only the owner approving a request fills."
   },
   "MAC-031": {
     "status": "resolved",
@@ -2064,5 +2064,52 @@
     },
     "verified": "OneDrive definitions verified (200). AllowTenantList is not in the settings catalogue (searched by id and keyword), so it goes in a custom profile; key name from Microsoft's OneDrive macOS documentation, not verified: host blocked.",
     "notes": "'Sync only the company tenant' = DisablePersonalSync + BlockExternalSync + AllowTenantList. 'Folder backup on' = KFMSilentOptIn with Desktop and Documents, users cannot opt out."
+  },
+  "MAC-032": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.intune-macos",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceManagement/configurationPolicies (PUT .../configurationPolicies/{id} with the full settings list to update; POST .../{id}/assign)",
+    "payload": {
+      "name": "Box macOS Edge",
+      "platforms": "macOS",
+      "technologies": "mdm,appleRemoteManagement",
+      "settings": [
+        {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+          "settingInstance": {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationSimpleSettingCollectionInstance",
+            "settingDefinitionId": "com.apple.managedclient.preferences_extensioninstallforcelist",
+            "simpleSettingCollectionValue": [
+              {
+                "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue",
+                "value": "{list:devices.browser.forced_extensions}"
+              }
+            ]
+          }
+        }
+      ],
+      "assignments": [
+        {
+          "target": {
+            "@odata.type": "#microsoft.graph.groupAssignmentTarget",
+            "groupId": "{group:grp-staff}"
+          }
+        }
+      ]
+    },
+    "read": "GET /beta/deviceManagement/configurationPolicies/{id}?$expand=settings",
+    "check": "extensioninstallforcelist == devices.browser.forced_extensions (one entry per id)",
+    "permissions": [
+      "graph:DeviceManagementConfiguration.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalent: IntuneSettingCatalogCustomPolicy (macOS)"
+    },
+    "verified": "settings catalogue definition GET /beta/deviceManagement/configurationSettings/com.apple.managedclient.preferences_extensioninstallforcelist returned 200 on the test tenant (2026-11-21) (string collection)",
+    "notes": "Merged into the \"Box macOS Edge\" catalogue policy of MAC-030 (same name). Mirrors WIN-091 (T14-19): applied only while the choice devices.browser_forced_extensions is everyone, from devices.browser.forced_extensions; an empty list leaves the setting out."
   }
 }

@@ -747,6 +747,87 @@ function Complete-ControlTask($In) {
   return @{ task_id = [string]$close.task_id; state = 'DONE'; output_url = $url; evidence_id = $evid; closed_by_person = ($person.Count -eq 1) }
 }
 
+# ---------- sharepoint.extension-requests (T14-18) ----------
+# Opens the register's ExtensionRequests list to staff: they add requests
+# with the list's form and read only their own; they edit nothing. The
+# columns the owner's decision fills are left out of the form. The box
+# never decides a request here: the owner does (box extensions approve or
+# reject, or the home screen), and only that decision changes the
+# configuration's allow list.
+$ExtRequestRole = 'Box Request'
+$ExtRequestStaff = 'grp-staff'
+$ExtRequestFormHidden = @('Title', 'state', 'store_name', 'requester', 'decided_by', 'decided_at', 'decision_reason')
+
+function Test-ExtFieldInNewForm($Field) {
+  # A field shows in the new-item form unless its schema says otherwise.
+  return ([string]$Field.SchemaXml) -notmatch 'ShowInNewForm="FALSE"'
+}
+
+function Get-ExtensionRequestChanges($In, [switch] $Apply) {
+  $sc = Connect-Site (Get-AdminSiteUrl $In)
+  $l = Get-RegisterList $sc 'ExtensionRequests' @('HasUniqueRoleAssignments', 'ReadSecurity', 'WriteSecurity', 'Title')
+  if (-not $l) {
+    if ($Apply) { throw 'the ExtensionRequests list does not exist (run sharepoint.register)' }
+    return @(New-BoxChange create 'ExtensionRequests access for staff' 'after sharepoint.register adds the list')
+  }
+  $changes = @()
+  $fields = @{}
+  foreach ($f in @(Get-PnPField -List $l.Id -Connection $sc)) { $fields[[string]$f.InternalName] = $f }
+  if (-not $fields.ContainsKey('state')) {
+    if ($Apply) { throw 'ExtensionRequests has no state column (run sharepoint.register)' }
+    return @(New-BoxChange update 'ExtensionRequests access for staff' 'after sharepoint.register adds the columns')
+  }
+  if ([string]$fields['state'].DefaultValue -ne 'requested') {
+    $changes += New-BoxChange update 'ExtensionRequests.state default' 'requested'
+    if ($Apply) { Set-PnPField -List $l.Id -Identity 'state' -Values @{ DefaultValue = 'requested' } -Connection $sc -ErrorAction Stop | Out-Null }
+  }
+  if ($fields['Title'].Required) {
+    $changes += New-BoxChange update 'ExtensionRequests.Title' 'optional (the form asks for extension_name)'
+    if ($Apply) { Set-PnPField -List $l.Id -Identity 'Title' -Values @{ Required = $false } -Connection $sc -ErrorAction Stop | Out-Null }
+  }
+  foreach ($name in $ExtRequestFormHidden) {
+    $f = $fields[$name]
+    if (-not $f -or -not (Test-ExtFieldInNewForm $f)) { continue }
+    $changes += New-BoxChange update "ExtensionRequests.$name in the request form" 'hidden (filled by the box or the owner)'
+    if ($Apply) {
+      $cf = $sc.Context.Web.Lists.GetById($l.Id).Fields.GetByInternalNameOrTitle($name)
+      $cf.SetShowInNewForm($false)
+      Invoke-PnPQuery -Connection $sc
+    }
+  }
+  # Staff read only their own requests (ReadSecurity 2) and change only
+  # their own (WriteSecurity 2); their permission level has no edit right
+  # at all, so they add requests and read them back.
+  if ([int]$l.ReadSecurity -ne 2 -or [int]$l.WriteSecurity -ne 2) {
+    $changes += New-BoxChange update 'ExtensionRequests item-level access' 'staff read only their own requests'
+    if ($Apply) {
+      $l.ReadSecurity = 2
+      $l.WriteSecurity = 2
+      $l.Update()
+      Invoke-PnPQuery -Connection $sc
+    }
+  }
+  if (-not (Get-PnPRoleDefinition -Identity $ExtRequestRole -Connection $sc -ErrorAction SilentlyContinue)) {
+    $changes += New-BoxChange create "permission level '$ExtRequestRole'" 'add and read items; never edit or delete'
+    if ($Apply) {
+      Add-PnPRoleDefinition -RoleName $ExtRequestRole -Include ViewListItems, AddListItems, OpenItems, ViewVersions, ViewPages, Open, BrowseUserInfo, UseRemoteAPIs -Description 'Add requests and read your own; never edit or delete (T14-18)' -Connection $sc | Out-Null
+    }
+  }
+  # Unique access: the site's own groups keep theirs; staff are added.
+  if (-not $l.HasUniqueRoleAssignments) {
+    $changes += New-BoxChange update 'ExtensionRequests unique access' 'keep the Admin site groups; add staff to ask'
+    if ($Apply) { Set-PnPList -Identity $l.Id -BreakRoleInheritance -CopyRoleAssignments -Connection $sc -ErrorAction Stop | Out-Null }
+  }
+  $login = Get-GroupLogin $ExtRequestStaff
+  $have = @()
+  if ($l.HasUniqueRoleAssignments) { $have = @(Get-ListPrincipals $sc ([string]$l.Title)) }
+  if ($login -notin $have) {
+    $changes += New-BoxChange update "$ExtRequestStaff on ExtensionRequests" "$ExtRequestRole (ask for an extension)"
+    if ($Apply) { Set-PnPListPermission -Identity $l.Id -User $login -AddRole $ExtRequestRole -Connection $sc -ErrorAction Stop }
+  }
+  return $changes
+}
+
 # ---------- policy.sharepoint (T14-09) ----------
 # Applies the resolved sharepoint settings from their mapping payloads
 # (expected-state/setting-ids/sharepoint.json). SharePoint has no audit form:
@@ -1336,6 +1417,13 @@ $script:Steps = [ordered]@{
     # Narrow operations for box tasks (SPEC §25: the assignee closes a task, never the box).
     read = { param($In) Read-ControlTasks $In }
     record = { param($In) Complete-ControlTask $In }
+  }
+  'sharepoint.extension-requests' = @{
+    test = $ok
+    plan = { param($In) Result-Changes (Get-ExtensionRequestChanges $In) }
+    apply = { param($In) Result-Changes (Get-ExtensionRequestChanges $In -Apply) }
+    verify = { param($In) $c = @(Get-ExtensionRequestChanges $In | Where-Object { $_ }); @{ ok = ($c.Count -eq 0); drift = $c } }
+    evidence = { param($In) New-Evidence 'extension-requests' 'ExtensionRequests open to staff: add and read their own; the owner decides (box extensions)' }
   }
   'policy.sharepoint' = @{
     test = $ok

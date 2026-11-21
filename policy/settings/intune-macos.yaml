@@ -284,3 +284,12 @@ settings:
   requirements:
   - COL-05
   - BCK-01
+- id: MAC-032
+  platform: macos
+  name: 'Browser: extensions installed for everyone'
+  value: same values as Windows (WIN-091)
+  tier: core
+  mode: enforce
+  capability: intune_p1
+  requirements:
+  - CFG-05

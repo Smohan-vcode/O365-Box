@@ -881,6 +881,17 @@ need permissions or Entra roles not in `expected-state/app-permissions.yaml`
 (for example for Purview, Defender for Office and Intune app protection);
 each is proposed when found, not granted.
 
+## SC-20  Configuration-monitor API (proposed, not granted)
+
+Spike S-02: the Tenant Configuration Management APIs (Graph beta) monitor
+and snapshot tenant configuration; they do not apply it. Adopting them
+needs `ConfigurationMonitoring.ReadWrite.All` for the pipeline app and,
+in a Global Administrator bootstrap sign-in, the service's own service
+principal with read access to each workload. Until approved, drift is
+monitored by `box drift`; `expected-state/baseline-coverage.yaml` records
+the monitor resource type per setting where one is known, so adoption is a
+data change.
+
 ## Exceptions on the test tenant (2026-11-21)
 
 - **No FIDO2 keys** for the break-glass accounts this round (owner's

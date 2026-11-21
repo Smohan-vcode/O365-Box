@@ -166,6 +166,10 @@ func (g *globals) open(f *runFlags, out io.Writer, exact bool) (*session, error)
 	return s, nil
 }
 
+// teamsAdminResource is Microsoft's fixed application id of the Teams
+// administration API (Skype and Teams Tenant Admin API).
+const teamsAdminResource = "48ac35b8-9aa8-4d74-927d-1f4a14a0b239"
+
 // appCredentials gives providers app-only tokens from the pipeline app's
 // certificate, when bootstrap has run for this tenant.
 func (s *session) appCredentials() error {
@@ -211,6 +215,16 @@ func (s *session) appCredentials() error {
 			}
 			s.red.AddSecret(g.Access)
 			out["graph"] = map[string]any{"access_token": g.Access}
+		}
+		if provider == "teams" {
+			// Connect-MicrosoftTeams -AccessTokens takes a Graph token and a
+			// token for the Teams administration resource.
+			t, err := cred.Token(ctx, teamsAdminResource)
+			if err != nil {
+				return nil, err
+			}
+			s.red.AddSecret(t.Access)
+			out["teams"] = map[string]any{"access_token": t.Access}
 		}
 		return out, nil
 	}

@@ -160,7 +160,7 @@
       "resource": null,
       "note": "S-02 not done; no SharePoint resource known in Tenant Configuration Management. Monitor with box drift."
     },
-    "verified": "Set-PnPTenant parameter exists (PnP.PowerShell 2.12.0); Get-PnPTenant app-only read OK on the test tenant (both currently false).",
+    "verified": "Applied by policy.sharepoint (T14-09) on the test tenant: PreventExternalUsersFromResharing set true. RequireAcceptingAccountMatchInvitedAccount: Set-PnPTenant returns without error but the value stays false while EnableAzureADB2BIntegration is true; the step treats it as decided by Entra B2B and logs it.",
     "notes": "With Entra B2B integration on, invited-account matching is enforced by Entra; the SharePoint flag is kept for evidence."
   },
   "SPO-007": {
@@ -213,7 +213,7 @@
       "resource": null,
       "note": "S-02 not done; no SharePoint resource known in Tenant Configuration Management. Monitor with box drift."
     },
-    "verified": "Set-PnPTenant parameter exists (PnP.PowerShell 2.12.0); Get-PnPTenant app-only read OK on the test tenant (currently AllowFullAccess).",
+    "verified": "T14-09 on the test tenant: Set-PnPTenant -ConditionalAccessPolicy AllowLimitedAccess made SharePoint create two Conditional Access policies ('[SharePoint admin center]Block access from apps on unmanaged devices - <date>' and '...Use app-enforced Restrictions for browser access - <date>'), enabled and without the grp-break-glass exclusion. They were set report-only with grp-break-glass excluded and the tenant value returned to AllowFullAccess. policy.sharepoint holds this setting (not written) until box check break-glass passes and ENT-009 owns the policies; it makes any '[SharePoint admin center]' policy report-only with break-glass excluded on every run.",
     "notes": "Same as baseline unmanaged_device_access: limited_web_only. Needs the Conditional Access policy with 'Use app enforced restrictions' for SharePoint (ENT-009, entra_p1); setting it in PowerShell does not create that policy."
   },
   "SPO-009": {
@@ -477,7 +477,7 @@
       "resource": null,
       "note": "S-02 not done; no SharePoint resource known in Tenant Configuration Management. Monitor with box drift."
     },
-    "verified": "Set-PnPTenant parameter exists (PnP.PowerShell 2.12.0); Get-PnPTenant app-only read OK on the test tenant (reshared true, invitations accepted false, anonymous true).",
+    "verified": "Applied by policy.sharepoint (T14-09) on the test tenant. NotifyOwnersWhenInvitationsAccepted: Set-PnPTenant returns without error but the value stays false while OneDriveSharingCapability is Disabled (no invitation can be accepted); the step logs it and does not report drift.",
     "notes": "These are the OneDrive owner notifications. SharePoint site owners are notified of sharing by the access-request and sharing emails; there is no further tenant switch."
   },
   "SPO-018": {

@@ -36,3 +36,9 @@ steps:
     task: T0-06
     depends_on: [sharepoint.register]
     reads: ["@document", "@dictionary", company, tenant, structure]
+  - id: policy.sharepoint
+    title: Resolved sharing and site settings
+    track: T14
+    task: T14-09
+    depends_on: [sharepoint.tenant, sharepoint.sites]
+    reads: ["@policy", tenant, structure]

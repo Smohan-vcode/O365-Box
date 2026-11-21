@@ -34,6 +34,7 @@ type auditFlags struct {
 	tenant     string
 	cap        int
 	noSettings bool
+	partial    bool
 	modulePath string
 	timeout    time.Duration
 }
@@ -121,6 +122,7 @@ func newAuditCmd(g *globals) *cobra.Command {
 	c.Flags().StringVar(&f.out, "out", "", "new or empty folder for the pack, outside the repository")
 	c.Flags().StringVar(&f.tenant, "tenant", "organizations", "tenant id or domain to sign in to")
 	c.Flags().IntVar(&f.cap, "cap", 5000, "most records read per activity log (sign-ins, directory audit, alerts)")
+	c.Flags().BoolVar(&f.partial, "partial", false, "build the pack even when the account that signs in can change the tenant (its settings are listed as not read)")
 	c.Flags().BoolVar(&f.noSettings, "no-settings", false, "skip the catalogue settings (policy step verify); inventories only")
 	c.Flags().StringVar(&f.modulePath, "module-path", "", "PSModulePath for provider workers")
 	c.Flags().DurationVar(&f.timeout, "step-timeout", 10*time.Minute, "timeout per policy step read")
@@ -198,7 +200,20 @@ func runAudit(ctx context.Context, g *globals, f *auditFlags, env *auditEnv, out
 	// R12: the token lives in this function only and is dropped on return.
 	defer func() { tok.Access = "" }()
 	sess := audit.NewSession(tok.TenantID(), tok.Subject(), tok.Scopes(), tok.Claims)
-	fmt.Fprintf(out, "✓ signed in (read only) to tenant %s\n", sess.Tenant)
+	who, _ := tok.Claims["preferred_username"].(string)
+	if who == "" {
+		who, _ = tok.Claims["upn"].(string)
+	}
+	fmt.Fprintf(out, "✓ signed in (read only) to tenant %s as %s; roles: %s\n", sess.Tenant, who, audit.RoleNames(sess.Roles))
+	if sess.WriterRole && !f.partial {
+		// A device-code page often reuses the browser's admin session. Stop
+		// before reading rather than produce a half-read pack.
+		fmt.Fprintln(out, "✗ this account can change the tenant, so most settings could not be read safely.")
+		fmt.Fprintln(out, "  Sign in as a reader-only account (Global Reader, Security Reader): use a private browser window")
+		fmt.Fprintln(out, "  so the code page does not reuse an administrator's session, then run box audit again.")
+		fmt.Fprintln(out, "  (--partial builds the pack anyway, with those settings listed as not read.)")
+		return exitError{ExitValidation}
+	}
 	var notes []string
 	if !sess.GlobalReader {
 		notes = append(notes, "The person who signed in does not hold Global Reader; reads it may not make are listed as not read.")

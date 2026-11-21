@@ -151,3 +151,31 @@ func (s Session) ProvidersAllowed() (bool, string) {
 	return false, fmt.Sprintf("the sign-in token carries write scopes consented earlier for the client (%s) and the person holds a role that can change the tenant: sign in as Global Reader to read these settings",
 		strings.Join(s.WriteScopes, ", "))
 }
+
+// roleNames are display names of common directory roles, for messages.
+var roleNames = map[string]string{RoleGlobalAdmin: "Global Administrator",
+	"29232cdf-9323-42fd-ade2-1d097af3e4de": "Exchange Administrator", "f28a1f50-f6e7-4571-818b-6a12f2af6b6c": "SharePoint Administrator",
+	"fe930be7-5e62-47db-91af-98c3a49a38b1": "User Administrator", "69091246-20e8-4a56-aa4d-066075b2a7a8": "Teams Administrator",
+	"194ae4cb-b126-40b2-bd5b-6091b380977d": "Security Administrator", "17315797-102d-40b4-93e0-432062caca18": "Compliance Administrator",
+	"3a2c62db-5318-420d-8d74-23affee5d9d5": "Intune Administrator"}
+
+// RoleNames lists the roles of a sign-in by name ("none" when it holds none
+// beyond the default user role).
+func RoleNames(ids []string) string {
+	var out []string
+	for _, id := range ids {
+		if n, ok := readerRoles[id]; ok {
+			if n != "User" {
+				out = append(out, n)
+			}
+		} else if n, ok := roleNames[id]; ok {
+			out = append(out, n)
+		} else {
+			out = append(out, "role "+id)
+		}
+	}
+	if len(out) == 0 {
+		return "none"
+	}
+	return strings.Join(out, ", ")
+}

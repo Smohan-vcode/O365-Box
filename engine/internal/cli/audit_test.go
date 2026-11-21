@@ -115,7 +115,16 @@ func TestAuditWithWriterTokenSkipsProviders(t *testing.T) {
 	}
 	var buf bytes.Buffer
 	out := filepath.Join(t.TempDir(), "pack")
-	if err := runAudit(context.Background(), &globals{repo: "../../.."}, &auditFlags{framework: "soc2", out: out, cap: 10}, env, &buf); err != nil {
+	// Without --partial an administrator's sign-in stops before reading.
+	if err := runAudit(context.Background(), &globals{repo: "../../.."}, &auditFlags{framework: "soc2", out: out, cap: 10}, env, &buf); err == nil ||
+		!strings.Contains(buf.String(), "as admin@fernhill.example; roles: Global Administrator") || !strings.Contains(buf.String(), "private browser window") {
+		t.Fatalf("admin sign-in did not stop: %v\n%s", err, buf.String())
+	}
+	if _, err := os.Stat(filepath.Join(out, "index.html")); err == nil {
+		t.Fatal("a pack was written after stopping")
+	}
+	buf.Reset()
+	if err := runAudit(context.Background(), &globals{repo: "../../.."}, &auditFlags{framework: "soc2", out: out, cap: 10, partial: true}, env, &buf); err != nil {
 		t.Fatal(err)
 	}
 	if token != "" {

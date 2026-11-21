@@ -1,0 +1,32 @@
+# DRAFT jurisdiction rules (SPEC §19.1). Not reviewed by counsel; not legal
+# advice. Rules only: no company values. Confirm every rule with counsel
+# before relying on it.
+code: nz
+name: New Zealand
+extends: null
+status: DRAFT
+reviewed_on: null
+sources:
+  - Companies Act 1993, section 25 (company name on written communications)
+  - Privacy Act 2020, Part 6 (notifiable privacy breaches); Office of the Privacy Commissioner
+  - Unsolicited Electronic Messages Act 2007
+  - Tax Administration Act 1994 (record keeping); Inland Revenue
+correspondence:
+  required: [legal_name]
+  commercial_email: [legal_name, contact_email, unsubscribe]
+  notes: A company's name is clearly stated in every written communication sent by or on its behalf and on every document issued or signed by or on its behalf that evidences or creates a legal obligation (Companies Act s. 25). Commercial electronic messages include accurate sender information and a functional unsubscribe facility.
+privacy:
+  regime: Privacy Act 2020
+  regulator: Office of the Privacy Commissioner
+  representative_required_if_outside: false
+  notes: Applies to overseas agencies carrying on business in New Zealand. Each agency has a privacy officer.
+notices: [PS-PRIV]
+retention_hints:
+  tax: "7y (Inland Revenue)"
+  accounting_records: "7y after the end of the accounting period (Companies Act s. 189-194; check with counsel)"
+incident_notifications:
+  - regime: Privacy Act 2020 (Part 6)
+    what: Notifiable privacy breach (a breach that has caused or is likely to cause serious harm)
+    to: Privacy Commissioner; affected individuals (or a public notice if individual notice is not reasonably practicable)
+    deadline: as soon as practicable after becoming aware that a notifiable privacy breach has occurred
+    applies_when: Agency holding personal information subject to the Privacy Act 2020

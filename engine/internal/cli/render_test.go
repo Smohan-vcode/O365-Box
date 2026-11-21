@@ -55,8 +55,8 @@ func TestRenderPoliciesCommand(t *testing.T) {
 		}
 	}
 	// Values the company has not supplied are listed for the owner, never invented.
-	for _, want := range []string{"POL-T1 v1.0  POL-T1 Identity and access.docx  (2 value(s) to be completed)", "✓ POL-T2 v1.1",
-		"dictionary.role.owner.phone: Phone number", "jurisdictions.registered: the jurisdiction rules file defaults/jurisdictions/gb.yaml"} {
+	for _, want := range []string{"POL-T1 v1.0  POL-T1 Identity and access.docx  (1 value(s) to be completed)", "✓ POL-T2 v1.1",
+		"dictionary.role.owner.phone: Phone number"} {
 		if !strings.Contains(text, want) {
 			t.Errorf("output lacks %q:\n%s", want, text)
 		}
@@ -104,13 +104,23 @@ func TestRenderContextValues(t *testing.T) {
 	}
 	// Not supplied: left to the owner with what to supply.
 	for k, want := range map[string]string{
-		"generated.retention_schedule":         "confirmation of the retention schedule",
-		"generated.approved_ai":                "Copilot and AI features",
-		"jurisdictions.registered":             "defaults/jurisdictions/gb.yaml",
-		"jurisdictions.notification_deadlines": "incident notification entries",
+		"generated.retention_schedule": "confirmation of the retention schedule",
+		"generated.approved_ai":        "Copilot and AI features",
 	} {
 		if v[k] != "" || !strings.Contains(c.Pending[k], want) {
 			t.Errorf("%s = %q, pending %q", k, v[k], c.Pending[k])
+		}
+	}
+	// Filled from the rules files acme selects (gb, eu, de), marked as drafts.
+	if got := v["jurisdictions.registered"]; got != "United Kingdom (rules not yet reviewed by counsel)" {
+		t.Errorf("jurisdictions.registered = %q (%s)", got, c.Pending["jurisdictions.registered"])
+	}
+	if got := v["jurisdictions.operating"]; !strings.Contains(got, "Germany (rules not yet reviewed by counsel)") {
+		t.Errorf("jurisdictions.operating = %q", got)
+	}
+	for _, want := range []string{"| Applies when |", "| United Kingdom | UK GDPR Art. 33 |", "| European Union (common rules) | NIS2 Art. 23 |", "| Germany | BSI-Gesetz"} {
+		if !strings.Contains(v["jurisdictions.notification_deadlines"], want) {
+			t.Errorf("notification_deadlines lacks %q: %s", want, v["jurisdictions.notification_deadlines"])
 		}
 	}
 	if _, ok := v["dictionary.role.owner.phone"]; ok {
@@ -171,7 +181,7 @@ func TestPoliciesInputCarriesApproval(t *testing.T) {
 	}
 	// POL-T1 has values to be completed: it stays a draft, no publish change.
 	t1 := list[0].(map[string]any)
-	if _, ok := t1["approve"]; ok || len(t1["missing"].([]any)) != 2 {
+	if _, ok := t1["approve"]; ok || len(t1["missing"].([]any)) != 1 {
 		t.Errorf("POL-T1 = %v", t1["missing"])
 	}
 	needed := in["dictionary_needed"].([]any)

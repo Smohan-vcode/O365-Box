@@ -1,0 +1,34 @@
+# DRAFT jurisdiction rules (SPEC §19.1). Not reviewed by counsel; not legal
+# advice. Rules only: no company values. Confirm every rule with counsel
+# before relying on it.
+#
+# Netherlands. Extends eu: GDPR, NIS2, DORA and Cyber Resilience Act duties
+# are in eu.yaml; this file adds the national rules.
+code: nl
+name: Netherlands
+extends: eu
+status: DRAFT
+reviewed_on: null
+sources:
+  - Handelsregisterbesluit 2008 (article 27, registration number on letters and electronic messages)
+  - Burgerlijk Wetboek Book 2 (name and seat of a BV or NV)
+  - Uitvoeringswet AVG and GDPR; Autoriteit Persoonsgegevens
+  - Wet beveiliging netwerk- en informatiesystemen (Wbni) and its NIS2 successor, the Cyberbeveiligingswet; Nationaal Cyber Security Centrum (NCSC)
+  - Algemene wet inzake rijksbelastingen, article 52 (tax records)
+correspondence:
+  required: [legal_name, registered_office, registration_number]
+  website: [legal_name, postal_address, contact_email, registration_number, vat_number]
+  notes: Letters, order forms, invoices, offers and electronic messages state the Chamber of Commerce (KvK) registration number; a legal person also states its full statutory name and seat.
+privacy:
+  regime: GDPR and Uitvoeringswet AVG
+  regulator: Autoriteit Persoonsgegevens
+  representative_required_if_outside: true
+notices: [PS-PRIV, PS-COOKIES]
+retention_hints:
+  tax: "7y (AWR art. 52); 10y for records on immovable property"
+incident_notifications:
+  - regime: NIS2 (Dutch Cyberbeveiligingswet)
+    what: Significant incident
+    to: Competent authority and the CSIRT for the sector (NCSC for many sectors)
+    deadline: "24 hours early warning, 72 hours notification and one month final report under NIS2 Art. 23; check with counsel whether the Cyberbeveiligingswet is in force (the Wbni applies until then)"
+    applies_when: Essential or important entity under the Dutch NIS2 law

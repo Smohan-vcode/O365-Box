@@ -1,0 +1,40 @@
+# DRAFT jurisdiction rules (SPEC §19.1). Not reviewed by counsel; not legal
+# advice. Rules only: no company values. Confirm every rule with counsel
+# before relying on it.
+#
+# Canada, federal rules. Each province file extends this one.
+code: ca
+name: Canada (federal)
+extends: null
+status: DRAFT
+reviewed_on: null
+sources:
+  - Canada Business Corporations Act (section 10)
+  - Personal Information Protection and Electronic Documents Act (PIPEDA) and Breach of Security Safeguards Regulations
+  - Office of the Privacy Commissioner of Canada
+  - Canada's Anti-Spam Legislation (CASL) and its regulations; CRTC
+  - OSFI Technology and Cyber Security Incident Reporting advisory
+correspondence:
+  required: [legal_name]
+  commercial_email: [legal_name, postal_address, telephone, contact_email, website, unsubscribe]
+  notes: A federal corporation sets out its name in legible characters in all contracts, invoices, negotiable instruments and orders for goods or services (CBCA s. 10). A commercial electronic message identifies the sender, gives a mailing address and one other contact method, and offers an unsubscribe mechanism (CASL).
+privacy:
+  regime: PIPEDA (provincial laws apply instead in Quebec, Alberta and British Columbia for activity within those provinces)
+  regulator: Office of the Privacy Commissioner of Canada
+  representative_required_if_outside: false
+  notes: PIPEDA requires a designated individual accountable for compliance.
+notices: [PS-PRIV]
+retention_hints:
+  tax: "6y from the end of the last tax year they relate to (Income Tax Act)"
+  breach_records: "24 months after the day the organisation determines a breach occurred (all breaches of security safeguards, PIPEDA)"
+incident_notifications:
+  - regime: PIPEDA
+    what: Breach of security safeguards involving personal information that creates a real risk of significant harm
+    to: Office of the Privacy Commissioner of Canada; affected individuals; organisations that can reduce the harm
+    deadline: as soon as feasible after the organisation determines the breach has occurred
+    applies_when: Collects, uses or discloses personal information in the course of commercial activity subject to PIPEDA
+  - regime: OSFI Technology and Cyber Security Incident Reporting
+    what: Technology or cyber security incident meeting OSFI's reportable criteria
+    to: OSFI lead supervisor and the OSFI incident mailbox
+    deadline: within 24 hours of determining the incident is reportable, or sooner if possible
+    applies_when: Federally regulated financial institution

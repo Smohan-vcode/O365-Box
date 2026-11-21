@@ -1,0 +1,35 @@
+# DRAFT jurisdiction rules (SPEC §19.1). Not reviewed by counsel; not legal
+# advice. Rules only: no company values. Confirm every rule with counsel
+# before relying on it.
+code: in
+name: India
+extends: null
+status: DRAFT
+reviewed_on: null
+sources:
+  - Companies Act 2013, section 12(3) (name, registered office and CIN on letters and documents); section 128 (books of account)
+  - Digital Personal Data Protection Act 2023 and Digital Personal Data Protection Rules 2025 (phased commencement); Data Protection Board of India
+  - CERT-In Directions under section 70B(6) of the Information Technology Act 2000 (28 April 2022); Indian Computer Emergency Response Team (CERT-In)
+correspondence:
+  required: [legal_name, registered_office, registration_number, telephone, contact_email, website]
+  notes: Every company has its name, registered office address, Corporate Identity Number (CIN), telephone number, fax number if any, email and website on its business letters, billheads, letter papers and all its notices and other official publications (Companies Act s. 12(3)(c)).
+privacy:
+  regime: Digital Personal Data Protection Act 2023 (in force in phases under the 2025 Rules)
+  regulator: Data Protection Board of India
+  representative_required_if_outside: false
+  notes: Applies to processing outside India in connection with offering goods or services to people in India. Most obligations start on dates set by the Rules; check with counsel which apply on a given date.
+notices: [PS-PRIV]
+retention_hints:
+  accounting_records: "8y (Companies Act s. 128)"
+  ict_logs: "180 days, maintained within India, for logs of all ICT systems (CERT-In Directions)"
+incident_notifications:
+  - regime: CERT-In Directions (IT Act s. 70B)
+    what: Cyber security incidents of the types listed in the Directions (including data breaches, data leaks, ransomware, unauthorised access, attacks on servers and cloud)
+    to: CERT-In
+    deadline: within 6 hours of noticing the incident or being notified of it
+    applies_when: Service provider, intermediary, data centre, body corporate or government organisation with systems in India
+  - regime: Digital Personal Data Protection Act 2023 and Rules
+    what: Personal data breach
+    to: Each affected Data Principal; Data Protection Board of India
+    deadline: "without delay to each affected Data Principal and to the Board; detailed report to the Board within 72 hours of becoming aware (or longer if the Board allows), once these Rules apply; check with counsel for the commencement date"
+    applies_when: Data Fiduciary processing digital personal data subject to the DPDP Act

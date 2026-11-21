@@ -1,0 +1,43 @@
+# DRAFT jurisdiction rules (SPEC §19.1). Not reviewed by counsel; not legal
+# advice. Rules only: no company values. Confirm every rule with counsel
+# before relying on it.
+code: hk
+name: Hong Kong
+extends: null
+status: DRAFT
+reviewed_on: null
+sources:
+  - Companies Ordinance (Cap. 622) and the Companies (Disclosure of Company Name and Liability Status) Regulation (Cap. 622B)
+  - Personal Data (Privacy) Ordinance (Cap. 486); Privacy Commissioner for Personal Data (PCPD)
+  - Protection of Critical Infrastructures (Computer Systems) Ordinance (Cap. 653, in force 1 January 2026); Commissioner's Office
+  - Unsolicited Electronic Messages Ordinance (Cap. 593)
+  - Inland Revenue Ordinance (record keeping); Companies Ordinance s. 377 (accounting records)
+correspondence:
+  required: [legal_name]
+  website: [legal_name]
+  notes: A company displays its registered name in legible characters in its business letters, notices, official publications, invoices, receipts, websites and other documents listed in Cap. 622B; check with counsel for the full list and for liability-status wording.
+privacy:
+  regime: Personal Data (Privacy) Ordinance (PDPO)
+  regulator: Privacy Commissioner for Personal Data (PCPD)
+  representative_required_if_outside: false
+  notes: A Personal Information Collection Statement is given when personal data is collected.
+notices: [PS-PRIV]
+retention_hints:
+  tax: "7y (Inland Revenue Ordinance)"
+  accounting_records: "7y (Companies Ordinance s. 377)"
+incident_notifications:
+  - regime: Personal Data (Privacy) Ordinance
+    what: Data breach involving personal data
+    to: Privacy Commissioner for Personal Data; affected individuals
+    deadline: no mandatory breach notification under the PDPO at the time of drafting; the PCPD recommends notifying as soon as practicable; check with counsel
+    applies_when: Data user in Hong Kong
+  - regime: Protection of Critical Infrastructures (Computer Systems) Ordinance
+    what: Serious computer-system security incident (disrupts or is likely to disrupt the core function of the critical infrastructure)
+    to: Commissioner's Office
+    deadline: within 12 hours of becoming aware; written report within 14 days (check with counsel)
+    applies_when: Designated operator of critical infrastructure
+  - regime: Protection of Critical Infrastructures (Computer Systems) Ordinance
+    what: Other computer-system security incident on a critical computer system
+    to: Commissioner's Office
+    deadline: within 48 hours of becoming aware; written report within 14 days (check with counsel)
+    applies_when: Designated operator of critical infrastructure

@@ -1,0 +1,54 @@
+# DRAFT jurisdiction rules (SPEC §19.1). Not reviewed by counsel; not legal
+# advice. Rules only: no company values. Confirm every rule with counsel
+# before relying on it.
+code: sg
+name: Singapore
+extends: null
+status: DRAFT
+reviewed_on: null
+sources:
+  - Companies Act 1967, section 144 (name and registration number on documents); section 199 (accounting records)
+  - Personal Data Protection Act 2012 (PDPA), Part 6A (notification of data breaches); Personal Data Protection Commission (PDPC)
+  - Cybersecurity Act 2018; Cyber Security Agency of Singapore (CSA)
+  - MAS Notice on Technology Risk Management; Monetary Authority of Singapore
+  - Spam Control Act 2007
+  - Income Tax Act 1947 (record keeping); Inland Revenue Authority of Singapore
+correspondence:
+  required: [legal_name, registration_number]
+  commercial_email: [legal_name, contact_email, unsubscribe]
+  notes: Every company has its name and registration number (UEN) in legible romanised letters on its business letters, statements of account, invoices, official notices, publications and websites (Companies Act s. 144; check with counsel for the full list). Unsolicited commercial email carries the sender's contact details, an unsubscribe facility and the label <ADV>.
+privacy:
+  regime: Personal Data Protection Act 2012 (PDPA)
+  regulator: Personal Data Protection Commission (PDPC)
+  representative_required_if_outside: false
+  notes: Every organisation designates at least one data protection officer and makes that person's business contact information publicly available.
+notices: [PS-PRIV]
+retention_hints:
+  tax: "5y from the relevant year of assessment (IRAS)"
+  accounting_records: "5y (Companies Act s. 199)"
+incident_notifications:
+  - regime: PDPA Part 6A
+    what: Data breach that may have occurred
+    to: Internal assessment
+    deadline: reasonable and expeditious assessment; PDPC guidance expects it within 30 calendar days of first becoming aware a breach may have occurred
+    applies_when: Organisation subject to the PDPA (a data intermediary notifies the organisation without undue delay)
+  - regime: PDPA Part 6A
+    what: Notifiable data breach (likely to result in significant harm, or affecting 500 or more individuals)
+    to: Personal Data Protection Commission
+    deadline: as soon as practicable, and no later than 3 calendar days after assessing that the breach is notifiable
+    applies_when: Organisation subject to the PDPA
+  - regime: PDPA Part 6A
+    what: Notifiable data breach likely to result in significant harm to individuals
+    to: Affected individuals
+    deadline: as soon as practicable, at the same time as or after notifying the PDPC
+    applies_when: Organisation subject to the PDPA
+  - regime: Cybersecurity Act 2018
+    what: Prescribed cybersecurity incident in respect of a critical information infrastructure or connected computer
+    to: Commissioner of Cybersecurity (Cyber Security Agency of Singapore)
+    deadline: within 2 hours of becoming aware (check with counsel for amended timelines)
+    applies_when: Owner of a designated critical information infrastructure
+  - regime: MAS Notice on Technology Risk Management
+    what: Relevant incident (system malfunction or IT security incident with a severe and widespread impact on operations or customers)
+    to: Monetary Authority of Singapore
+    deadline: as soon as possible, and within 1 hour of discovery; root cause and impact report within 14 days
+    applies_when: Financial institution regulated by MAS

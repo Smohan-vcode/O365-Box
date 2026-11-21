@@ -1,0 +1,38 @@
+# DRAFT jurisdiction rules (SPEC §19.1). Not reviewed by counsel; not legal
+# advice. Rules only: no company values. Confirm every rule with counsel
+# before relying on it.
+#
+# France. Extends eu: GDPR, NIS2, DORA and Cyber Resilience Act duties are
+# in eu.yaml; this file adds the national rules.
+code: fr
+name: France
+extends: eu
+status: DRAFT
+reviewed_on: null
+sources:
+  - Code de commerce, articles R123-237 and R123-238 (documents and correspondence), L123-22 (accounting records)
+  - Loi pour la confiance dans l'économie numérique (LCEN), article 6 (website legal notices)
+  - Loi Informatique et Libertés (law 78-17) and GDPR; Commission nationale de l'informatique et des libertés (CNIL)
+  - Agence nationale de la sécurité des systèmes d'information (ANSSI)
+  - Livre des procédures fiscales, article L102 B (tax records)
+correspondence:
+  required: [legal_name, legal_form, share_capital, registered_office, registration_number, register_name]
+  conditional:
+    liquidation_status: the company is being wound up
+  website: [legal_name, legal_form, share_capital, registered_office, registration_number, register_name, vat_number, contact_email, telephone]
+  notes: Invoices, order forms, price lists, advertising and all commercial correspondence state the SIREN number with the mention RCS and the city of the registry, the registered office, and for a company its legal form and share capital (Code de commerce R123-237). Website legal notices (mentions légales) also name the publication director and the hosting provider (LCEN art. 6).
+privacy:
+  regime: GDPR and Loi Informatique et Libertés
+  regulator: Commission nationale de l'informatique et des libertés (CNIL)
+  representative_required_if_outside: true
+  notes: CNIL guidance on cookies and trackers requires consent before non-essential trackers are set and refusal to be as easy as acceptance.
+notices: [PS-PRIV, PS-COOKIES, PS-IMPRINT]
+retention_hints:
+  accounting_records: "10y for accounting documents and vouchers (Code de commerce L123-22)"
+  tax: "6y (Livre des procédures fiscales L102 B)"
+incident_notifications:
+  - regime: NIS2 (French transposition)
+    what: Significant incident
+    to: ANSSI
+    deadline: "24 hours early warning, 72 hours notification and one month final report under NIS2 Art. 23; check with counsel whether the French transposing law is in force and its exact terms"
+    applies_when: Essential or important entity under the French NIS2 law

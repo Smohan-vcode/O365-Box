@@ -1,0 +1,45 @@
+# DRAFT jurisdiction rules (SPEC §19.1). Not reviewed by counsel; not legal
+# advice. Rules only: no company values. Confirm every rule with counsel
+# before relying on it.
+#
+# Used for "Other…": a place without its own rules file. Nothing is marked
+# required; the owner is told to check local requirements with counsel.
+#
+# Shape of every file: code, name, extends (the country or eu file a state,
+# province or member state builds on), status (DRAFT or REVIEWED),
+# reviewed_on, sources, correspondence, privacy, notices (legal pack notice
+# ids), retention_hints, incident_notifications ({regime, what, to,
+# deadline, applies_when}). A file holds only what it adds to the file it
+# extends.
+#
+# correspondence.required lists the fields business letters and emails must
+# show; conditional maps a field to when it is required; website and
+# commercial_email list the fields for those media. Field names:
+#   legal_name, legal_form, place_of_registration, registration_number,
+#   register_name, registered_office, share_capital, directors,
+#   managing_directors, supervisory_board_chair, representative_name,
+#   sole_shareholder, liquidation_status, vat_number, tax_number,
+#   postal_address, telephone, contact_email, website, unsubscribe.
+code: generic
+name: Other (generic rules)
+extends: null
+status: DRAFT
+reviewed_on: null
+sources:
+  - none; local law applies and must be checked with counsel
+correspondence:
+  required: []
+  notes: Check with counsel which company details local law requires on letters, emails, order forms, invoices and websites.
+privacy:
+  regime: local law (not known)
+  regulator: check with counsel
+  representative_required_if_outside: false
+  notes: Many privacy laws apply to companies outside the country when they offer goods or services to, or monitor, people there. Check with counsel.
+notices: [PS-PRIV]
+retention_hints: {}
+incident_notifications:
+  - regime: Local privacy and cyber security law
+    what: Personal data breaches and security incidents affecting people or systems in this place
+    to: check with counsel (privacy regulator, national CSIRT, affected people)
+    deadline: check with counsel
+    applies_when: The company has customers, staff or data in a place without its own rules file

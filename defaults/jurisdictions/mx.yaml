@@ -1,0 +1,35 @@
+# DRAFT jurisdiction rules (SPEC §19.1). Not reviewed by counsel; not legal
+# advice. Rules only: no company values. Confirm every rule with counsel
+# before relying on it.
+code: mx
+name: Mexico
+extends: null
+status: DRAFT
+reviewed_on: null
+sources:
+  - Ley Federal de Protección de Datos Personales en Posesión de los Particulares (LFPDPPP, new law published 20 March 2025)
+  - Secretaría Anticorrupción y Buen Gobierno (data protection authority since 2025, replacing INAI)
+  - Ley Federal de Protección al Consumidor (e-commerce information); PROFECO
+  - Código Fiscal de la Federación, article 30 (records); Servicio de Administración Tributaria (SAT)
+  - Código de Comercio, article 38 (commercial records)
+correspondence:
+  required: [legal_name]
+  conditional:
+    tax_number: the document is an electronic invoice (CFDI, which carries the RFC)
+  website: [legal_name, postal_address, telephone, contact_email]
+  notes: Electronic invoices (CFDI) carry the issuer's name and RFC. Online suppliers give consumers their name, physical address, telephone numbers and other contact means (Ley Federal de Protección al Consumidor). Check with counsel for letterhead practice.
+privacy:
+  regime: LFPDPPP (2025)
+  regulator: Secretaría Anticorrupción y Buen Gobierno
+  representative_required_if_outside: false
+  notes: A privacy notice (aviso de privacidad) is made available to data subjects before or when personal data is collected. Check with counsel for the effects of the 2025 law and its regulations.
+notices: [PS-PRIV]
+retention_hints:
+  tax: "5y (Código Fiscal de la Federación art. 30)"
+  commercial_records: "10y for correspondence and records of the business (Código de Comercio art. 38)"
+incident_notifications:
+  - regime: LFPDPPP (2025)
+    what: Security breach at any stage of processing that significantly affects the property or moral rights of data subjects
+    to: Affected data subjects
+    deadline: immediately once the breach is confirmed and the controller has started acting on it; no regulator notification is set by the law (check with counsel)
+    applies_when: Private controller processing personal data subject to the LFPDPPP

@@ -1,0 +1,42 @@
+# DRAFT jurisdiction rules (SPEC §19.1). Not reviewed by counsel; not legal
+# advice. Rules only: no company values. Confirm every rule with counsel
+# before relying on it.
+code: ch
+name: Switzerland
+extends: null
+status: DRAFT
+reviewed_on: null
+sources:
+  - Code of Obligations, article 954a (company name in correspondence), article 958f (retention)
+  - Federal Act on Data Protection (revised FADP, in force 1 September 2023); Federal Data Protection and Information Commissioner (FDPIC)
+  - Information Security Act (reporting duty for cyberattacks on critical infrastructure, from 1 April 2025); Federal Office for Cybersecurity (BACS / NCSC)
+  - FINMA Guidance 05/2020 (reporting cyber attacks)
+  - Unfair Competition Act, article 3(1)(s) (e-commerce information)
+correspondence:
+  required: [legal_name]
+  website: [legal_name, postal_address, contact_email]
+  notes: The company name as entered in the commercial register is used, complete and unchanged, in correspondence, order forms, invoices and announcements (CO art. 954a). Online shops give clear information on identity and contact address, including email (UCA art. 3(1)(s)). Check with counsel whether the enterprise identification number (UID) should also appear.
+privacy:
+  regime: revised Federal Act on Data Protection (FADP)
+  regulator: Federal Data Protection and Information Commissioner (FDPIC)
+  representative_required_if_outside: true
+  notes: A private controller established abroad appoints a representative in Switzerland if it processes personal data of people in Switzerland regularly and extensively, in connection with offering goods or services to them or monitoring them, and the processing involves a high risk (FADP art. 14).
+notices: [PS-PRIV, PS-IMPRINT]
+retention_hints:
+  accounting_records: "10y for business books, accounting vouchers, annual reports and audit reports (CO art. 958f)"
+incident_notifications:
+  - regime: FADP art. 24
+    what: Data security breach likely to result in a high risk to the personality or fundamental rights of the people concerned
+    to: FDPIC; the people concerned where needed for their protection or if the FDPIC requests it
+    deadline: as soon as possible
+    applies_when: Controller processing personal data subject to the FADP (a processor informs the controller as soon as possible)
+  - regime: Information Security Act
+    what: Cyberattack on the entity's IT resources that threatens its functioning, involves manipulation or leaking of information, went undetected for a long time, or involves extortion, threat or coercion
+    to: Federal Office for Cybersecurity (BACS)
+    deadline: within 24 hours of discovery
+    applies_when: Operator of critical infrastructure listed in the Information Security Act
+  - regime: FINMA Guidance 05/2020
+    what: Cyber attack on critical functions or assets with a high or severe criticality
+    to: FINMA
+    deadline: initial report within 24 hours of detecting the attack and assessing its criticality; full report within 72 hours (check with counsel)
+    applies_when: Institution supervised by FINMA

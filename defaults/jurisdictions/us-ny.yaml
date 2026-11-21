@@ -1,0 +1,38 @@
+# DRAFT jurisdiction rules (SPEC §19.1). Not reviewed by counsel; not legal
+# advice. Rules only: no company values. Confirm every rule with counsel
+# before relying on it.
+code: us-ny
+name: United States, New York
+extends: us
+status: DRAFT
+reviewed_on: null
+sources:
+  - New York SHIELD Act (General Business Law 899-aa and 899-bb)
+  - NYDFS Cybersecurity Regulation (23 NYCRR Part 500)
+  - New York Attorney General; Department of State; Division of State Police; Department of Financial Services
+correspondence:
+  required: []
+  notes: No state rule on company details in business letters or emails.
+privacy:
+  regime: no comprehensive state privacy law; SHIELD Act data security duties
+  regulator: New York Attorney General; NYDFS for licensed financial services
+  representative_required_if_outside: false
+notices: [PS-PRIV]
+retention_hints:
+  nydfs_cyber_records: "5y for records supporting the annual compliance certification (23 NYCRR 500.17)"
+incident_notifications:
+  - regime: New York SHIELD Act (General Business Law 899-aa)
+    what: Breach of the security of the system involving private information of New York residents
+    to: Affected residents; Attorney General, Department of State and Division of State Police; consumer reporting agencies when more than 5,000 residents are notified
+    deadline: "in the most expedient time possible and without unreasonable delay; amended in December 2024 to within 30 days after discovery (check with counsel)"
+    applies_when: Owns or licenses computerised private information of New York residents
+  - regime: NYDFS Cybersecurity Regulation (23 NYCRR 500.17)
+    what: Cybersecurity incident as defined in Part 500 (including incidents at third-party service providers affecting the entity)
+    to: NYDFS Superintendent (DFS portal)
+    deadline: within 72 hours after determining a cybersecurity incident has occurred
+    applies_when: Entity licensed or regulated by NYDFS (covered entity)
+  - regime: NYDFS Cybersecurity Regulation (23 NYCRR 500.17)
+    what: Extortion payment made in connection with a cybersecurity event
+    to: NYDFS Superintendent
+    deadline: notice within 24 hours of the payment; written explanation within 30 days of the payment
+    applies_when: Entity licensed or regulated by NYDFS (covered entity)

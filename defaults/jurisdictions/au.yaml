@@ -1,0 +1,61 @@
+# DRAFT jurisdiction rules (SPEC §19.1). Not reviewed by counsel; not legal
+# advice. Rules only: no company values. Confirm every rule with counsel
+# before relying on it.
+code: au
+name: Australia
+extends: null
+status: DRAFT
+reviewed_on: null
+sources:
+  - Corporations Act 2001, sections 153 and 286 (name and ACN on documents; financial records)
+  - Privacy Act 1988, Australian Privacy Principles and the Notifiable Data Breaches scheme (Part IIIC); Office of the Australian Information Commissioner (OAIC)
+  - Security of Critical Infrastructure Act 2018 (SOCI), section 30BC and 30BD; Australian Signals Directorate's Australian Cyber Security Centre (ACSC)
+  - Cyber Security Act 2024 (ransomware payment reporting)
+  - APRA Prudential Standard CPS 234 Information Security
+  - Spam Act 2003; Australian Communications and Media Authority
+  - Taxation Administration Act 1953 and Income Tax Assessment Act (record keeping); Australian Taxation Office
+correspondence:
+  required: [legal_name, registration_number]
+  commercial_email: [legal_name, contact_email, unsubscribe]
+  notes: A company sets out its name on all public documents and negotiable instruments, and its ACN (or an ABN that includes the ACN) with the name, on the first page of documents that require it (Corporations Act s. 153). Commercial electronic messages identify the sender with accurate contact details and include a functional unsubscribe facility (Spam Act).
+privacy:
+  regime: Privacy Act 1988 and the Australian Privacy Principles
+  regulator: Office of the Australian Information Commissioner (OAIC)
+  representative_required_if_outside: false
+  notes: Applies to APP entities, which include most businesses with annual turnover above 3 million Australian dollars and some smaller businesses (for example health service providers); organisations with an Australian link are covered even if established abroad.
+notices: [PS-PRIV]
+retention_hints:
+  tax: "5y (ATO)"
+  financial_records: "7y after the transactions they record (Corporations Act s. 286)"
+  employee_records: "7y (Fair Work Regulations)"
+incident_notifications:
+  - regime: Notifiable Data Breaches scheme (Privacy Act Part IIIC)
+    what: Suspected eligible data breach (unauthorised access, disclosure or loss of personal information likely to cause serious harm)
+    to: Internal assessment
+    deadline: reasonable and expeditious assessment, within 30 days of becoming aware of grounds to suspect an eligible data breach
+    applies_when: APP entity under the Privacy Act
+  - regime: Notifiable Data Breaches scheme (Privacy Act Part IIIC)
+    what: Eligible data breach
+    to: OAIC (statement); affected individuals
+    deadline: as soon as practicable after becoming aware of reasonable grounds to believe an eligible data breach has occurred
+    applies_when: APP entity under the Privacy Act
+  - regime: Security of Critical Infrastructure Act 2018
+    what: Critical cyber security incident having a significant impact on the availability of the asset
+    to: Australian Cyber Security Centre (ASD's ACSC)
+    deadline: within 12 hours of becoming aware (written report within 84 hours of an oral report)
+    applies_when: Responsible entity for a critical infrastructure asset under SOCI
+  - regime: Security of Critical Infrastructure Act 2018
+    what: Other cyber security incident having a relevant impact on the asset
+    to: Australian Cyber Security Centre (ASD's ACSC)
+    deadline: within 72 hours of becoming aware (written report within 48 hours of an oral report)
+    applies_when: Responsible entity for a critical infrastructure asset under SOCI
+  - regime: Cyber Security Act 2024 (ransomware payment reporting)
+    what: Ransomware or cyber extortion payment made by or on behalf of the entity
+    to: Australian Signals Directorate
+    deadline: within 72 hours of making the payment or becoming aware it was made
+    applies_when: Business with annual turnover above the threshold set by the rules (3 million Australian dollars at the time of drafting), or a SOCI responsible entity
+  - regime: APRA CPS 234
+    what: Material information security incident
+    to: APRA
+    deadline: as soon as possible and no later than 72 hours after becoming aware
+    applies_when: APRA-regulated entity

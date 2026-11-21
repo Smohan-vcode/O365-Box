@@ -1,0 +1,64 @@
+# DRAFT jurisdiction rules (SPEC §19.1). Not reviewed by counsel; not legal
+# advice. Rules only: no company values. Confirm every rule with counsel
+# before relying on it.
+#
+# United States, federal rules. Each state file extends this one; state
+# breach notification laws are in the state files.
+code: us
+name: United States (federal)
+extends: null
+status: DRAFT
+reviewed_on: null
+sources:
+  - CAN-SPAM Act (15 U.S.C. 7701 et seq.) and FTC CAN-SPAM Rule (16 CFR 316)
+  - FTC Act section 5 (Federal Trade Commission)
+  - HIPAA Breach Notification Rule (45 CFR 164.400-414), HHS Office for Civil Rights
+  - FTC Health Breach Notification Rule (16 CFR 318)
+  - GLBA Safeguards Rule (16 CFR 314), FTC
+  - SEC Form 8-K Item 1.05 (cybersecurity incident disclosure)
+  - DFARS 252.204-7012 (Department of Defense contractors)
+  - Computer-Security Incident Notification Rule for banking organisations (OCC, Federal Reserve, FDIC)
+correspondence:
+  required: []
+  commercial_email: [legal_name, postal_address, unsubscribe]
+  notes: No federal rule on company details in business letters; state law may add some. Commercial email must identify the sender, carry a valid physical postal address and offer a working opt-out (CAN-SPAM).
+privacy:
+  regime: no general federal privacy law; sector laws (HIPAA, GLBA, COPPA, FTC Act) and state laws
+  regulator: Federal Trade Commission; sector regulators (HHS OCR, SEC, banking agencies)
+  representative_required_if_outside: false
+notices: [PS-PRIV]
+retention_hints:
+  tax: "3y after filing as a rule, longer in some cases (IRS); check with counsel"
+  payroll: "3y (FLSA); 4y for employment tax records (IRS)"
+  form_i9: "3y after hire or 1y after employment ends, whichever is later"
+incident_notifications:
+  - regime: SEC Form 8-K Item 1.05
+    what: Cybersecurity incident the company determines to be material
+    to: SEC (public filing on Form 8-K)
+    deadline: 4 business days after determining materiality (SEC registrants only)
+    applies_when: The company is an SEC registrant
+  - regime: HIPAA Breach Notification Rule
+    what: Breach of unsecured protected health information
+    to: Affected individuals; HHS; prominent media where more than 500 residents of a state are affected; a business associate notifies the covered entity
+    deadline: "Individuals: without unreasonable delay and no later than 60 calendar days after discovery. HHS: within 60 days for 500 or more people, otherwise within 60 days after the end of the calendar year"
+    applies_when: HIPAA covered entity or business associate
+  - regime: FTC Health Breach Notification Rule
+    what: Breach of security of unsecured identifiable health information in a personal health record
+    to: Affected individuals; FTC; media where more than 500 residents of a state are affected
+    deadline: "Individuals: without unreasonable delay and no later than 60 calendar days after discovery. FTC: at the same time as individuals for 500 or more people"
+    applies_when: Vendor of personal health records or related entity not covered by HIPAA
+  - regime: GLBA Safeguards Rule
+    what: Notification event (unauthorised acquisition of unencrypted customer information) involving 500 or more consumers
+    to: FTC
+    deadline: as soon as possible, and no later than 30 days after discovery
+    applies_when: Non-bank financial institution under FTC jurisdiction
+  - regime: DFARS 252.204-7012
+    what: Cyber incident affecting covered defense information or operationally critical support
+    to: Department of Defense (DoD Cyber Crime Center reporting portal)
+    deadline: within 72 hours of discovery
+    applies_when: Department of Defense contractor or subcontractor handling covered defense information
+  - regime: Computer-Security Incident Notification Rule (banking)
+    what: Notification incident that materially disrupts or degrades the banking organisation's operations
+    to: Primary federal banking regulator
+    deadline: as soon as possible and no later than 36 hours after determining the incident occurred
+    applies_when: Banking organisation supervised by the OCC, Federal Reserve or FDIC (bank service providers notify their bank customers as soon as possible)

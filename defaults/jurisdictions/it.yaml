@@ -1,0 +1,37 @@
+# DRAFT jurisdiction rules (SPEC §19.1). Not reviewed by counsel; not legal
+# advice. Rules only: no company values. Confirm every rule with counsel
+# before relying on it.
+#
+# Italy. Extends eu: GDPR, NIS2, DORA and Cyber Resilience Act duties are in
+# eu.yaml; this file adds the national rules.
+code: it
+name: Italy
+extends: eu
+status: DRAFT
+reviewed_on: null
+sources:
+  - Codice civile, article 2250 (company documents and correspondence), article 2220 (records)
+  - DPR 633/1972, article 35 (VAT number on websites)
+  - Codice in materia di protezione dei dati personali (D.Lgs. 196/2003 as amended by D.Lgs. 101/2018) and GDPR; Garante per la protezione dei dati personali
+  - D.Lgs. 138/2024 (NIS2 transposition); Agenzia per la Cybersicurezza Nazionale (ACN)
+correspondence:
+  required: [legal_name, registered_office, register_name, registration_number, vat_number]
+  conditional:
+    share_capital: the company is an SpA, Srl or SApA (state the capital actually paid up per the last balance sheet)
+    liquidation_status: the company is being wound up
+    sole_shareholder: the company has a sole shareholder
+  website: [legal_name, registered_office, vat_number]
+  notes: Acts and correspondence state the registered office, the Register of Companies office and registration number; companies limited by shares state their paid-up capital and, if applicable, sole-shareholder status and liquidation (Codice civile art. 2250). Websites show the VAT number.
+privacy:
+  regime: GDPR and Codice privacy
+  regulator: Garante per la protezione dei dati personali
+  representative_required_if_outside: true
+notices: [PS-PRIV, PS-COOKIES]
+retention_hints:
+  accounting_records: "10y for books, invoices, letters and telegrams received and copies sent (Codice civile art. 2220)"
+incident_notifications:
+  - regime: NIS2 (D.Lgs. 138/2024)
+    what: Significant incident
+    to: CSIRT Italia at the Agenzia per la Cybersicurezza Nazionale
+    deadline: "pre-notification within 24 hours of becoming aware; notification within 72 hours; final report within one month of the notification (check with counsel for the dates ACN set for each obligation)"
+    applies_when: Essential or important entity registered with ACN under D.Lgs. 138/2024

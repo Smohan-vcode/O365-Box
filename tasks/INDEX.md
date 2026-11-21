@@ -87,7 +87,7 @@ CI runs `box backlog check`.
 | T14-06 | Apply: macOS devices | P0 | M | T14-04, T1-04 | yes | TODO |
 | T14-07 | Apply: Phones and tablets | P0 | M | T14-04 |  | TODO |
 | T14-08 | Apply: Endpoint and mail protection | P0 | M | T14-04, T2-02 |  | TODO |
-| T14-09 | Apply: Sharing, meetings, organisation and automation settings | P0 | M | T14-04, T3-01 |  | TODO |
+| T14-09 | Apply: Sharing, meetings, organisation and automation settings | P0 | M | T14-04, T3-01 | yes | TODO |
 | T14-10 | Sensitivity labels | P0 | M | T14-04, T3-02 |  | TODO |
 | T14-11 | Data loss prevention policies | P0 | L | T14-10, T2-02 | yes | TODO |
 | T14-12 | Audit, alert policies and log export | P0 | S | T14-04 |  | TODO |

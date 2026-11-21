@@ -1,0 +1,33 @@
+# DRAFT jurisdiction rules (SPEC §19.1). Not reviewed by counsel; not legal
+# advice. Rules only: no company values. Confirm every rule with counsel
+# before relying on it.
+code: us-tx
+name: United States, Texas
+extends: us
+status: DRAFT
+reviewed_on: null
+sources:
+  - Texas Data Privacy and Security Act (Business and Commerce Code Chapter 541)
+  - Texas Identity Theft Enforcement and Protection Act (Business and Commerce Code 521.053)
+  - Texas Attorney General
+correspondence:
+  required: []
+  notes: No state rule on company details in business letters or emails.
+privacy:
+  regime: Texas Data Privacy and Security Act
+  regulator: Texas Attorney General
+  representative_required_if_outside: false
+  notes: Applies to businesses that conduct business in Texas or offer products or services to Texas residents and process or sell personal data, unless they are a small business as defined by the U.S. Small Business Administration (selling sensitive data still needs consent).
+notices: [PS-PRIV]
+retention_hints: {}
+incident_notifications:
+  - regime: Texas breach notification law (Business and Commerce Code 521.053)
+    what: Breach of system security involving sensitive personal information of Texas residents
+    to: Affected individuals
+    deadline: without unreasonable delay and no later than 60 days after determining the breach occurred
+    applies_when: Owns or licenses computerised sensitive personal information
+  - regime: Texas breach notification law (Business and Commerce Code 521.053)
+    what: Breach involving at least 250 Texas residents
+    to: Texas Attorney General (online form)
+    deadline: as soon as practicable and no later than 30 days after determining the breach occurred
+    applies_when: At least 250 Texas residents are affected

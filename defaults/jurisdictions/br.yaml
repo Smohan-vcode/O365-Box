@@ -1,0 +1,32 @@
+# DRAFT jurisdiction rules (SPEC §19.1). Not reviewed by counsel; not legal
+# advice. Rules only: no company values. Confirm every rule with counsel
+# before relying on it.
+code: br
+name: Brazil
+extends: null
+status: DRAFT
+reviewed_on: null
+sources:
+  - Lei Geral de Proteção de Dados (LGPD, Law 13.709/2018), article 48; Autoridade Nacional de Proteção de Dados (ANPD)
+  - ANPD Resolution CD/ANPD No. 15/2024 (security incident reporting regulation)
+  - Decree 7.962/2013 (e-commerce information)
+  - Código Tributário Nacional (limitation periods for tax)
+correspondence:
+  required: [legal_name, registration_number]
+  website: [legal_name, registration_number, postal_address, contact_email]
+  notes: Invoices (nota fiscal) and e-commerce websites carry the company name and CNPJ; websites also give the physical and electronic address and other contact details (Decree 7.962/2013). Check with counsel for letterhead practice.
+privacy:
+  regime: Lei Geral de Proteção de Dados (LGPD)
+  regulator: Autoridade Nacional de Proteção de Dados (ANPD)
+  representative_required_if_outside: false
+  notes: Applies to processing of data collected in Brazil or relating to people in Brazil, or to offering goods or services to them. A controller appoints a data protection officer (encarregado) and publishes the officer's identity and contact details; small processing agents may be exempt.
+notices: [PS-PRIV]
+retention_hints:
+  tax: "5y limitation period (Código Tributário Nacional); check with counsel"
+  security_incident_records: "5y for the register of security incidents, including those not notified (Resolution CD/ANPD 15/2024)"
+incident_notifications:
+  - regime: LGPD article 48 and Resolution CD/ANPD 15/2024
+    what: Security incident involving personal data that may cause relevant risk or damage to data subjects
+    to: ANPD; affected data subjects
+    deadline: within 3 business days of the controller becoming aware that the incident affected personal data (supplementary information within 20 business days)
+    applies_when: Controller processing personal data subject to the LGPD

@@ -1,0 +1,28 @@
+# DRAFT jurisdiction rules (SPEC §19.1). Not reviewed by counsel; not legal
+# advice. Rules only: no company values. Confirm every rule with counsel
+# before relying on it.
+code: us-wa
+name: United States, Washington
+extends: us
+status: DRAFT
+reviewed_on: null
+sources:
+  - Washington My Health My Data Act (RCW 19.373)
+  - Washington breach notification law (RCW 19.255.010)
+  - Washington Attorney General
+correspondence:
+  required: []
+  notes: No state rule on company details in business letters or emails.
+privacy:
+  regime: no comprehensive state privacy law; My Health My Data Act for consumer health data
+  regulator: Washington Attorney General
+  representative_required_if_outside: false
+  notes: The My Health My Data Act applies to any entity that collects consumer health data of Washington consumers and requires a separate consumer health data privacy policy.
+notices: [PS-PRIV, PS-PRIV-HEALTH-DATA]
+retention_hints: {}
+incident_notifications:
+  - regime: Washington breach notification law (RCW 19.255.010)
+    what: Breach of the security of the system involving personal information of Washington residents
+    to: Affected residents; Attorney General when more than 500 residents are notified
+    deadline: in the most expedient time possible, without unreasonable delay, and no more than 30 calendar days after the breach was discovered (same for the Attorney General)
+    applies_when: Owns or licenses personal information of Washington residents

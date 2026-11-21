@@ -70,4 +70,4 @@ listed below, or a role key that names a role not in `defaults/roles.yaml`.
 | --- | --- |
 | `jurisdictions.registered` | Name of the place where the company is registered (`jurisdictions.registered`). |
 | `jurisdictions.operating` | Names of the places where the company has customers, staff or data (`jurisdictions.operating`). |
-| `jurisdictions.notification_deadlines` | Table, one row per selected jurisdiction and regime: what must be notified, to whom, and the deadline, from each rules file's incident notification entries. |
+| `jurisdictions.notification_deadlines` | Table, one row per selected jurisdiction and regime: what must be notified, to whom, the deadline and when it applies, from each rules file's incident notification entries. |

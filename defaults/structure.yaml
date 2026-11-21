@@ -12,6 +12,17 @@ groups:
   - {name: grp-admins, kind: access, title: "Administrators"}
   - {name: grp-break-glass, kind: system, fixed: true, note: "excluded from every Conditional Access policy"}
 
+# Groups a choice suggests (SPEC §25, T14-04). The choice's recommended option
+# sets the configuration value `values.<value>` to the group's name;
+# identity.groups then creates the group and adds its members from the
+# configuration (never removing anyone, like the access groups):
+#   members_from: {access_group: <name>}  the users in that access group
+#   members_from: {plan: <plan>}          the users the configuration licenses on that plan (identity.users)
+# Break-glass accounts are never members.
+choice_groups:
+  - {name: grp-device-join, value: device_join_group, choice: devices.join, title: "May join devices to Microsoft Entra (ENT-039)", members_from: {access_group: grp-admins}}
+  - {name: plan-business_premium, value: managed_plan_group, choice: signin.managed_plan_users, title: "Users on Business Premium (ENT-004, ENT-005)", members_from: {plan: business_premium}}
+
 hub: {name: "Company", url: "company"}
 
 sites:

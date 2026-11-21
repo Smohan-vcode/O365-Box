@@ -12,7 +12,7 @@ const acmeConfig = "../../../examples/acme/box-config.yaml"
 
 func TestPolicyValidate(t *testing.T) {
 	code, out := box(t, "policy", "validate")
-	if code != ExitOK || !strings.Contains(out, "90 requirements, 333 settings in 12 centres, 5 frameworks") {
+	if code != ExitOK || !strings.Contains(out, "90 requirements, 334 settings in 12 centres, 5 frameworks") {
 		t.Fatalf("exit %d\n%s", code, out)
 	}
 	code, out = box(t, "policy", "validate", "--json")
@@ -30,7 +30,7 @@ func TestPolicyResolve(t *testing.T) {
 	if code != ExitOK {
 		t.Fatalf("exit %d\n%s", code, out)
 	}
-	for _, want := range []string{"plan business_premium, tier core, stage audit", "applied 302 settings in 12 centres", "not applied 31"} {
+	for _, want := range []string{"plan business_premium, tier core, stage audit", "applied 303 settings in 12 centres", "not applied 31"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("output lacks %q\n%s", want, out)
 		}

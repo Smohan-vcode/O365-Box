@@ -37,9 +37,12 @@ type Mapping struct {
 
 // Variant is one choice-selected form of a mapping.
 type Variant struct {
-	Payload any    `json:"payload,omitempty"`
-	Check   string `json:"check,omitempty"`
-	Notes   string `json:"notes"`
+	Payload any `json:"payload,omitempty"`
+	// PayloadAudit is the variant's audit or report-only form; a staged
+	// setting's variant with a payload needs one.
+	PayloadAudit any    `json:"payload_audit,omitempty"`
+	Check        string `json:"check,omitempty"`
+	Notes        string `json:"notes"`
 }
 
 // Mapping statuses.
@@ -126,6 +129,11 @@ func (c *Catalogue) CheckMappings(maps map[string]Mapping, file map[string]strin
 			}
 			if st := c.Setting(id); st != nil && st.Mode == "staged" && m.PayloadAudit == nil {
 				add(f, id, "a staged setting needs payload_audit (its audit or report-only form)")
+			}
+			for k, v := range m.Variants {
+				if st := c.Setting(id); st != nil && st.Mode == "staged" && v.Payload != nil && v.PayloadAudit == nil {
+					add(f, id, "variant "+k+" of a staged setting needs payload_audit")
+				}
 			}
 		}
 		if (m.Status == "gate" || m.Status == "unresolved" || m.Status == "not-applicable") && strings.TrimSpace(m.Notes) == "" {
@@ -214,6 +222,9 @@ func SettingsByStep(res *Result, maps map[string]Mapping) map[string][]StepSetti
 			if v, ok := m.Variants[s.Variant]; ok {
 				if v.Payload != nil {
 					payload = v.Payload
+				}
+				if (s.Mode == ModeAudit || s.Mode == ModeReport) && v.PayloadAudit != nil {
+					payload = v.PayloadAudit
 				}
 				if v.Check != "" {
 					check = v.Check

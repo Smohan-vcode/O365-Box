@@ -153,6 +153,79 @@ choices:
         detail: Strongest. This setup tool must then be used from a computer with a browser.
         cost: none
 
+  - id: signin.mfa_snooze_days
+    step: security
+    question: How long may staff put off setting up the Microsoft Authenticator app?
+    help: After signing in, anyone without the app is asked to set it up. They can say "not now" three times; after that they must set it up before they continue. This is how long each "not now" lasts.
+    options:
+      - value: "0"
+        label: Ask at every sign-in
+        detail: The fastest way to get everyone protected; staff are asked each time they sign in until they set it up.
+        cost: none
+        effects: {values: {values.mfa_snooze_days: "0"}}
+      - value: "1"
+        label: One day
+        detail: Staff are asked again the next day, so everyone is set up within a few days.
+        recommended: true
+        cost: none
+        effects: {values: {values.mfa_snooze_days: "1"}}
+      - value: "7"
+        label: One week
+        detail: Gentler; everyone is set up within about a month.
+        cost: none
+        effects: {values: {values.mfa_snooze_days: "7"}}
+
+  # ---------- Security step: values only the company supplies (SPEC §25, T14-04) ----------
+  - id: signin.banned_passwords
+    step: security
+    question: Stop staff using the company's own names in passwords?
+    help: Attackers try a company's name, web address and products first. Microsoft already blocks common passwords; this adds your own names.
+    options:
+      - value: company
+        label: Yes, block our company and product names
+        detail: Your trading name, legal name and web address, and the product names you list in the Dictionary (company.product_names). They follow your company details when those change.
+        recommended: true
+        cost: none
+      - value: none
+        label: No, only Microsoft's list of common passwords
+        cost: none
+        effects: {exceptions: [ENT-026]}
+
+  - id: signin.managed_plan_users
+    step: security
+    question: Who must use a managed computer or a protected app for company data?
+    help: Company data opens only on computers the company manages and, on phones, in apps that protect it. This needs a plan that includes device management (Business Premium).
+    options:
+      - value: plan
+        label: Everyone on Business Premium
+        detail: We keep a group, plan-business_premium, of the people you put on Business Premium, and apply the rule to it.
+        recommended: true
+        cost: none
+        effects: {values: {values.managed_plan_group: plan-business_premium}}
+      - value: all
+        label: All users
+        detail: Also covers anyone on a plan without device management; they cannot open company data until their device is managed.
+        cost: none
+        effects: {variants: {ENT-004: all-users, ENT-005: all-users}}
+
+  - id: devices.join
+    step: security
+    question: Who may join Windows PCs to the company (Microsoft Entra)?
+    help: Joining a Windows PC makes it a company computer. Limiting who can do it stops a stolen account adding an attacker's PC.
+    when: module devices
+    options:
+      - value: admins
+        label: Only administrators
+        detail: We keep a group, grp-device-join, holding your administrators (grp-admins). Anyone else who sets up PCs can be added to it.
+        recommended: true
+        cost: none
+        effects: {values: {values.device_join_group: grp-device-join}}
+      - value: all
+        label: Any member of staff
+        detail: Anyone can join a PC with their own account (two-step sign-in still applies).
+        cost: none
+        effects: {variants: {ENT-039: all-users}}
+
   - id: forms.external_responses
     step: security
     question: Can people outside the company fill in your Microsoft Forms?

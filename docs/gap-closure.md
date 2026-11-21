@@ -24,20 +24,20 @@ data: requirement ids and causes only, no tenant values. Re-run
 
 | Requirement | Causes | Tasks |
 | --- | --- | --- |
-| IAM-01 MFA for every user | D, H | T14-17; CA01 enforce after G-02 |
+| IAM-01 MFA for every user | D, H | T14-17, ENT-050 registration campaign (SC-27); CA01 enforce after G-02 |
 | IAM-02 Phishing-resistant MFA for admins | D, H | T14-17; G-02 |
 | IAM-03 Legacy auth blocked | H | T14-04 enforce |
 | IAM-04 No SMS, voice, email codes | B | T14-04 (ENT-022..024) |
-| IAM-05 Banned passwords, lockout, no expiry, SSPR | C | ENT-026 banned terms choice |
+| IAM-05 Banned passwords, lockout, no expiry, SSPR | C | ENT-026: choice signin.banned_passwords (terms from the company names and Dictionary products) |
 | IAM-06 No standing admin rights | D | gate G-05; T1-05 |
 | IAM-07 Break-glass accounts tested | D, E, F | G-02; PRC break-glass test; T10-02 |
-| IAM-08 Compliant device or protected app | D, H | device enrolment; ENT-004/005 group choice |
+| IAM-08 Compliant device or protected app | D, H | device enrolment; ENT-004/005: choice signin.managed_plan_users (group plan-business_premium) |
 | IAM-09 Session limits | H | T14-04 enforce |
 | IAM-10 No user app consent | A, B | T16-06; ENT-030/031 |
 | IAM-11 Guests by admins only | A | T16-06 |
 | IAM-12 Joiners and leavers through groups | E, F | T9-01 PRC joiner-leaver; T10-02 |
 | IAM-13 Quarterly access review | E, F | T9-01; T10-02 |
-| IAM-14 Device join needs MFA, named users | C | ENT-039 device-join group choice |
+| IAM-14 Device join needs MFA, named users | C | ENT-039: choice devices.join (group grp-device-join) |
 | IAM-15 Risky sign-ins challenged | B | add-on (Entra ID P2) or report; T11 |
 | IAM-16 Just-in-time admin roles | B | add-on (P2); T11 |
 | IAM-17 App identities without secrets | A, F | T16-06; T10-02 app review |

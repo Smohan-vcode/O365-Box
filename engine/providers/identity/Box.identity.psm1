@@ -144,7 +144,23 @@ function Get-DesiredGroups($In) {
     foreach ($g in @($u.access_groups)) { if ($groups.Contains($g)) { $groups[$g].members += $upn } }
     foreach ($r in @($u.roles)) { if ($groups.Contains("role-$r")) { $groups["role-$r"].members += $upn } }
   }
+  foreach ($cg in @(Get-ChoiceGroups $In)) {
+    $members = @(foreach ($u in @($In.config.users | Where-Object { -not $_.break_glass })) {
+        $from = $cg.members_from
+        if (($from.access_group -and $from.access_group -in @($u.access_groups)) -or ($from.plan -and [string]$u.plan -eq [string]$from.plan)) { "$($u.primary)@$(Get-Domain $In)" }
+      })
+    $groups[[string]$cg.name] = @{ desc = [string]$cg.title; members = $members }
+  }
   return $groups
+}
+# Groups a choice suggests (defaults/structure.yaml choice_groups, T14-04):
+# wanted while the configuration value values.<value> the choice's answer
+# sets names the group.
+function Get-ChoiceGroups($In) {
+  $vals = $In.config.values
+  foreach ($cg in @($In.defaults.structure.choice_groups | Where-Object { $_ })) {
+    if ($vals -and [string]$vals.($cg.value) -eq [string]$cg.name) { $cg }
+  }
 }
 function Get-GroupChanges($In, [switch] $Apply) {
   $changes = @()
@@ -193,23 +209,16 @@ function Get-AuthMethodChanges($In, [switch] $Apply) {
       }
     }
   }
-  # Registration campaign (T14-17): not a catalogue setting yet, so this
-  # step owns it (baseline registration_campaign; docs/spec-changes.md SC-27).
-  $rc = $In.defaults.baseline_identity.registration_campaign
-  if ($rc) {
-    $bg = Get-GroupByName ([string]$rc.exclude_group)
-    if (-not $bg) { throw "the registration campaign exclusion group $($rc.exclude_group) does not exist (run box bootstrap)" }
-    $changes += @(Get-BoxCampaignChanges -Baseline $rc -ExcludeGroupId $bg.id -Apply:$Apply)
-  }
+  # The registration campaign is catalogue setting ENT-050 (SC-27), owned by
+  # policy.entra: this step never writes it, so the two cannot fight. It
+  # keeps the registration report and CA01 readiness below (T14-17).
   return $changes
 }
 
 # MFA registration and CA01 readiness (T14-17). The home screen calls this
 # (and plan shows it) to propose enforcing CA01; it never enforces.
 function Get-MfaState($In) {
-  $name = [string]$In.defaults.baseline_identity.registration_campaign.exclude_group
-  if (-not $name) { $name = 'grp-break-glass' }
-  $bg = Get-GroupByName $name
+  $bg = Get-GroupByName 'grp-break-glass'   # gate G-02 covers the break-glass accounts
   $reg = Get-BoxMfaRegistration -ExcludeIds @(if ($bg) { Get-MemberIds $bg.id })
   $g02 = [bool](& $script:Steps['identity.gate-g02'].verify $In).ok
   return @{ registration = $reg; readiness = (Get-BoxCA01Readiness -Counts $reg.counts -G02 $g02 -ReportError $reg.error) }
@@ -460,7 +469,7 @@ $script:Steps = [ordered]@{
     evidence = { param($In)
       $s = Get-MfaState $In
       @{ items = @(
-          @{ kind = 'authentication-methods'; ref = 'tenant:authentication-methods'; summary = 'states and registration campaign equal baseline/identity.yaml' }
+          @{ kind = 'authentication-methods'; ref = 'tenant:authentication-methods'; summary = 'method states equal baseline/identity.yaml (the registration campaign is ENT-050, policy.entra)' }
           @{ kind = 'mfa-registration'; ref = 'tenant:mfa-registration'; summary = "$(Format-BoxRegistrationSummary $s.registration.counts); $($s.readiness.message)" }) } }
   }
   'identity.directory-settings' = @{
@@ -538,5 +547,5 @@ function Invoke-BoxStep {
 function Get-BoxStepIds { @($script:Steps.Keys) }
 function Get-BoxStepProblems { Test-BoxStepTable -Steps $script:Steps }
 Export-ModuleMember -Function Invoke-BoxStep, Get-BoxStepIds, Get-BoxStepProblems, Get-NotCoveredUsers, Get-BoxMfaEnforcementReadiness,
-  Get-BoxCampaignWant, Get-BoxCampaignDrift, Get-BoxMfaRegistrationCounts, Get-BoxCA01Readiness, Format-BoxRegistrationSummary,
-  Compare-BoxValue, Resolve-BoxPayload, Get-BoxCAState, Merge-BoxGroupSettingValues, Get-BoxIdleTimeout, Get-BoxEntraClaims
+  Get-BoxCampaignDrift, Get-BoxMfaRegistrationCounts, Get-BoxCA01Readiness, Format-BoxRegistrationSummary,
+  Compare-BoxValue, Resolve-BoxPayload, Get-BoxCAState, Merge-BoxGroupSettingValues, Get-BoxIdleTimeout, Get-BoxEntraClaims, Get-BoxBannedTerms

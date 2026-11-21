@@ -336,7 +336,8 @@ func engineDefaults(root string) (map[string]any, error) {
 	out := map[string]any{}
 	for key, rel := range map[string]string{"roles": "defaults/roles.yaml", "baseline_identity": "baseline/identity.yaml",
 		"baseline_exchange": "baseline/exchange.yaml", "baseline_sharepoint": "baseline/sharepoint.yaml",
-		"capabilities": "engine/capabilities.yaml", "lists": "engine/register/lists.yaml"} {
+		"capabilities": "engine/capabilities.yaml", "lists": "engine/register/lists.yaml",
+		"structure": "defaults/structure.yaml"} {
 		var v any
 		if err := readYAMLFile(filepath.Join(root, rel), &v); err != nil {
 			return nil, err

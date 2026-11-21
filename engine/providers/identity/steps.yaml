@@ -24,9 +24,9 @@ steps:
     track: T1
     task: T1-03
     depends_on: [identity.users]
-    reads: [groups, users, company]
+    reads: [groups, users, company, values]   # values: groups a choice suggests (defaults/structure.yaml choice_groups)
   - id: identity.auth-methods
-    title: Authentication methods and MFA registration campaign
+    title: Authentication methods and MFA registration report
     track: T1
     task: T1-05
     depends_on: [identity.break-glass]
@@ -64,7 +64,7 @@ steps:
     track: T14
     task: T14-04
     depends_on: [identity.groups, identity.conditional-access, identity.directory-settings, identity.auth-methods]
-    reads: ["@policy", tenant, users, modules]
+    reads: ["@policy", tenant, users, modules, company, structure]   # company, structure: ENT-026 terms (company names, Admin site Dictionary)
   - id: policy.m365-admin
     title: Microsoft 365 admin centre settings (idle timeout, password expiry, apps and services, third-party storage)
     track: T14

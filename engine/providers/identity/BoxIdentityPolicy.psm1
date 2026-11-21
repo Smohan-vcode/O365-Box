@@ -10,6 +10,8 @@
 #   - authorizationPolicy and admin-consent properties named in an entra
 #     mapping are owned by policy.entra; identity.directory-settings and
 #     identity.auth-methods leave them alone (Get-BoxEntraClaims).
+#   - The MFA registration campaign (ENT-050, SC-27) is owned by
+#     policy.entra; identity.auth-methods keeps only the registration report.
 #   - The Group.Unified directory setting: policy.entra (ENT-034) writes
 #     EnableGroupCreation only; policy.teams.identity (TMS-014) owns
 #     GroupCreationAllowedGroupId. Both merge into the existing values.
@@ -17,6 +19,7 @@
 #     value, so neither can undo the other.
 Import-Module (Join-Path $PSScriptRoot '..' 'common' 'BoxProvider.psm1') -Force
 Import-Module (Join-Path $PSScriptRoot '..' 'common' 'BoxGraph.psm1') -Force
+Import-Module (Join-Path $PSScriptRoot 'BoxIdentityMfa.psm1') -Force   # Get-BoxCampaignDrift (ENT-050)
 
 $script:Beta = 'https://graph.microsoft.com/beta'
 $script:ReportOnly = 'enabledForReportingButNotEnforced'
@@ -109,36 +112,50 @@ function Resolve-BoxPayload {
   # Replaces placeholders in a mapping payload. {group:NAME} becomes the
   # group's object id (from $Groups: name -> id, $null when missing), a
   # string starting with {roles:privileged} becomes the privileged role
-  # template ids. Any other {kind:...} placeholder is a value the company
-  # supplies: the setting cannot be applied, so this throws "unresolved".
-  param($Payload, [hashtable] $Groups, [string[]] $Roles = @())
+  # template ids. {text:x}, {number:x} and {terms:x} come from $Fill (keys
+  # 'text:x', 'number:x', 'terms:x'): values the company's choices supply
+  # (configuration values.x, SPEC 24) or terms derived from its own names; a
+  # string that is only {number:x} becomes a number. Any other {kind:...}
+  # placeholder, or one $Fill lacks, is a value the company supplies: the
+  # setting cannot be applied, so this throws "unresolved".
+  param($Payload, [hashtable] $Groups, [string[]] $Roles = @(), [hashtable] $Fill = @{})
   $p = ConvertTo-BoxPlain $Payload
-  return (Resolve-BoxNode $p $Groups $Roles)
+  return (Resolve-BoxNode $p $Groups $Roles $Fill)
 }
-function Resolve-BoxNode($n, [hashtable] $Groups, [string[]] $Roles) {
+function Resolve-BoxNode($n, [hashtable] $Groups, [string[]] $Roles, [hashtable] $Fill) {
   if ($n -is [System.Collections.IDictionary]) {
     $h = [ordered]@{}
-    foreach ($k in @($n.Keys)) { $h[$k] = Resolve-BoxNode $n[$k] $Groups $Roles }
+    foreach ($k in @($n.Keys)) { $h[$k] = Resolve-BoxNode $n[$k] $Groups $Roles $Fill }
     return $h
   }
   if (Test-BoxIsList $n) {
     $items = [System.Collections.Generic.List[object]]::new()
     foreach ($x in $n) {
       if ($x -is [string] -and $x -like '{roles:privileged}*') { foreach ($r in $Roles) { $items.Add($r) }; continue }
-      $items.Add((Resolve-BoxNode $x $Groups $Roles))
+      $items.Add((Resolve-BoxNode $x $Groups $Roles $Fill))
     }
     return , $items.ToArray()
   }
   if ($n -is [string]) {
     if ($n -like '{roles:privileged}*') { return , @($Roles) }
+    if ($n -match '^\{number:([a-z0-9_]+)\}$') {
+      $v = if ($Fill) { $Fill["number:$($Matches[1])"] } else { $null }
+      if ($null -eq $v -or "$v" -notmatch '^-?[0-9]+$') { throw "unresolved: {number:$($Matches[1])} needs a value the company's choices supply" }
+      return [int]"$v"
+    }
     $s = $n
+    foreach ($m in [regex]::Matches($n, '\{(text|terms):([a-z0-9_]+)\}')) {
+      $v = if ($Fill) { $Fill["$($m.Groups[1].Value):$($m.Groups[2].Value)"] } else { $null }
+      if ($null -eq $v -or "$v" -eq '') { throw "unresolved: $($m.Value) needs a value the company supplies" }
+      $s = $s.Replace($m.Value, [string]$v)
+    }
     foreach ($m in [regex]::Matches($n, '\{group:([^}]+)\}')) {
       $name = $m.Groups[1].Value
       $id = if ($Groups.ContainsKey($name)) { $Groups[$name] } else { $null }
       if (-not $id) { throw "unresolved: group $name does not exist" }
       $s = $s.Replace($m.Value, $id)
     }
-    $u = [regex]::Match($s, '\{(dictionary|config|sku|namedLocation|user|app|github|site|library):[^}]*\}')
+    $u = [regex]::Match($s, '\{(dictionary|config|sku|namedLocation|user|app|github|site|library|text|number|terms):[^}]*\}')
     if ($u.Success) { throw "unresolved: $($u.Value) needs a value the company supplies" }
     if ($s -like '*<existing ids>*') { throw 'unresolved: placeholder <existing ids>' }
     return $s
@@ -212,6 +229,34 @@ function Get-BoxEntraClaims {
   return $out
 }
 
+# Legal-form words that are not worth banning on their own.
+$script:LegalForms = @('limited', 'ltd', 'inc', 'incorporated', 'llc', 'llp', 'plc', 'corp', 'corporation', 'company', 'gmbh', 'sarl', 'pty', 'group', 'holdings', 'the')
+function Get-BoxBannedTerms {
+  # ENT-026: the custom banned password terms derived from the company's own
+  # names (SPEC 25: the suggestion comes from its values, not a fixed list).
+  # Each name gives itself with spaces removed and each of its words; a
+  # domain gives its first label. Entra takes terms of 4 to 16 characters,
+  # at most 1000; legal-form words are dropped; the first spelling of a
+  # term (case-insensitive) is kept, in input order.
+  param([string[]] $Names = @(), [string[]] $Domains = @())
+  $cand = [System.Collections.Generic.List[string]]::new()
+  $all = @($Names) + @($Domains | Where-Object { $_ } | ForEach-Object { ([string]$_).Split('.')[0] })
+  foreach ($n in $all) {
+    if (-not $n) { continue }
+    $words = @([regex]::Split($n, '[^\p{L}\p{N}]+') | Where-Object { $_ -and $_.ToLowerInvariant() -notin $script:LegalForms })
+    $cand.Add(($words -join ''))
+    foreach ($w in $words) { $cand.Add($w) }
+  }
+  $seen = @{}; $out = [System.Collections.Generic.List[string]]::new()
+  foreach ($t in $cand) {
+    $k = $t.ToLowerInvariant()
+    if ($t.Length -lt 4 -or $t.Length -gt 16 -or $seen[$k] -or $t -notmatch '\p{L}') { continue }
+    $seen[$k] = $true; $out.Add($t)
+    if ($out.Count -ge 1000) { break }
+  }
+  return $out.ToArray()
+}
+
 # ---------------------------------------------------------------- tenant helpers
 
 function Get-BoxGroupIds([string[]] $Names) {
@@ -259,7 +304,21 @@ function New-BoxPolicyContext($In, [bool] $Apply) {
   return @{ In = $In; Apply = $Apply; Settings = $settings; Changes = [System.Collections.Generic.List[object]]::new()
     Skipped = [System.Collections.Generic.List[object]]::new(); Report = [System.Collections.Generic.List[object]]::new()
     Drift = [System.Collections.Generic.List[object]]::new()
-    Groups = (Get-BoxGroupIds ($names | Select-Object -Unique)); Cache = @{} }
+    Groups = (Get-BoxGroupIds ($names | Select-Object -Unique)); Cache = @{}; Fill = (Get-BoxChoiceFill $In) }
+}
+function Get-BoxChoiceFill($In) {
+  # The values the company's choices supply (configuration values.*, SPEC
+  # 24) as Resolve-BoxPayload fill keys: 'text:x' and, for whole numbers, 'number:x'.
+  $fill = @{}
+  $vals = Get-BoxProp $In.config 'values'
+  if ($null -eq $vals) { return $fill }
+  foreach ($k in Get-BoxKeys $vals) {
+    $v = Get-BoxProp $vals $k
+    if ($null -eq $v -or (Test-BoxIsMap $v) -or (Test-BoxIsList $v)) { continue }
+    $fill["text:$k"] = [string]$v
+    if ("$v" -match '^-?[0-9]+$') { $fill["number:$k"] = [int]"$v" }
+  }
+  return $fill
 }
 function Add-BoxSkip($Ctx, $S, [string] $Why) { $Ctx.Skipped.Add(@{ id = $S.id; reason = $Why }) }
 function Add-BoxChange($Ctx, $S, [string] $Action, [string] $Target, [string] $Detail) {
@@ -269,8 +328,10 @@ function Add-BoxChange($Ctx, $S, [string] $Action, [string] $Target, [string] $D
 function Add-BoxDrift($Ctx, $S, [string] $Target, [string] $Detail) {
   $Ctx.Drift.Add((New-BoxChange update "$($S.id) $Target" $Detail))
 }
-function Get-BoxResolved($Ctx, $S) {
-  try { return @{ ok = $true; body = (Resolve-BoxPayload -Payload $S.payload -Groups $Ctx.Groups -Roles $script:PrivilegedRoles) } }
+function Get-BoxResolved($Ctx, $S, [hashtable] $Extra = @{}) {
+  $fill = @{} + $Ctx.Fill
+  foreach ($k in $Extra.Keys) { $fill[$k] = $Extra[$k] }
+  try { return @{ ok = $true; body = (Resolve-BoxPayload -Payload $S.payload -Groups $Ctx.Groups -Roles $script:PrivilegedRoles -Fill $fill) } }
   catch { Add-BoxSkip $Ctx $S ("$_" -replace '^unresolved: ', ''); return @{ ok = $false } }
 }
 function Get-BoxCached($Ctx, [string] $Key, [scriptblock] $Read) {
@@ -367,6 +428,62 @@ function Sync-BoxMfaMigration($Ctx, $S) {
   if ($on.Count -eq 0) { return }
   Add-BoxChange $Ctx $S update 'per-user MFA' "$($on.Count) user(s) -> disabled"
   if ($Ctx.Apply) { foreach ($u in $on) { Invoke-BoxGraph -Method PATCH -Uri "$script:Beta/users/$($u.id)/authentication/requirements" -Body @{ perUserMfaState = 'disabled' } | Out-Null } }
+}
+
+function Sync-BoxRegistrationCampaign($Ctx, $S) {
+  # ENT-050 (SC-27): the MFA registration campaign, on beta (the
+  # enforce-after-snoozes property is beta only). identity.auth-methods
+  # leaves it to this step and keeps the registration report.
+  $r = Get-BoxResolved $Ctx $S
+  if (-not $r.ok) { return }
+  $want = $r.body.registrationEnforcement.authenticationMethodsRegistrationCampaign
+  $snooze = [int]$want.snoozeDurationInDays
+  if ($snooze -lt 0 -or $snooze -gt 14) { throw "$($S.id): snoozeDurationInDays must be 0 to 14, not $snooze (choice signin.mfa_snooze_days)" }
+  $uri = "$script:Beta/policies/authenticationMethodsPolicy"
+  $have = (Invoke-BoxGraph -Uri $uri).registrationEnforcement.authenticationMethodsRegistrationCampaign
+  $drift = @(Get-BoxCampaignDrift -Want $want -Have $have)
+  if ($drift.Count -eq 0) { return }
+  Add-BoxChange $Ctx $S update 'registration campaign (Microsoft Authenticator)' ($drift -join '; ')
+  if ($Ctx.Apply) { Invoke-BoxGraph -Method PATCH -Uri $uri -Body $r.body | Out-Null }
+}
+
+# --- banned passwords (ENT-026) ---
+function Get-BoxDictionaryValue($Ctx, [string] $Key) {
+  # One value from the Admin site's Dictionary list (SPEC 9.2), or $null
+  # when the register or the key does not exist yet. A read that fails
+  # otherwise throws, so a term list is never shortened by a refused call.
+  $sp = [string]$Ctx.In.tenant.sharepoint
+  $admin = @($Ctx.In.config.structure.sites | Where-Object { $_.name -eq 'Admin' })
+  if (-not $sp -or $admin.Count -ne 1) { throw "the step's input has no Admin site: add 'structure' to its reads" }
+  $site = Get-BoxGraphOne "/sites/$(([uri]$sp).Host):/sites/$($admin[0].url)?`$select=id"
+  if (-not $site) { return $null }
+  $list = Get-BoxGraphOne "/sites/$($site.id)/lists/Dictionary?`$select=id"
+  if (-not $list) { return $null }
+  foreach ($i in @(Get-BoxGraphAll "/sites/$($site.id)/lists/$($list.id)/items?`$expand=fields(`$select=key,value)&`$top=500")) {
+    if ([string]$i.fields.key -eq $Key) { return [string]$i.fields.value }
+  }
+  return $null
+}
+function Get-BoxCompanyTerms($Ctx) {
+  # The company's names: trading and legal name and domains from the
+  # configuration, product names from the Dictionary (company.product_names,
+  # comma, semicolon or line separated).
+  $co = $Ctx.In.config.company
+  $products = Get-BoxDictionaryValue $Ctx 'company.product_names'
+  if (-not $products) { $Ctx.Report.Add('ENT-026: no product names in the Dictionary (company.product_names); the banned list holds the company names only') }
+  $names = @([string]$co.trading_name, [string]$co.legal_name) + @(([string]$products) -split '[,;\r\n]+' | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+  $domains = @([string]$co.primary_domain) + @($co.domain_aliases | Where-Object { $_ })
+  return @(Get-BoxBannedTerms -Names $names -Domains $domains)
+}
+function Sync-BoxBannedPasswords($Ctx, $S) {
+  # {terms:company} is filled here; the terms are company data, so changes
+  # and the report name the setting and a count, never the terms.
+  $terms = @(Get-BoxCompanyTerms $Ctx)
+  if ($terms.Count -eq 0) { Add-BoxSkip $Ctx $S 'the configuration names no company to derive banned password terms from'; return }
+  $r = Get-BoxResolved $Ctx $S @{ 'terms:company' = ($terms -join "`t") }
+  if (-not $r.ok) { return }
+  $Ctx.Report.Add("ENT-026: $($terms.Count) banned password term(s) derived from the company's names")
+  Sync-BoxGroupSetting $Ctx $S $r.body.templateId $r.body.values
 }
 
 # --- directory settings (groupSettings from a template) ---
@@ -583,8 +700,9 @@ $script:Handlers = @{
   'ENT-021' = { param($c, $s) Sync-BoxAuthMethod $c $s }; 'ENT-022' = { param($c, $s) Sync-BoxAuthMethod $c $s }
   'ENT-023' = { param($c, $s) Sync-BoxAuthMethod $c $s }; 'ENT-024' = { param($c, $s) Sync-BoxAuthMethod $c $s }
   'ENT-025' = { param($c, $s) Sync-BoxMfaMigration $c $s }
+  'ENT-050' = { param($c, $s) Sync-BoxRegistrationCampaign $c $s }
   # password rule directory setting
-  'ENT-026' = { param($c, $s) $r = Get-BoxResolved $c $s; if ($r.ok) { Sync-BoxGroupSetting $c $s $r.body.templateId $r.body.values } }
+  'ENT-026' = { param($c, $s) Sync-BoxBannedPasswords $c $s }
   'ENT-027' = { param($c, $s) $r = Get-BoxResolved $c $s; if ($r.ok) { Sync-BoxGroupSetting $c $s $r.body.templateId $r.body.values } }
   'ENT-028' = { param($c, $s) Sync-BoxDomainExpiry $c $s }
   # authorization policy and consent
@@ -685,4 +803,4 @@ function Get-BoxPolicyEvidence($In, [string] $Kind) {
 }
 
 Export-ModuleMember -Function Set-BoxPolicyRoles, ConvertTo-BoxPlain, Compare-BoxValue, Resolve-BoxPayload, Get-BoxCAState,
-  Merge-BoxGroupSettingValues, Get-BoxIdleTimeout, Get-BoxEntraClaims, Get-BoxPolicyPlan, Invoke-BoxPolicyApply, Test-BoxPolicyVerify, Get-BoxPolicyEvidence
+  Merge-BoxGroupSettingValues, Get-BoxIdleTimeout, Get-BoxEntraClaims, Get-BoxBannedTerms, Get-BoxPolicyPlan, Invoke-BoxPolicyApply, Test-BoxPolicyVerify, Get-BoxPolicyEvidence

@@ -1255,3 +1255,48 @@ mode enforce, requirements IAM-01, IAM-02):
 
 When approved: add the ENT entry and mapping, remove `registration_campaign`
 from `baseline/identity.yaml`, and let `policy.entra` own the object.
+
+## SC-28  Teams meeting policy refuses app-only writes (proposed, T14-09)
+
+**Finding (test tenant, 2026-11-21, MicrosoftTeams 6.7.0).** The pipeline
+app connects with `Connect-MicrosoftTeams -AccessTokens` (a Graph token and
+a token for `48ac35b8-9aa8-4d74-927d-1f4a14a0b239`, both app-only, exactly
+as the module's own help example asks). Every `Get-Cs*` the step needs
+reads. Writes to the tenant federation configuration, client
+configuration, messaging, channels, app permission, custom app, events,
+calling, meeting configuration and guest meeting configuration policies
+succeed. Every write to `TeamsMeetingPolicy` (`Set-` on Global, `New-` on
+a new name) and to `ExternalAccessPolicy` is refused:
+`PolicyRpException {"code":"Forbidden","message":"You are not authorized
+to perform this action","errorCode":40301}`.
+
+Ruled out:
+- token audience or form: `-Certificate` (the module gets its own tokens)
+  gives the same 403;
+- the role: Teams Administrator is assigned to the service principal at
+  directory scope `/`, 14 hours before the test, and is in the token's
+  `wids`; other writes succeed with the same token;
+- Graph permissions Microsoft documents for app-only `-Cs` cmdlets:
+  `Organization.Read.All` (all cmdlets) is granted. The documented
+  `RoleManagement.Read.Directory` applies to apps used with administrative
+  units, which this app is not; `GroupMember.Read.All` applies to the group
+  policy assignment cmdlets only;
+- the "Skype and Teams Tenant Admin API" application permission: Microsoft
+  says not to add it for app-based authentication.
+
+`policy.teams` now applies every other cmdlet and fails naming the refused
+cmdlet and its settings (TMS-004 to TMS-008), so `box check policy.teams`
+cannot pass while meeting policy differs.
+
+**Proposed.**
+1. Optional experiment, owner's choice: add `RoleManagement.Read.Directory`
+   to the `teams` bundle in `expected-state/app-permissions.yaml`, re-run
+   bootstrap on the test tenant, retry. Documented only for administrative
+   units, so it may not help; remove it again if it does not.
+2. Otherwise a gate (next free id, R5): "Teams meeting policy" - the owner
+   sets the Global meeting policy values from TMS-004 to TMS-008 in the
+   Teams admin centre (Meetings > Meeting policies > Global); the check is
+   the existing `Get-CsTeamsMeetingPolicy` comparison, which `policy.teams`
+   already does app-only. T14-09's "Human steps: None" changes to name it.
+3. Open a Microsoft support case with the correlation ids from the test
+   run; drop the gate if Microsoft enables app-only meeting policy writes.

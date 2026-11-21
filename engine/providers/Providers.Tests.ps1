@@ -292,6 +292,16 @@ Describe 'policy.teams payloads (T14-09)' {
     $want = [ordered]@{ Identity = 'Tag:Other'; AllowGuestUser = $false; GlobalCatalogApps = @(); AllowedDomains = 'AllowAllKnownDomains' }
     @(Compare-TeamsValues $cur $want | ForEach-Object { $_.name }) | Should -Be @('AllowGuestUser', 'GlobalCatalogApps')
   }
+  It 'records which setting wants each parameter and recognises a Teams 403' {
+    $s = @([pscustomobject]@{ id = 'TMS-004'; payload = [pscustomobject]@{ 'Set-CsTeamsMeetingPolicy' = [pscustomobject]@{ Identity = 'Global'; AutoAdmittedUsers = 'EveryoneInCompanyExcludingGuests' } } })
+    (Resolve-TeamsPayload $s 'core').from['Set-CsTeamsMeetingPolicy AutoAdmittedUsers'] | Should -Be 'TMS-004'
+    InModuleScope Box.teams {
+      $forbidden = [System.Management.Automation.ErrorRecord]::new([Exception]::new('{"code":"Forbidden","message":"You are not authorized to perform this action","errorCode":40301}'), 'x', 'PermissionDenied', $null)
+      Test-TeamsForbidden $forbidden | Should -BeTrue
+      $other = [System.Management.Automation.ErrorRecord]::new([Exception]::new('"Global" not found'), 'x', 'ObjectNotFound', $null)
+      Test-TeamsForbidden $other | Should -BeFalse
+    }
+  }
 }
 
 Describe 'intune policy helpers (T14-05)' {

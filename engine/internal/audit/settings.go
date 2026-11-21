@@ -47,17 +47,32 @@ type StepOutcome struct {
 // providerNeeds says what reading a provider's settings takes when the
 // audit's Graph sign-in cannot.
 var providerNeeds = map[string]string{
-	"exchange":      "Exchange Online PowerShell with a delegated sign-in (Global Reader or View-Only Organization Management)",
-	"sharepoint":    "SharePoint Online management (PnP) with a delegated sign-in to the tenant's admin site; tenant sharing is in the sharing_settings inventory",
-	"teams":         "Microsoft Teams PowerShell with a delegated sign-in (Teams Administrator or Global Reader)",
+	"exchange":      "a read-only Exchange Online sign-in (Exchange Online PowerShell as Global Reader, plus Security Reader for the Defender policies)",
+	"sharepoint":    "a read-only SharePoint admin sign-in (PnP as Global Reader); tenant sharing is in the sharing_settings inventory",
+	"teams":         "a read-only Microsoft Teams sign-in (Teams PowerShell as Global Reader)",
 	"powerplatform": "the Power Platform admin API with a Power Platform administrator sign-in",
 	"dns":           "public DNS; SPF and DMARC are in the mail_auth inventory",
-	"purview":       "Security & Compliance PowerShell with a delegated sign-in (a Purview reader role)",
+	"purview":       "a read-only Security & Compliance sign-in (Global Reader and Security Reader; labels, DLP and retention may need a view-only Purview role group)",
 }
 
 // GraphProviders are the providers whose policy steps read over Microsoft
 // Graph only, so their verify runs with the audit's delegated token.
 var GraphProviders = map[string]bool{"identity": true, "intune": true}
+
+// TokenProviders are the providers whose policy steps read through their
+// own PowerShell module, with a delegated token for its resource (T16-06):
+// their verify runs only when Tokens holds that token.
+var TokenProviders = map[string]bool{"exchange": true, "sharepoint": true, "teams": true}
+
+// StepResource names the resource (expected-state/audit-scopes.yaml) whose
+// token a step of provider reads with: the Purview steps of the exchange
+// provider use Security & Compliance, every other step its provider's own.
+func StepResource(provider, step string) string {
+	if provider == "exchange" && strings.HasPrefix(step, "policy.purview") {
+		return "compliance"
+	}
+	return provider
+}
 
 // NeedsFor returns what reading a step of provider takes.
 func NeedsFor(provider, step string) string {
@@ -101,7 +116,9 @@ var settingID = regexp.MustCompile(`\b[A-Z]{3}-\d{3}\b`)
 // notReadDetail marks drift a step reports because it could not read or
 // would not judge (a refused call, a missing group, an add-on), not
 // because the tenant differs.
-var notReadDetail = regexp.MustCompile(`(?i)not applied|permission|refused|forbidden|unauthori[sz]ed|\b40[13]\b|unresolved|no handler`)
+// "permission" is a whole word: cmdlet names such as
+// Set-CsTeamsAppPermissionPolicy in a real difference must not hide it.
+var notReadDetail = regexp.MustCompile(`(?i)not applied|\bpermissions?\b|refused|forbidden|unauthori[sz]ed|\b40[13]\b|unresolved|no handler`)
 
 type verifyOut struct {
 	OK    bool `json:"ok"`

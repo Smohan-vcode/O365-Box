@@ -33,8 +33,8 @@ func fakeAuditEnv(t *testing.T, signedIn *bool, gotToken *string) *auditEnv {
 		},
 		http: fg.Server.Client(), v1: fg.V1(), beta: fg.Beta(),
 		dns: audittest.Resolver{"fernhill.example": {"v=spf1 -all"}, "_dmarc.fernhill.example": {"v=DMARC1; p=reject"}},
-		steps: func(_ context.Context, _ string, _ *auditFlags, _ io.Writer, by map[string][]policy.StepSetting, tenant map[string]any, token string) map[string]audit.StepOutcome {
-			*gotToken = token
+		steps: func(_ context.Context, _ string, _ *auditFlags, _ io.Writer, by map[string][]policy.StepSetting, tenant map[string]any, creds auditCreds) map[string]audit.StepOutcome {
+			*gotToken = creds.graph
 			if tenant["initial_domain"] != "fernhilllabs.onmicrosoft.com" {
 				t.Errorf("tenant input = %v", tenant)
 			}
@@ -145,5 +145,154 @@ func TestAuditHelp(t *testing.T) {
 	}
 	if code != ExitOK {
 		t.Errorf("exit %d", code)
+	}
+}
+
+// T16-06: a reader-only sign-in gets read-only tokens for Exchange Online,
+// Security & Compliance, SharePoint and Teams (one more device-code sign-in
+// per Microsoft client, as the same account); the provider workers get them
+// under the names they read; nothing is printed or kept.
+func TestAuditWorkloadTokens(t *testing.T) {
+	signedIn, token := false, ""
+	env := fakeAuditEnv(t, &signedIn, &token)
+	claims := map[string]any{"tid": audittest.Tenant, "oid": "00000000-0000-4000-8000-0000000000bb", "upn": "reader@fernhill.example",
+		"scp": "User.Read.All Policy.Read.All openid", "wids": []any{audit.RoleGlobalReader}}
+	env.signIn = func(context.Context, string, []string, io.Writer) (*auth.Token, error) {
+		return &auth.Token{Access: audittest.Token(claims), Refresh: "refresh-graph-0123456789", Claims: claims, ExpiresAt: time.Now().Add(time.Hour)}, nil
+	}
+	var signIns, redeems []string
+	issue := func(client string, scopes []string) *auth.Token {
+		return &auth.Token{Access: "workload-token-" + client + "-" + scopes[0], Refresh: "refresh-" + client + "-0123456789", Claims: claims,
+			ExpiresAt: time.Date(2026, 11, 21, 13, 0, 0, 0, time.UTC)}
+	}
+	env.signInClient = func(_ context.Context, tenant, client string, scopes []string, title string, _ io.Writer) (*auth.Token, error) {
+		if tenant != audittest.Tenant {
+			t.Errorf("sign-in tenant %s", tenant)
+		}
+		signIns = append(signIns, title)
+		return issue(client, scopes), nil
+	}
+	env.redeem = func(_ context.Context, _, client, refresh string, scopes []string) (*auth.Token, error) {
+		redeems = append(redeems, scopes[0])
+		return issue(client, scopes), nil
+	}
+	var creds map[string]map[string]any
+	env.steps = func(ctx context.Context, _ string, _ *auditFlags, _ io.Writer, by map[string][]policy.StepSetting, tenant map[string]any, c auditCreds) map[string]audit.StepOutcome {
+		if tenant["sharepoint_admin"] != "https://fernhilllabs-admin.sharepoint.com" {
+			t.Errorf("tenant = %v", tenant)
+		}
+		creds = map[string]map[string]any{}
+		for _, p := range []string{"identity", "exchange", "sharepoint", "teams"} {
+			m, err := auditWorkerCreds(ctx, p, c, func(string) {})
+			if err != nil {
+				t.Fatal(err)
+			}
+			creds[p] = m
+		}
+		drift, _ := json.Marshal(map[string]any{"ok": false,
+			"drift":   []map[string]string{{"action": "update", "target": "tenant SharingCapability", "detail": "ExternalUserSharingOnly -> ExistingExternalUserSharingOnly (SPO-001)"}},
+			"skipped": []map[string]string{{"id": "SPO-018", "reason": "role assignments: reads each site's content, which a Global Reader cannot open"}}})
+		return map[string]audit.StepOutcome{"policy.sharepoint": {Step: "policy.sharepoint", Provider: "sharepoint", Ran: true, Verify: drift}}
+	}
+	var buf bytes.Buffer
+	out := filepath.Join(t.TempDir(), "pack")
+	f := &auditFlags{framework: "soc2", period: "2026-01-01..2026-11-21", out: out, tenant: "organizations", cap: 100}
+	if err := runAudit(context.Background(), &globals{repo: "../../.."}, f, env, &buf); err != nil {
+		t.Fatalf("%v\n%s", err, buf.String())
+	}
+	text := buf.String()
+	if strings.Join(signIns, "|") != "Exchange Online and Security & Compliance (Purview)|SharePoint admin|Microsoft Teams" || len(redeems) != 1 ||
+		redeems[0] != "https://ps.compliance.protection.outlook.com/.default" {
+		t.Errorf("sign-ins %q, redeems %q", signIns, redeems)
+	}
+	for _, want := range []string{"✓ Exchange Online: signed in read-only", "✓ Microsoft Teams: signed in read-only", "not built yet"} {
+		if !strings.Contains(text, want) {
+			t.Errorf("output lacks %q\n%s", want, text)
+		}
+	}
+	if strings.Contains(text, "workload-token") || strings.Contains(text, "refresh-") {
+		t.Errorf("a token was printed\n%s", text)
+	}
+	get := func(p, k string) string {
+		m, _ := creds[p][k].(map[string]any)
+		s, _ := m["access_token"].(string)
+		return s
+	}
+	graphTok := get("identity", "graph")
+	if graphTok == "" || get("identity", "app") != graphTok || get("exchange", "graph") != graphTok ||
+		!strings.Contains(get("exchange", "app"), "outlook.office365.com") || !strings.Contains(get("exchange", "ipps"), "ps.compliance") ||
+		!strings.Contains(get("sharepoint", "app"), "-admin.sharepoint.com") || !strings.Contains(get("teams", "teams"), "48ac35b8") || get("teams", "app") != "" {
+		t.Errorf("worker credentials = %v", creds)
+	}
+	b, _ := os.ReadFile(filepath.Join(out, "evidence", "settings", "all-settings.json"))
+	if strings.Contains(string(b), "workload-token") || strings.Contains(string(b), "refresh-") {
+		t.Error("a token was written to the pack")
+	}
+	got := settingReads(t, b)
+	if got["SPO-001"].Status != audit.Fail || got["SPO-018"].Status != audit.NotRead || got["SPO-003"].Status != audit.Pass {
+		t.Errorf("sharepoint reads: %+v %+v %+v", got["SPO-001"], got["SPO-018"], got["SPO-003"])
+	}
+	if s := got["EXO-001"]; s.Status != audit.NotRead || !strings.Contains(s.Detail, "policy.exchange is not built yet") {
+		t.Errorf("EXO-001 = %+v", s)
+	}
+}
+
+func settingReads(t *testing.T, b []byte) map[string]audit.SettingRead {
+	t.Helper()
+	got := map[string]audit.SettingRead{}
+	var list []audit.SettingRead
+	if err := json.Unmarshal(b, &list); err == nil {
+		for _, s := range list {
+			got[s.ID] = s
+		}
+		return got
+	}
+	var wrapped struct {
+		Settings []audit.SettingRead `json:"settings"`
+	}
+	if err := json.Unmarshal(b, &wrapped); err != nil {
+		t.Fatalf("all-settings.json: %v", err)
+	}
+	for _, s := range wrapped.Settings {
+		got[s.ID] = s
+	}
+	return got
+}
+
+// --graph-only, or a sign-in whose roles could write, asks for no workload
+// token.
+func TestAuditNoWorkloadTokens(t *testing.T) {
+	for name, tc := range map[string]struct {
+		wids    []any
+		flags   auditFlags
+		explain string
+	}{
+		"graph-only": {[]any{audit.RoleGlobalReader}, auditFlags{graphOnly: true}, "--graph-only"},
+		"writer":     {[]any{audit.RoleGlobalAdmin}, auditFlags{partial: true}, "can change the tenant"},
+	} {
+		signedIn, token := false, ""
+		env := fakeAuditEnv(t, &signedIn, &token)
+		claims := map[string]any{"tid": audittest.Tenant, "oid": "o", "upn": "x@fernhill.example", "scp": "User.Read.All", "wids": tc.wids}
+		env.signIn = func(context.Context, string, []string, io.Writer) (*auth.Token, error) {
+			return &auth.Token{Access: audittest.Token(claims), Refresh: "refresh-graph-0123456789", Claims: claims}, nil
+		}
+		env.signInClient = func(context.Context, string, string, []string, string, io.Writer) (*auth.Token, error) {
+			t.Errorf("%s: workload sign-in", name)
+			return nil, io.EOF
+		}
+		env.redeem = func(context.Context, string, string, string, []string) (*auth.Token, error) {
+			t.Errorf("%s: refresh token redeemed", name)
+			return nil, io.EOF
+		}
+		f := tc.flags
+		f.framework, f.out, f.cap = "soc2", filepath.Join(t.TempDir(), "pack"), 10
+		var buf bytes.Buffer
+		if err := runAudit(context.Background(), &globals{repo: "../../.."}, &f, env, &buf); err != nil {
+			t.Fatalf("%s: %v\n%s", name, err, buf.String())
+		}
+		b, _ := os.ReadFile(filepath.Join(f.out, "evidence", "settings", "all-settings.json"))
+		if !strings.Contains(buf.String()+string(b), tc.explain) {
+			t.Errorf("%s: reason %q not reported\n%s", name, tc.explain, buf.String())
+		}
 	}
 }

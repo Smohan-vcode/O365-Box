@@ -1,10 +1,12 @@
 # Provider: sharepoint. Tenant sharing, hub and sites, libraries, register
 # lists and the configuration store (T3, T0-06). Connects with PnP using the
-# pipeline app's token for the tenant's SharePoint host.
+# pipeline app's token for the tenant's SharePoint host or, for box audit, a
+# reader-only delegated token for the admin host (T16-06).
 Import-Module (Join-Path $PSScriptRoot '..' 'common' 'BoxProvider.psm1') -Force
 Import-Module (Join-Path $PSScriptRoot '..' 'common' 'BoxGraph.psm1') -Force
 
 $script:Conn = @{}
+$script:AuditSkipped = @() # settings box audit could not judge (policy.sharepoint verify)
 $Levels = @{ owner = 'Full Control'; member = 'Edit'; visitor = 'Read' }
 
 function Get-Root($In) { return [string]$In.tenant.sharepoint }
@@ -362,9 +364,10 @@ function Compare-BoxProperties {
 # Merges one payload part (for example 'Set-PnPTenant') across settings; two
 # settings that want different values for one parameter are a mapping error.
 function Merge-BoxPayload {
-  param($Settings, [string] $Part)
+  # $From, when given, is filled with parameter -> setting id.
+  param($Settings, [string] $Part, [hashtable] $From = @{})
   $want = [ordered]@{}
-  $from = @{}
+  $from = $From
   foreach ($s in @($Settings)) {
     $p = Get-BoxProp $s.payload $Part
     if ($null -eq $p) { continue }
@@ -374,7 +377,8 @@ function Merge-BoxPayload {
         throw "$($s.id) and $($from[$q.Name]) want different values for $Part $($q.Name)"
       }
       $want[$q.Name] = $q.Value
-      $from[$q.Name] = $s.id
+      # Every setting that wants the value (SPO-001 and SPO-004 both set SharingCapability).
+      $from[$q.Name] = if ($from.ContainsKey($q.Name) -and $from[$q.Name] -notmatch "\b$($s.id)\b") { "$($from[$q.Name]), $($s.id)" } else { [string]$s.id }
     }
   }
   return $want
@@ -475,47 +479,75 @@ function Get-SpPolicyChanges($In, [switch] $Apply) {
   $enf = @($all | Where-Object { $_.mode -eq 'enforce' })
   $ids = @{}
   foreach ($s in $enf) { $ids[[string]$s.id] = $s }
+  # box audit (SPEC §26) reads a tenant the box did not build, as a reader:
+  # the engine's own sites, the break-glass group and the company's lists
+  # are not there to compare with, and a Global Reader cannot open a site's
+  # content. Those parts are reported not read (skipped), never assumed.
+  $audit = ([string]$In.environment -eq 'audit')
+  $script:AuditSkipped = @()
   $c = Connect-Admin $In
   $changes = @()
 
   # Tenant values (SPO-001, 003, 004, 005, 006, 008, 010, 012, 013, 015, 017).
-  $want = Merge-BoxPayload $enf 'Set-PnPTenant'
+  $from = @{}
+  $want = Merge-BoxPayload $enf 'Set-PnPTenant' $from
   $conflicts = @(Test-BaselineAgreement (Get-BaselineTenantWant $In) $want)
   if ($conflicts.Count) { throw ($conflicts -join '; ') }
+  if ($audit) {
+    foreach ($k in @($want.Keys)) {
+      if ([string]$want[$k] -match '\{config:([A-Za-z0-9_.\[\]]+)\}') {
+        $cfg = $Matches[1]
+        foreach ($id in ($from[$k] -split ', ')) { $script:AuditSkipped += @{ id = $id; reason = "tenant $k is the company's own list (configuration $cfg), which an audit does not have; not compared" } }
+        $want.Remove($k)
+      }
+    }
+  }
   if ($want.Count) {
     $t = Get-PnPTenant -Connection $c
     $set = @{}
     $moot = Get-SupersededTenantKeys $t
     foreach ($d in @(Compare-BoxProperties $t $want $TenantReadName)) {
       if ($moot.ContainsKey($d.name)) { Write-Warning "tenant $($d.name) stays $($d.current): $($moot[$d.name])"; continue }
-      if ($HeldTenantKeys.ContainsKey($d.name)) { Write-Warning "tenant $($d.name) stays $($d.current): $($HeldTenantKeys[$d.name])"; continue }
-      $changes += New-BoxChange update "tenant $($d.name)" "$($d.current) -> $($d.want)"
+      # Held keys are a reason not to write; an audit reports the difference.
+      if ($HeldTenantKeys.ContainsKey($d.name) -and -not $audit) { Write-Warning "tenant $($d.name) stays $($d.current): $($HeldTenantKeys[$d.name])"; continue }
+      $changes += New-BoxChange update "tenant $($d.name)" "$($d.current) -> $($d.want) ($($from[$d.name]))"
       $set[$d.name] = $d.want
     }
     if (@($set.Keys | Where-Object { $_ -in $VersionKeys }).Count) { foreach ($k in $VersionKeys) { if ($want.Contains($k)) { $set[$k] = $want[$k] } } }
     if ($Apply -and $set.Count) { Set-PnPTenant @set -Connection $c -ErrorAction Stop }
   }
   # Policies SharePoint generated for unmanaged devices (any earlier run, or
-  # a change in the admin centre) are made safe on every run.
-  $changes += @(Get-SharePointCaChanges -Apply:$Apply)
+  # a change in the admin centre) are made safe on every run. They name the
+  # box's break-glass group, so an audit does not check them.
+  if (-not $audit) { $changes += @(Get-SharePointCaChanges -Apply:$Apply) }
 
   # Site sharing (SPO-002 for the engine's sites, SPO-004 for every site),
   # custom script (SPO-015) and, below, access requests (SPO-016).
   $sites = @(Get-PnPTenantSite -Connection $c -ErrorAction Stop)
   $engine = @{}
-  foreach ($e in Get-EngineSites $In) { $engine[$e.url.ToLower()] = $e }
+  if ($audit) {
+    $perSite = "reads each site's content, which a Global Reader cannot open (SharePoint gives it the admin centre only); not read"
+    if ($ids.ContainsKey('SPO-002')) {
+      $shared = @($sites | Where-Object { [string]$_.SharingCapability -ne 'Disabled' }).Count
+      $script:AuditSkipped += @{ id = 'SPO-002'; reason = "which sites may share outside is the company's decision, which an audit does not have; $shared of $($sites.Count) site(s) allow external sharing" }
+    }
+    if ($ids.ContainsKey('SPO-013')) { $script:AuditSkipped += @{ id = 'SPO-013'; reason = "library versions: $perSite (the tenant version limits were compared)" } }
+    if ($ids.ContainsKey('SPO-016')) { $script:AuditSkipped += @{ id = 'SPO-016'; reason = "access requests: $perSite" } }
+  } else {
+    foreach ($e in Get-EngineSites $In) { $engine[$e.url.ToLower()] = $e }
+  }
   foreach ($ts in $sites) {
     $u = ([string]$ts.Url).TrimEnd('/')
     $e = $engine[$u.ToLower()]
-    $wantShare = $null
-    if ($ids.ContainsKey('SPO-002') -and $e) { $wantShare = $e.sharing }
-    elseif ($ids.ContainsKey('SPO-004') -and [string]$ts.SharingCapability -eq 'ExternalUserAndGuestSharing') { $wantShare = 'ExistingExternalUserSharingOnly' }
+    $wantShare, $shareId = $null, $null
+    if ($ids.ContainsKey('SPO-002') -and $e) { $wantShare, $shareId = $e.sharing, 'SPO-002' }
+    elseif ($ids.ContainsKey('SPO-004') -and [string]$ts.SharingCapability -eq 'ExternalUserAndGuestSharing') { $wantShare, $shareId = 'ExistingExternalUserSharingOnly', 'SPO-004' }
     if ($wantShare -and [string]$ts.SharingCapability -ne $wantShare) {
-      $changes += New-BoxChange update "sharing on $u" "$($ts.SharingCapability) -> $wantShare"
+      $changes += New-BoxChange update "sharing on $u" "$($ts.SharingCapability) -> $wantShare ($shareId)"
       if ($Apply) { Set-PnPTenantSite -Identity $u -SharingCapability $wantShare -Connection $c -ErrorAction Stop }
     }
     if ($ids.ContainsKey('SPO-015') -and [string]$ts.DenyAddAndCustomizePages -ne 'Enabled') {
-      $changes += New-BoxChange update "custom script on $u" "$($ts.DenyAddAndCustomizePages) -> Enabled (denied)"
+      $changes += New-BoxChange update "custom script on $u" "$($ts.DenyAddAndCustomizePages) -> Enabled (denied) (SPO-015)"
       if ($Apply) { Set-PnPTenantSite -Identity $u -DenyAddAndCustomizePages:$true -Connection $c -ErrorAction Stop }
     }
   }
@@ -528,7 +560,7 @@ function Get-SpPolicyChanges($In, [switch] $Apply) {
     $cur = Get-PnPBrowserIdleSignout -Connection $c -ErrorAction Stop
     $d = @(Compare-BoxProperties $cur $want9)
     if ($d.Count) {
-      $changes += New-BoxChange update 'browser idle sign-out' (($d | ForEach-Object { "$($_.name) $($_.current) -> $($_.want)" }) -join '; ')
+      $changes += New-BoxChange update 'browser idle sign-out' ((($d | ForEach-Object { "$($_.name) $($_.current) -> $($_.want)" }) -join '; ') + ' (SPO-009)')
       if ($Apply) { Set-PnPBrowserIdleSignout -Enabled $want9.Enabled -WarnAfter $want9.WarnAfter -SignoutAfter $want9.SignOutAfter -Connection $c -ErrorAction Stop }
     }
   }
@@ -542,7 +574,7 @@ function Get-SpPolicyChanges($In, [switch] $Apply) {
     $ctx.Load($tn)
     $ctx.ExecuteQuery()
     if ([bool]$tn.SelfServiceSiteCreationDisabled -ne $wantOff) {
-      $changes += New-BoxChange update 'tenant SelfServiceSiteCreationDisabled' "$($tn.SelfServiceSiteCreationDisabled) -> $wantOff"
+      $changes += New-BoxChange update 'tenant SelfServiceSiteCreationDisabled' "$($tn.SelfServiceSiteCreationDisabled) -> $wantOff (SPO-014)"
       if ($Apply) { $tn.SelfServiceSiteCreationDisabled = $wantOff; $tn.Update(); $ctx.ExecuteQuery() }
     }
   }
@@ -555,7 +587,7 @@ function Get-SpPolicyChanges($In, [switch] $Apply) {
       $sc = Connect-Site $e.url
       $web = Get-PnPWeb -Includes RequestAccessEmail, UseAccessRequestDefault -Connection $sc
       if ($web.UseAccessRequestDefault -or $web.RequestAccessEmail) {
-        $changes += New-BoxChange update "access requests on $($e.url)" 'on -> off'
+        $changes += New-BoxChange update "access requests on $($e.url)" 'on -> off (SPO-016)'
         if ($Apply) { Set-PnPRequestAccessEmails -Disabled -Connection $sc -ErrorAction Stop }
       }
     }
@@ -565,7 +597,7 @@ function Get-SpPolicyChanges($In, [switch] $Apply) {
         $list = Get-PnPList -Identity $l.name -Includes EnableVersioning, MajorVersionLimit -Connection $sc -ErrorAction SilentlyContinue
         if (-not $list) { continue } # sharepoint.libraries creates it with versioning
         if (-not $list.EnableVersioning -or $list.MajorVersionLimit -lt 100) {
-          $changes += New-BoxChange update "versions on $($e.url)/$($l.name)" "$($list.EnableVersioning)/$($list.MajorVersionLimit) -> True/100"
+          $changes += New-BoxChange update "versions on $($e.url)/$($l.name)" "$($list.EnableVersioning)/$($list.MajorVersionLimit) -> True/100 (SPO-013)"
           if ($Apply) { Set-PnPList -Identity $l.name -EnableVersioning $true -MajorVersions 100 -Connection $sc -ErrorAction Stop | Out-Null }
         }
       }
@@ -580,6 +612,10 @@ function Get-SpPolicyChanges($In, [switch] $Apply) {
 function Get-SpPolicyFindings($In) {
   $all = Get-PolicySettings $In
   if (-not ($all | Where-Object { $_.id -eq 'SPO-018' -and $_.mode -eq 'enforce' })) { return @() }
+  if ([string]$In.environment -eq 'audit') {
+    $script:AuditSkipped += @{ id = 'SPO-018'; reason = "role assignments: reads each site's content, which a Global Reader cannot open (SharePoint gives it the admin centre only); not read" }
+    return @()
+  }
   $out = @()
   foreach ($e in Get-EngineSites $In) {
     $sc = Connect-Site $e.url
@@ -639,7 +675,7 @@ $script:Steps = [ordered]@{
     test = $ok
     plan = { param($In) Result-Changes (Get-SpPolicyChanges $In) }
     apply = { param($In) Result-Changes (Get-SpPolicyChanges $In -Apply) }
-    verify = { param($In) $c = @(@(Get-SpPolicyChanges $In) + @(Get-SpPolicyFindings $In) | Where-Object { $_ }); @{ ok = ($c.Count -eq 0); drift = $c } }
+    verify = { param($In) $c = @(@(Get-SpPolicyChanges $In) + @(Get-SpPolicyFindings $In) | Where-Object { $_ }); @{ ok = ($c.Count -eq 0); drift = $c; skipped = @($script:AuditSkipped) } }
     evidence = { param($In) New-Evidence 'policy-sharepoint' "resolved sharepoint settings verified: $((@($In.policy.settings | ForEach-Object { $_.id })) -join ', ')" }
   }
 }

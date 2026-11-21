@@ -13,6 +13,19 @@ function Connect-BoxExchange($In) {
   }
 }
 
+# Security & Compliance (Purview) PowerShell, for the Purview and alert
+# steps: a token for ps.compliance.protection.outlook.com under 'ipps'. box
+# audit sends a reader-only delegated token (T16-06); module 3.9 or later
+# takes -AccessToken here too.
+$script:LastIppsToken = $null
+function Connect-BoxCompliance($In) {
+  $t = (Get-BoxAuth 'ipps').access_token
+  if ($t -ne $script:LastIppsToken) {
+    Connect-IPPSSession -AccessToken $t -Organization ([string]$In.tenant.initial_domain) -ShowBanner:$false -ErrorAction Stop | Out-Null
+    $script:LastIppsToken = $t
+  }
+}
+
 function Get-Domain($In) {
   $d = [string]$In.config.company.primary_domain
   if (-not $d) { $d = [string]$In.tenant.initial_domain }

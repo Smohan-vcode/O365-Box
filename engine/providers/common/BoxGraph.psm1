@@ -7,6 +7,8 @@
 
 function Invoke-BoxGraph {
   param([string] $Method = 'GET', [Parameter(Mandatory)] [string] $Uri, $Body)
+  # A read-only worker (box audit) sends GET only (runtime/BoxWorker.ps1).
+  if ($env:BOX_READ_ONLY -eq '1' -and $Method -notin @('GET', 'HEAD')) { throw "read-only (audit): $Method $Uri was refused" }
   $u = if ($Uri -like 'https://*') { $Uri } else { 'https://graph.microsoft.com/v1.0' + $Uri }
   $p = @{ Method = $Method; Uri = $u; ErrorAction = 'Stop'; Headers = @{ Authorization = 'Bearer ' + (Get-BoxAuth 'graph').access_token } }
   if ($null -ne $Body) { $p.Body = ($Body | ConvertTo-Json -Depth 20 -Compress); $p.ContentType = 'application/json' }

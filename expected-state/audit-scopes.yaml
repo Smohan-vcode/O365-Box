@@ -33,3 +33,64 @@ delegated:
   - IdentityRiskyUser.Read.All             # risky users (Entra ID P2 tenants)
   - InformationProtectionPolicy.Read       # sensitivity labels
   - RecordsManagement.Read.All             # retention labels
+
+# Workloads read through their own PowerShell modules (T16-06): the policy
+# steps' verify for Exchange Online, Security & Compliance (Purview),
+# SharePoint (PnP) and Teams. Each needs a delegated token for its own
+# resource. `client` is the public client the token is issued to: empty
+# means the client above, and the Graph sign-in's refresh token is redeemed
+# for the resource (in memory only); otherwise the audit asks for one more
+# device-code sign-in with that client (one per client, for every resource
+# it serves), as the same person. These are Microsoft's own clients for the
+# modules named: Entra pre-authorises them for their resources, which a
+# first-party client such as the Graph tools is not.
+#
+# These tokens carry the module's management scope, which is not read-only
+# by name: what keeps the reads read-only is the person's roles. So a token
+# is requested, and handed to a provider worker, only when every directory
+# role of the person who signed in can only read, and each token must be
+# for that same person (tenant and object id) with no other role. The
+# worker also runs in read-only mode: test, verify and evidence only, and
+# any module cmdlet whose verb could change the tenant is refused.
+#
+# Roles the reader needs, all read-only:
+#   exchange    Global Reader (Exchange's Global Reader role group); Security
+#               Reader for the anti-spam and Defender policies
+#   compliance  Global Reader and Security Reader (Purview role groups of the
+#               same names); labels, DLP and retention may also need a
+#               custom Purview role group with the View-Only DLP Compliance
+#               Management, View-Only Retention Management, Sensitivity Label
+#               Reader and View-Only Audit Logs roles. Never Compliance
+#               Administrator: it can write.
+#   sharepoint  Global Reader (tenant settings and the site list; it cannot
+#               open a site's content, so per-site reads stay not read)
+#   teams       Global Reader
+#
+# resource: an https resource or an application id; {sharepoint_admin} is
+# the tenant's SharePoint admin host, from its initial domain.
+# credential: the name the provider worker reads it under (Get-BoxAuth).
+resources:
+  - name: exchange
+    title: Exchange Online
+    resource: https://outlook.office365.com
+    client: fb78d390-0c51-40cd-8e17-fdbfab77341b   # Exchange Online PowerShell
+    provider: exchange
+    credential: app
+  - name: compliance
+    title: Security & Compliance (Purview)
+    resource: https://ps.compliance.protection.outlook.com
+    client: fb78d390-0c51-40cd-8e17-fdbfab77341b   # the same client: no second sign-in
+    provider: exchange
+    credential: ipps
+  - name: sharepoint
+    title: SharePoint admin
+    resource: "{sharepoint_admin}"
+    client: 9bc3ab49-b65d-410a-85ad-de819febfddc   # SharePoint Online Management Shell
+    provider: sharepoint
+    credential: app
+  - name: teams
+    title: Microsoft Teams
+    resource: 48ac35b8-9aa8-4d74-927d-1f4a14a0b239  # Skype and Teams Tenant Admin API
+    client: 12128f48-ec9e-42f0-b203-ea49fb6af367   # Microsoft Teams PowerShell
+    provider: teams
+    credential: teams

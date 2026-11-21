@@ -41,6 +41,73 @@ $script:Secrets = [System.Collections.Generic.List[string]]::new()
 $script:BoxAuth = @{}
 $script:CurrentId = $null
 
+# Read-only mode (box audit, SPEC §26): set by the orchestrator through
+# BOX_READ_ONLY=1, never by a request. Only test, verify and evidence run;
+# in the provider module, every module cmdlet whose verb could change the
+# tenant is replaced by a function that refuses, and Graph and REST calls
+# other than GET are refused (common/BoxGraph.psm1 and the REST wrappers
+# below). Handlers reach the tenant only through cmdlets and REST, so a
+# verify path that would write fails instead of writing.
+$script:ReadOnly = ($env:BOX_READ_ONLY -eq '1')
+$script:ReadOnlyOperations = @('test', 'verify', 'evidence')
+# Verbs that only read. 'Test' is left out: Exchange's Test- cmdlets send mail.
+$script:ReadVerbs = @('Get', 'Connect', 'Disconnect', 'Find', 'Search', 'Select', 'Measure', 'Compare', 'Format', 'ConvertTo', 'ConvertFrom', 'Resolve', 'Read')
+
+# Command names the provider may call that could write: every command the
+# Microsoft modules export with another verb, and every such name the
+# provider's own files call (Exchange Online's cmdlets only exist after
+# Connect-ExchangeOnline). PowerShell's own cmdlets and the provider's own
+# functions are not included.
+function Get-BoxWriteCommandNames([string] $ProviderPath, [string[]] $MicrosoftModules) {
+  $names = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+  $isWrite = { param([string] $n) $v, $rest = $n -split '-', 2; $rest -and ($v -notin $script:ReadVerbs) }
+  foreach ($m in $MicrosoftModules) {
+    foreach ($mod in @(Get-Module -Name $m)) {
+      foreach ($n in $mod.ExportedCommands.Keys) { if (& $isWrite $n) { [void]$names.Add($n) } }
+    }
+  }
+  $dir = Split-Path -Parent $ProviderPath
+  $common = Join-Path $dir '..' 'common'
+  $files = @(Get-ChildItem -Path (Join-Path $dir '*.psm1'), (Join-Path $dir '*.ps1'), (Join-Path $common '*.psm1') -File -ErrorAction SilentlyContinue |
+      Where-Object { $_.Name -notlike '*.Tests.ps1' })
+  $own = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+  $called = @()
+  foreach ($f in $files) {
+    $ast = [System.Management.Automation.Language.Parser]::ParseFile($f.FullName, [ref]$null, [ref]$null)
+    foreach ($fd in $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)) { [void]$own.Add($fd.Name) }
+    $called += @($ast.FindAll({ $args[0] -is [System.Management.Automation.Language.CommandAst] }, $true) | ForEach-Object { $_.GetCommandName() } | Where-Object { $_ })
+  }
+  foreach ($n in $called) {
+    if ($own.Contains($n) -or -not (& $isWrite $n)) { continue }
+    $c = Get-Command -Name $n -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($c -and ([string]$c.ModuleName -like 'Microsoft.PowerShell.*' -or $c.CommandType -eq 'Alias')) { continue }
+    [void]$names.Add($n)
+  }
+  return @($names)
+}
+
+# Defines the refusing functions in the provider module's scope, where they
+# take precedence over the cmdlets for every call the provider makes,
+# including '& $name' with a name built at run time.
+function Install-BoxReadOnlyGuard($ProviderModule, [string[]] $Names) {
+  & $ProviderModule {
+    param([string[]] $Names)
+    foreach ($n in $Names) {
+      Set-Item -Path "function:script:$n" -Value ([scriptblock]::Create("throw 'read-only (audit): $n was refused; a verify must only read'"))
+    }
+    # REST calls keep every parameter of the cmdlet; only GET and HEAD pass.
+    foreach ($n in @('Invoke-RestMethod', 'Invoke-WebRequest')) {
+      $meta = [System.Management.Automation.CommandMetadata]::new((Get-Command "Microsoft.PowerShell.Utility\$n"))
+      $body = [System.Management.Automation.ProxyCommand]::GetCmdletBindingAttribute($meta) +
+        "`nparam(" + [System.Management.Automation.ProxyCommand]::GetParamBlock($meta) + ")`n" +
+        "`$m = if (`$PSBoundParameters.ContainsKey('Method')) { [string]`$PSBoundParameters['Method'] } else { 'Get' }`n" +
+        "if (`$m -notin @('Get', 'Head', 'Default')) { throw `"read-only (audit): $n -Method `$m was refused`" }`n" +
+        "Microsoft.PowerShell.Utility\$n @PSBoundParameters"
+      Set-Item -Path "function:script:$n" -Value ([scriptblock]::Create($body))
+    }
+  } $Names
+}
+
 function Hide-BoxSecret([string] $Text) {
   if ($null -eq $Text) { return $Text }
   foreach ($s in $script:Secrets) {
@@ -114,6 +181,9 @@ function Invoke-BoxRequest($Request) {
     }
     'invoke' {
       $d = $Request.data
+      if ($script:ReadOnly -and [string]$d.operation -notin $script:ReadOnlyOperations) {
+        throw "read-only (audit): operation '$($d.operation)' was refused; only test, verify and evidence run"
+      }
       $stepInput = if ($d.PSObject.Properties['input']) { $d.input } else { $null }
       $results = [System.Collections.Generic.List[object]]::new()
       & { Invoke-BoxStep -Step $d.step -Operation $d.operation -InputObject $stepInput } *>&1 | ForEach-Object {
@@ -134,6 +204,9 @@ try {
   $script:ProviderName = $mod.Name
   if (-not (Get-Command Invoke-BoxStep -Module $mod.Name -ErrorAction SilentlyContinue)) {
     throw "provider module $($mod.Name) does not export Invoke-BoxStep"
+  }
+  if ($script:ReadOnly) {
+    Install-BoxReadOnlyGuard $mod (Get-BoxWriteCommandNames $mod.Path $Modules)
   }
 } catch {
   Write-BoxEvent @{ id = 'start'; ev = 'error'; error = @{ type = $_.Exception.GetType().FullName; message = $_.Exception.Message } }

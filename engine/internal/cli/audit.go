@@ -34,6 +34,7 @@ type auditFlags struct {
 	tenant     string
 	cap        int
 	noSettings bool
+	graphOnly  bool
 	partial    bool
 	modulePath string
 	timeout    time.Duration
@@ -42,21 +43,44 @@ type auditFlags struct {
 // auditEnv is what the audit reaches the outside world through; tests
 // replace it with recorded responses.
 type auditEnv struct {
-	signIn   func(ctx context.Context, tenant string, scopes []string, out io.Writer) (*auth.Token, error)
+	signIn func(ctx context.Context, tenant string, scopes []string, out io.Writer) (*auth.Token, error)
+	// signInClient is one more device-code sign-in, with another public
+	// client, for the workloads named in title (T16-06).
+	signInClient func(ctx context.Context, tenant, client string, scopes []string, title string, out io.Writer) (*auth.Token, error)
+	// redeem exchanges a refresh token for a token to another resource.
+	redeem   func(ctx context.Context, tenant, client, refresh string, scopes []string) (*auth.Token, error)
 	http     *http.Client
 	v1, beta string
 	dns      audit.Resolver
-	steps    func(ctx context.Context, root string, f *auditFlags, out io.Writer, bySteps map[string][]policy.StepSetting, tenant map[string]any, token string) map[string]audit.StepOutcome
+	steps    func(ctx context.Context, root string, f *auditFlags, out io.Writer, bySteps map[string][]policy.StepSetting, tenant map[string]any, creds auditCreds) map[string]audit.StepOutcome
 	now      func() time.Time
+}
+
+// auditCreds is what the policy steps read with: the audit's read-only
+// Graph token and, when the sign-in is reader-only, the workload tokens.
+type auditCreds struct {
+	graph  string
+	tokens *audit.Tokens // nil: no workload token
 }
 
 func defaultAuditEnv() *auditEnv {
 	return &auditEnv{
 		signIn: func(ctx context.Context, tenant string, scopes []string, out io.Writer) (*auth.Token, error) {
-			return auth.SignInDeviceCode(ctx, nil, tenant, auth.GraphCLIClientID, auth.GraphScopes(scopes), func(dc auth.DeviceCode) {
+			// offline_access returns a refresh token, kept in memory to get
+			// the workload tokens without another sign-in where Entra allows.
+			return auth.SignInDeviceCode(ctx, nil, tenant, auth.GraphCLIClientID, append(auth.GraphScopes(scopes), "offline_access"), func(dc auth.DeviceCode) {
 				fmt.Fprintf(out, "SIGN-IN (read only): open %s and enter the code %s (expires in %d minutes).\n  Sign in as a person with Global Reader (plus Security Reader and a Purview reader role).\n",
 					dc.VerificationURI, dc.UserCode, dc.ExpiresIn/60)
 			})
+		},
+		signInClient: func(ctx context.Context, tenant, client string, scopes []string, title string, out io.Writer) (*auth.Token, error) {
+			return auth.SignInDeviceCode(ctx, nil, tenant, client, scopes, func(dc auth.DeviceCode) {
+				fmt.Fprintf(out, "SIGN-IN (read only, %s): open %s and enter the code %s (expires in %d minutes).\n  Sign in as the same reader account.\n",
+					title, dc.VerificationURI, dc.UserCode, dc.ExpiresIn/60)
+			})
+		},
+		redeem: func(ctx context.Context, tenant, client, refresh string, scopes []string) (*auth.Token, error) {
+			return auth.Redeem(ctx, nil, tenant, client, refresh, scopes)
 		},
 		dns:   net.DefaultResolver,
 		steps: runAuditSteps,
@@ -81,16 +105,28 @@ The first sign-in may ask for consent to the read-only scopes for the
 Microsoft Graph Command Line Tools: a Global Reader cannot consent, so an
 administrator approves them once (or through the admin consent workflow).
 
+Exchange Online, Security & Compliance (Purview), SharePoint (PnP) and Teams
+are read through their own PowerShell modules, each with a delegated token
+for its resource (expected-state/audit-scopes.yaml, resources). Their scopes
+do not limit them to reads, so they are requested only when every directory
+role of the account that signed in can only read, each must be issued to
+that same account, and the provider workers run read-only (test, verify and
+evidence only; module cmdlets that could write and REST calls other than GET
+are refused). Each Microsoft PowerShell client takes one more device-code
+sign-in as the same account (Exchange and Purview share one); --graph-only
+skips them and lists those settings as not read.
+
 What it reads: every catalogue setting through its mapping's verify (the
-Entra ID and Intune policy steps, over Graph); inventories (users and admins
-with MFA registration and last sign-in, role assignments, guests,
-Conditional Access, authentication methods, devices and compliance, sharing,
-labels, retention, alerts, licences, app registrations, SPF and DMARC); and
-activity over the period (directory audit, sign-ins, alerts), as far back as
-the tenant keeps it, capped at --cap records each. Settings and inventories
-held only in Exchange Online, Security & Compliance, SharePoint (PnP), Teams
-or Power Platform PowerShell are listed as "not read" with what reading
-them needs; no value is assumed.
+Entra ID and Intune policy steps over Graph; SharePoint and Teams through
+their modules; Exchange and Purview once their policy steps are built);
+inventories (users and admins with MFA registration and last sign-in, role
+assignments, guests, Conditional Access, authentication methods, devices and
+compliance, sharing, labels, retention, alerts, licences, app registrations,
+SPF and DMARC); and activity over the period (directory audit, sign-ins,
+alerts), as far back as the tenant keeps it, capped at --cap records each.
+Settings that cannot be read with this sign-in (a missing role, a policy
+step not built yet, Power Platform, a site's content) are listed as "not
+read" with the reason; no value is assumed.
 
 The pack goes to --out, a new or empty folder outside this repository:
   index.html       one row per control: status, requirements, gap, evidence
@@ -124,6 +160,7 @@ func newAuditCmd(g *globals) *cobra.Command {
 	c.Flags().IntVar(&f.cap, "cap", 5000, "most records read per activity log (sign-ins, directory audit, alerts)")
 	c.Flags().BoolVar(&f.partial, "partial", false, "build the pack even when the account that signs in can change the tenant (its settings are listed as not read)")
 	c.Flags().BoolVar(&f.noSettings, "no-settings", false, "skip the catalogue settings (policy step verify); inventories only")
+	c.Flags().BoolVar(&f.graphOnly, "graph-only", false, "read over Microsoft Graph only: no Exchange, Purview, SharePoint or Teams sign-in (their settings are listed as not read)")
 	c.Flags().StringVar(&f.modulePath, "module-path", "", "PSModulePath for provider workers")
 	c.Flags().DurationVar(&f.timeout, "step-timeout", 10*time.Minute, "timeout per policy step read")
 	c.AddCommand(&cobra.Command{Use: "verify <folder>", Short: "Check an audit pack's files against its manifest.sha256", Args: cobra.ExactArgs(1),
@@ -198,7 +235,7 @@ func runAudit(ctx context.Context, g *globals, f *auditFlags, env *auditEnv, out
 		return fmt.Errorf("sign-in: %w", err)
 	}
 	// R12: the token lives in this function only and is dropped on return.
-	defer func() { tok.Access = "" }()
+	defer tok.Drop()
 	sess := audit.NewSession(tok.TenantID(), tok.Subject(), tok.Scopes(), tok.Claims)
 	who, _ := tok.Claims["preferred_username"].(string)
 	if who == "" {
@@ -225,6 +262,22 @@ func runAudit(ctx context.Context, g *globals, f *auditFlags, env *auditEnv, out
 
 	hc := audit.ReadOnlyClient(env.http)
 	gc := &graph.Client{HTTP: hc, Token: func() string { return tok.Access }}
+	allowed, why := sess.ProvidersAllowed()
+
+	// The workload tokens are asked for now, so every sign-in happens before
+	// the long reads.
+	var toks *audit.Tokens
+	if allowed && !f.noSettings && !f.graphOnly && len(scopes.Resources) > 0 {
+		_, spAdmin := sharePointHosts(initialDomain(ctx, gc, env.v1))
+		toks = workloadTokens(ctx, env, f, out, sess, tok, scopes.Resources, spAdmin)
+		defer toks.Drop()
+		for _, r := range scopes.Resources {
+			if reason := toks.Reason(r.Name); reason != "" {
+				notes = append(notes, reason+".")
+			}
+		}
+	}
+
 	rd := &audit.Reader{Graph: gc, V1: env.v1, Beta: env.beta, DNS: env.dns, Period: period, Cap: f.cap, Now: now,
 		Progress: func(id, title string) { fmt.Fprintf(out, "  … %s\n", title) }}
 	fmt.Fprintf(out, "Reading inventories for %s…\n", period)
@@ -232,7 +285,6 @@ func runAudit(ctx context.Context, g *globals, f *auditFlags, env *auditEnv, out
 
 	bySteps := audit.AuditSelection(cat, maps)
 	outcomes := map[string]audit.StepOutcome{}
-	allowed, why := sess.ProvidersAllowed()
 	switch {
 	case f.noSettings:
 		why = "skipped with --no-settings"
@@ -243,20 +295,19 @@ func runAudit(ctx context.Context, g *globals, f *auditFlags, env *auditEnv, out
 			if len(ss) > 0 {
 				prov = maps[ss[0].ID].Provider
 			}
-			if audit.GraphProviders[prov] {
+			if audit.GraphProviders[prov] || audit.TokenProviders[prov] {
 				outcomes[st] = audit.StepOutcome{Step: st, Provider: prov, Reason: why}
 			}
 		}
-		notes = append(notes, "Catalogue settings read by the Entra ID and Intune policy steps were not read: "+why+".")
+		notes = append(notes, "Catalogue settings read by the Entra ID, Intune, Exchange, Purview, SharePoint and Teams policy steps were not read: "+why+".")
 	default:
-		name, _, _ := strings.Cut(strings.ToLower(rd.InitialDomain()), ".")
 		tenant := map[string]any{"id": sess.Tenant, "initial_domain": rd.InitialDomain()}
-		if name != "" {
-			tenant["sharepoint"] = "https://" + name + ".sharepoint.com"
-			tenant["sharepoint_admin"] = "https://" + name + "-admin.sharepoint.com"
+		if root, admin := sharePointHosts(rd.InitialDomain()); root != "" {
+			tenant["sharepoint"], tenant["sharepoint_admin"] = root, admin
 		}
 		fmt.Fprintln(out, "Reading catalogue settings through the policy steps (audit mode: test, verify, evidence)…")
-		outcomes = env.steps(ctx, root, f, out, bySteps, tenant, tok.Access)
+		outcomes = env.steps(ctx, root, f, out, bySteps, tenant, auditCreds{graph: tok.Access, tokens: toks})
+		explainUnbuilt(bySteps, maps, outcomes, toks, f.graphOnly)
 	}
 	settings := audit.ReadSettings(cat, maps, bySteps, outcomes)
 	notes = append(notes, notReadNote(settings)...)
@@ -264,12 +315,14 @@ func runAudit(ctx context.Context, g *globals, f *auditFlags, env *auditEnv, out
 	a := audit.Assess(cat, fw, settings, invs)
 	pack := &audit.Pack{Tenant: sess.Tenant, Organisation: rd.OrganisationName(), Subject: sess.Subject, ReadBy: "box audit " + Version,
 		Period: period, ReadAt: now().UTC(), Framework: fw, Assessment: a, Inventories: invs, Settings: settings, Steps: outcomes, Notes: notes}
-	tok.Access, gc = "", nil
+	tok.Drop()
+	toks.Drop()
+	gc = nil
 	files, err := audit.Write(dir, pack)
 	if err != nil {
 		return err
 	}
-	fmt.Fprintln(out, "✓ sign-in token dropped (never written)")
+	fmt.Fprintln(out, "✓ sign-in token dropped (never written), with every workload token")
 	if g.asJSON {
 		return writeJSON(out, map[string]any{"command": "audit", "framework": fw.ID, "tenant": sess.Tenant, "period": period.String(),
 			"out": dir, "files": len(files), "controls": a.Counts})
@@ -288,9 +341,110 @@ func runAudit(ctx context.Context, g *globals, f *auditFlags, env *auditEnv, out
 	return nil
 }
 
+// workloadTokens asks for the Exchange, Purview, SharePoint and Teams tokens
+// (T16-06) and prints each outcome. Tokens refuses them unless the sign-in
+// is reader-only.
+func workloadTokens(ctx context.Context, env *auditEnv, f *auditFlags, out io.Writer, sess audit.Session, main *auth.Token, list []audit.Resource, spAdmin string) *audit.Tokens {
+	tenant := sess.Tenant
+	if tenant == "" {
+		tenant = f.tenant
+	}
+	src := audit.TokenSource{}
+	if env.redeem != nil {
+		src.Redeem = func(ctx context.Context, client, refresh string, scopes []string) (*auth.Token, error) {
+			return env.redeem(ctx, tenant, client, refresh, scopes)
+		}
+	}
+	if env.signInClient != nil {
+		src.SignIn = func(ctx context.Context, client string, scopes []string, title string) (*auth.Token, error) {
+			return env.signInClient(ctx, tenant, client, scopes, title, out)
+		}
+	}
+	toks := audit.NewTokens(sess, auth.GraphCLIClientID, main, src)
+	toks.Now = env.now
+	fmt.Fprintln(out, "Signing in read-only to Exchange Online, Security & Compliance, SharePoint and Teams…")
+	toks.Acquire(ctx, list, spAdmin, func(r audit.Resource, err error) {
+		title := r.Title
+		if title == "" {
+			title = r.Name
+		}
+		if err != nil {
+			fmt.Fprintf(out, "  ✗ %s: not signed in: %v\n", title, err)
+			return
+		}
+		fmt.Fprintf(out, "  ✓ %s: signed in read-only as the same account\n", title)
+	})
+	return toks
+}
+
+// initialDomain reads the tenant's initial domain (for its SharePoint
+// hosts) before the inventories, so every sign-in happens first.
+func initialDomain(ctx context.Context, gc *graph.Client, v1 string) string {
+	if v1 == "" {
+		v1 = "https://graph.microsoft.com/v1.0"
+	}
+	var org struct {
+		Value []struct {
+			VerifiedDomains []struct {
+				Name      string `json:"name"`
+				IsInitial bool   `json:"isInitial"`
+			} `json:"verifiedDomains"`
+		} `json:"value"`
+	}
+	if gc.Get(ctx, v1+"/organization?$select=verifiedDomains", &org) != nil {
+		return ""
+	}
+	for _, o := range org.Value {
+		for _, d := range o.VerifiedDomains {
+			if d.IsInitial {
+				return d.Name
+			}
+		}
+	}
+	return ""
+}
+
+// sharePointHosts are the tenant's SharePoint root and admin hosts, from its
+// initial domain (<name>.onmicrosoft.com).
+func sharePointHosts(initial string) (root, admin string) {
+	name, _, _ := strings.Cut(strings.ToLower(initial), ".")
+	if name == "" {
+		return "", ""
+	}
+	return "https://" + name + ".sharepoint.com", "https://" + name + "-admin.sharepoint.com"
+}
+
+// explainUnbuilt gives the settings of steps that did not run, for a
+// provider read with a workload token, the real reason: the step is not
+// built yet, or there is no token and why.
+func explainUnbuilt(bySteps map[string][]policy.StepSetting, maps map[string]policy.Mapping, outcomes map[string]audit.StepOutcome, toks *audit.Tokens, graphOnly bool) {
+	for st, ss := range bySteps {
+		if _, ok := outcomes[st]; ok || len(ss) == 0 {
+			continue
+		}
+		prov := maps[ss[0].ID].Provider
+		if !audit.TokenProviders[prov] {
+			continue
+		}
+		res := audit.StepResource(prov, st)
+		reason := ""
+		switch {
+		case graphOnly:
+			reason = "needs " + audit.NeedsFor(prov, st) + "; skipped with --graph-only"
+		case toks != nil && toks.Has(res):
+			reason = "the policy step " + st + " is not built yet: the read-only sign-in for it worked, but no verify reads these settings"
+		case toks != nil && toks.Reason(res) != "":
+			reason = "needs " + audit.NeedsFor(prov, st) + ": " + toks.Reason(res)
+		default:
+			continue
+		}
+		outcomes[st] = audit.StepOutcome{Step: st, Provider: prov, Reason: reason}
+	}
+}
+
 // notReadNote summarises the settings not read, by reason.
 func notReadNote(settings map[string]*audit.SettingRead) []string {
-	by, addon := map[string]int{}, 0
+	by, unbuilt, addon := map[string]int{}, map[string]int{}, 0
 	for _, s := range settings {
 		switch {
 		case s.Status != audit.NotRead:
@@ -298,11 +452,16 @@ func notReadNote(settings map[string]*audit.SettingRead) []string {
 			addon++
 		case strings.HasPrefix(s.Detail, "needs "):
 			by[s.Provider]++
+		case strings.Contains(s.Detail, " is not built yet"):
+			unbuilt[s.Step]++
 		}
 	}
 	var out []string
 	if addon > 0 {
 		out = append(out, fmt.Sprintf("%d add-on setting(s) are outside the subscription and have no read (not read).", addon))
+	}
+	for _, st := range sortedKeys(unbuilt) {
+		out = append(out, fmt.Sprintf("%d setting(s) not read: the policy step %s that verifies them is not built yet.", unbuilt[st], st))
 	}
 	for _, p := range sortedKeys(by) {
 		out = append(out, fmt.Sprintf("%d %s setting(s) not read: needs %s.", by[p], p, audit.NeedsFor(p, "")))
@@ -310,9 +469,57 @@ func notReadNote(settings map[string]*audit.SettingRead) []string {
 	return out
 }
 
-// runAuditSteps runs the Entra ID and Intune policy steps in audit mode
-// with the delegated token and returns each step's test and verify result.
-func runAuditSteps(ctx context.Context, root string, f *auditFlags, out io.Writer, bySteps map[string][]policy.StepSetting, tenant map[string]any, token string) map[string]audit.StepOutcome {
+// auditStepReason says why a built policy step cannot run in audit mode
+// ("" when it can): its provider reads neither over Graph nor with a
+// workload token the audit holds.
+func auditStepReason(st *plan.Step, creds auditCreds) string {
+	switch {
+	case audit.GraphProviders[st.Provider]:
+		return ""
+	case !audit.TokenProviders[st.Provider]:
+		return "needs " + audit.NeedsFor(st.Provider, st.ID)
+	}
+	res := audit.StepResource(st.Provider, st.ID)
+	if creds.tokens != nil && creds.tokens.Has(res) {
+		return ""
+	}
+	reason := "needs " + audit.NeedsFor(st.Provider, st.ID)
+	if creds.tokens != nil && creds.tokens.Reason(res) != "" {
+		reason += ": " + creds.tokens.Reason(res)
+	}
+	return reason
+}
+
+// auditWorkerCreds is what a provider worker gets in audit mode: the
+// read-only Graph token, as "app" too for the Graph providers, and for the
+// others their workload tokens under the names they read (app, ipps,
+// teams). Tokens near expiry are renewed from the refresh token.
+func auditWorkerCreds(ctx context.Context, provider string, creds auditCreds, secret func(string)) (map[string]any, error) {
+	g := map[string]any{"access_token": creds.graph}
+	out := map[string]any{"graph": g}
+	if audit.GraphProviders[provider] {
+		out["app"] = g
+		return out, nil
+	}
+	if creds.tokens == nil {
+		return out, nil
+	}
+	for cred, name := range creds.tokens.ForProvider(provider) {
+		a, err := creds.tokens.Token(ctx, name)
+		if err != nil {
+			return nil, err
+		}
+		secret(a)
+		out[cred] = map[string]any{"access_token": a}
+	}
+	return out, nil
+}
+
+// runAuditSteps runs the policy steps in audit mode, in read-only provider
+// workers: Entra ID and Intune with the Graph token, SharePoint, Teams and
+// (once built) Exchange and Purview with their workload tokens. It returns
+// each step's test and verify result.
+func runAuditSteps(ctx context.Context, root string, f *auditFlags, out io.Writer, bySteps map[string][]policy.StepSetting, tenant map[string]any, creds auditCreds) map[string]audit.StepOutcome {
 	outcomes := map[string]audit.StepOutcome{}
 	cat, err := plan.Load(filepath.Join(root, "engine", "providers"), filepath.Join(root, "engine", "gates.yaml"))
 	reason := ""
@@ -326,22 +533,26 @@ func runAuditSteps(ctx context.Context, root string, f *auditFlags, out io.Write
 		reason = "engine defaults: " + err.Error()
 	}
 	g := &plan.Graph{Nodes: map[string]*plan.Node{}}
+	running := map[string]bool{}
 	for id := range bySteps {
 		var st *plan.Step
 		if cat != nil {
 			st = cat.Steps[id]
 		}
-		switch {
-		case st == nil:
-			// Not built yet (T14): ReadSettings reports what reading it needs.
+		if st == nil {
+			// Not built yet (T14): the caller and ReadSettings say so.
 			continue
-		case !audit.GraphProviders[st.Provider]:
-			outcomes[id] = audit.StepOutcome{Step: id, Provider: st.Provider, Reason: "needs " + audit.NeedsFor(st.Provider, id)}
+		}
+		why := auditStepReason(st, creds)
+		switch {
+		case why != "":
+			outcomes[id] = audit.StepOutcome{Step: id, Provider: st.Provider, Reason: why}
 		case reason != "":
 			outcomes[id] = audit.StepOutcome{Step: id, Provider: st.Provider, Reason: reason}
 		default:
 			g.Nodes[id] = &plan.Node{Step: st}
 			g.Order = append(g.Order, id)
+			running[st.Provider] = true
 		}
 	}
 	if len(g.Order) == 0 {
@@ -358,20 +569,26 @@ func runAuditSteps(ctx context.Context, root string, f *auditFlags, out io.Write
 			fmt.Fprintf(out, "  - %s: %s\n", e.Step, e.Msg)
 		}
 	}), nil)
-	red.AddSecret(token)
+	red.AddSecret(creds.graph)
+	if creds.tokens != nil {
+		for _, s := range creds.tokens.Secrets() {
+			red.AddSecret(s)
+		}
+	}
 	specs := map[string]providers.PoolSpec{}
 	for name, man := range cat.Manifests {
-		if audit.GraphProviders[name] {
-			specs[name] = providers.PoolSpec{Provider: man.ModuleFile(), Modules: man.Modules}
+		if running[name] {
+			// Read-only workers: test, verify and evidence only, and no module
+			// cmdlet or REST call that could write (BoxWorker.ps1).
+			specs[name] = providers.PoolSpec{Provider: man.ModuleFile(), Modules: man.Modules, ReadOnly: true}
 		}
 	}
 	pool := &providers.Pool{
 		Script:     filepath.Join(root, "engine", "providers", "runtime", "BoxWorker.ps1"),
 		ModulePath: f.modulePath,
 		Specs:      specs,
-		CredsFunc: func(context.Context, string) (map[string]any, error) {
-			t := map[string]any{"access_token": token}
-			return map[string]any{"graph": t, "app": t}, nil
+		CredsFunc: func(ctx context.Context, provider string) (map[string]any, error) {
+			return auditWorkerCreds(ctx, provider, creds, red.AddSecret)
 		},
 	}
 	defer pool.Close()

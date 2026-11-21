@@ -24,7 +24,7 @@
       "resource": "microsoft.teams.federationconfiguration",
       "note": "S-02 not done; candidate resource name, unconfirmed"
     },
-    "verified": "not verified on tenant: host api.interfaces.records.teams.microsoft.com refused by the container's network proxy (T14-09, 2026-11-21). Connect-MicrosoftTeams -AccessTokens (Graph + Teams admin token) succeeds app-only; the pipeline app's token carries the Teams Administrator role. Cmdlet and parameters verified offline with Get-Command in MicrosoftTeams 6.7.0.",
+    "verified": "Verified on the test tenant 2026-11-21 (T14-09), app-only Connect-MicrosoftTeams -AccessTokens (Graph + Teams admin token; the pipeline app holds Teams Administrator at tenant scope), MicrosoftTeams 6.7.0: read and a no-op Set-CsTenantFederationConfiguration succeed.",
     "notes": "Matches baseline external_access.consumer_teams: off. The Global external access policy (Set-CsExternalAccessPolicy -EnableTeamsConsumerAccess $false) is the per-user companion; the tenant switch is sufficient."
   },
   "TMS-002": {
@@ -62,7 +62,7 @@
       "resource": "microsoft.teams.federationconfiguration",
       "note": "S-02 not done; candidate resource name, unconfirmed"
     },
-    "verified": "not verified on tenant: host api.interfaces.records.teams.microsoft.com refused by the container's network proxy (T14-09, 2026-11-21). Connect-MicrosoftTeams -AccessTokens (Graph + Teams admin token) succeeds app-only; the pipeline app's token carries the Teams Administrator role. Cmdlet and parameters verified offline with Get-Command in MicrosoftTeams 6.7.0.",
+    "verified": "Verified on the test tenant 2026-11-21 (T14-09), app-only Connect-MicrosoftTeams -AccessTokens (Graph + Teams admin token; the pipeline app holds Teams Administrator at tenant scope), MicrosoftTeams 6.7.0: read and a no-op Set-CsTenantFederationConfiguration succeed.",
     "notes": "One setting with two tier values; the enhanced allow list has no home in the configuration schema yet. AllowPublicUsers (Skype consumer) should be false and is covered by TMS-001's intent."
   },
   "TMS-003": {
@@ -89,7 +89,7 @@
       "resource": "microsoft.teams.clientconfiguration",
       "note": "S-02 not done; candidate resource name, unconfirmed"
     },
-    "verified": "not verified on tenant: host api.interfaces.records.teams.microsoft.com refused by the container's network proxy (T14-09, 2026-11-21). Connect-MicrosoftTeams -AccessTokens (Graph + Teams admin token) succeeds app-only; the pipeline app's token carries the Teams Administrator role. Cmdlet and parameters verified offline with Get-Command in MicrosoftTeams 6.7.0.",
+    "verified": "Verified on the test tenant 2026-11-21 (T14-09), app-only Connect-MicrosoftTeams -AccessTokens (Graph + Teams admin token; the pipeline app holds Teams Administrator at tenant scope), MicrosoftTeams 6.7.0: read and a no-op Set-CsTeamsClientConfiguration succeed.",
     "notes": "Matches baseline guest_access: off. Entra guest invitation settings are in the entra area."
   },
   "TMS-004": {
@@ -117,7 +117,7 @@
       "resource": "microsoft.teams.meetingpolicy",
       "note": "S-02 not done; candidate resource name, unconfirmed"
     },
-    "verified": "not verified on tenant: host api.interfaces.records.teams.microsoft.com refused by the container's network proxy (T14-09, 2026-11-21). Connect-MicrosoftTeams -AccessTokens (Graph + Teams admin token) succeeds app-only; the pipeline app's token carries the Teams Administrator role. Cmdlet and parameters verified offline with Get-Command in MicrosoftTeams 6.7.0.",
+    "verified": "Verified on the test tenant 2026-11-21 (T14-09), app-only Connect-MicrosoftTeams -AccessTokens (Graph + Teams admin token; the pipeline app holds Teams Administrator at tenant scope), MicrosoftTeams 6.7.0: Get-CsTeamsMeetingPolicy reads, but every app-only write to TeamsMeetingPolicy (Set- on Global, New- on a new name) is refused with 403 PolicyRpException errorCode 40301, with -AccessTokens and with -Certificate alike, while writes to the other Teams policy types succeed with the same tokens. Not applied; see docs/spec-changes.md SC-28.",
     "notes": "Every other meeting policy assigned to users must carry the same values; the step reads all policies (Get-CsTeamsMeetingPolicy) and reports custom ones."
   },
   "TMS-005": {
@@ -144,7 +144,7 @@
       "resource": "microsoft.teams.meetingpolicy",
       "note": "S-02 not done; candidate resource name, unconfirmed"
     },
-    "verified": "not verified on tenant: host api.interfaces.records.teams.microsoft.com refused by the container's network proxy (T14-09, 2026-11-21). Connect-MicrosoftTeams -AccessTokens (Graph + Teams admin token) succeeds app-only; the pipeline app's token carries the Teams Administrator role. Cmdlet and parameters verified offline with Get-Command in MicrosoftTeams 6.7.0.",
+    "verified": "Verified on the test tenant 2026-11-21 (T14-09), app-only Connect-MicrosoftTeams -AccessTokens (Graph + Teams admin token; the pipeline app holds Teams Administrator at tenant scope), MicrosoftTeams 6.7.0: Get-CsTeamsMeetingPolicy reads, but every app-only write to TeamsMeetingPolicy (Set- on Global, New- on a new name) is refused with 403 PolicyRpException errorCode 40301, with -AccessTokens and with -Certificate alike, while writes to the other Teams policy types succeed with the same tokens. Not applied; see docs/spec-changes.md SC-28.",
     "notes": "Anonymous join stays on (baseline meetings.anonymous_join: on); they wait in the lobby (TMS-004)."
   },
   "TMS-006": {
@@ -171,7 +171,7 @@
       "resource": "microsoft.teams.meetingpolicy",
       "note": "S-02 not done; candidate resource name, unconfirmed"
     },
-    "verified": "not verified on tenant: host api.interfaces.records.teams.microsoft.com refused by the container's network proxy (T14-09, 2026-11-21). Connect-MicrosoftTeams -AccessTokens (Graph + Teams admin token) succeeds app-only; the pipeline app's token carries the Teams Administrator role. Cmdlet and parameters verified offline with Get-Command in MicrosoftTeams 6.7.0.",
+    "verified": "Verified on the test tenant 2026-11-21 (T14-09), app-only Connect-MicrosoftTeams -AccessTokens (Graph + Teams admin token; the pipeline app holds Teams Administrator at tenant scope), MicrosoftTeams 6.7.0: Get-CsTeamsMeetingPolicy reads, but every app-only write to TeamsMeetingPolicy (Set- on Global, New- on a new name) is refused with 403 PolicyRpException errorCode 40301, with -AccessTokens and with -Certificate alike, while writes to the other Teams policy types succeed with the same tokens. Not applied; see docs/spec-changes.md SC-28.",
     "notes": "OrganizerOnlyUserOverride is the default 'Only organizers and co-organizers' with the organiser able to change it per meeting; the product has no value that forbids the override."
   },
   "TMS-007": {
@@ -198,7 +198,7 @@
       "resource": "microsoft.teams.meetingpolicy",
       "note": "S-02 not done; candidate resource name, unconfirmed"
     },
-    "verified": "not verified on tenant: host api.interfaces.records.teams.microsoft.com refused by the container's network proxy (T14-09, 2026-11-21). Connect-MicrosoftTeams -AccessTokens (Graph + Teams admin token) succeeds app-only; the pipeline app's token carries the Teams Administrator role. Cmdlet and parameters verified offline with Get-Command in MicrosoftTeams 6.7.0.",
+    "verified": "Verified on the test tenant 2026-11-21 (T14-09), app-only Connect-MicrosoftTeams -AccessTokens (Graph + Teams admin token; the pipeline app holds Teams Administrator at tenant scope), MicrosoftTeams 6.7.0: Get-CsTeamsMeetingPolicy reads, but every app-only write to TeamsMeetingPolicy (Set- on Global, New- on a new name) is refused with 403 PolicyRpException errorCode 40301, with -AccessTokens and with -Certificate alike, while writes to the other Teams policy types succeed with the same tokens. Not applied; see docs/spec-changes.md SC-28.",
     "notes": ""
   },
   "TMS-008": {
@@ -227,7 +227,7 @@
       "resource": "microsoft.teams.meetingpolicy",
       "note": "S-02 not done; candidate resource name, unconfirmed"
     },
-    "verified": "not verified on tenant: host api.interfaces.records.teams.microsoft.com refused by the container's network proxy (T14-09, 2026-11-21). Connect-MicrosoftTeams -AccessTokens (Graph + Teams admin token) succeeds app-only; the pipeline app's token carries the Teams Administrator role. Cmdlet and parameters verified offline with Get-Command in MicrosoftTeams 6.7.0.",
+    "verified": "Verified on the test tenant 2026-11-21 (T14-09), app-only Connect-MicrosoftTeams -AccessTokens (Graph + Teams admin token; the pipeline app holds Teams Administrator at tenant scope), MicrosoftTeams 6.7.0: Get-CsTeamsMeetingPolicy reads, but every app-only write to TeamsMeetingPolicy (Set- on Global, New- on a new name) is refused with 403 PolicyRpException errorCode 40301, with -AccessTokens and with -Certificate alike, while writes to the other Teams policy types succeed with the same tokens. Not applied; see docs/spec-changes.md SC-28.",
     "notes": "Matches baseline meetings. Expiry applies to recordings created after the change."
   },
   "TMS-009": {
@@ -260,7 +260,7 @@
       "resource": "microsoft.teams.messagingpolicy",
       "note": "S-02 not done; candidate resource name, unconfirmed"
     },
-    "verified": "not verified on tenant: host api.interfaces.records.teams.microsoft.com refused by the container's network proxy (T14-09, 2026-11-21). Connect-MicrosoftTeams -AccessTokens (Graph + Teams admin token) succeeds app-only; the pipeline app's token carries the Teams Administrator role. Cmdlet and parameters verified offline with Get-Command in MicrosoftTeams 6.7.0.",
+    "verified": "Verified on the test tenant 2026-11-21 (T14-09), app-only Connect-MicrosoftTeams -AccessTokens (Graph + Teams admin token; the pipeline app holds Teams Administrator at tenant scope), MicrosoftTeams 6.7.0: read and a no-op Set-CsTeamsMessagingPolicy succeed.",
     "notes": "Both switches are needed for the report button in Teams. Reports go where the user-reported settings send them (ReportChatMessageToCustomizedAddressEnabled / ReportChatMessageAddresses, currently Microsoft only)."
   },
   "TMS-010": {
@@ -291,7 +291,7 @@
       "resource": "microsoft.teams.clientconfiguration",
       "note": "S-02 not done; candidate resource name, unconfirmed"
     },
-    "verified": "not verified on tenant: host api.interfaces.records.teams.microsoft.com refused by the container's network proxy (T14-09, 2026-11-21). Connect-MicrosoftTeams -AccessTokens (Graph + Teams admin token) succeeds app-only; the pipeline app's token carries the Teams Administrator role. Cmdlet and parameters verified offline with Get-Command in MicrosoftTeams 6.7.0.",
+    "verified": "Verified on the test tenant 2026-11-21 (T14-09), app-only Connect-MicrosoftTeams -AccessTokens (Graph + Teams admin token; the pipeline app holds Teams Administrator at tenant scope), MicrosoftTeams 6.7.0: read and a no-op Set-CsTeamsClientConfiguration succeed.",
     "notes": ""
   },
   "TMS-011": {
@@ -318,7 +318,7 @@
       "resource": "microsoft.teams.clientconfiguration",
       "note": "S-02 not done; candidate resource name, unconfirmed"
     },
-    "verified": "not verified on tenant: host api.interfaces.records.teams.microsoft.com refused by the container's network proxy (T14-09, 2026-11-21). Connect-MicrosoftTeams -AccessTokens (Graph + Teams admin token) succeeds app-only; the pipeline app's token carries the Teams Administrator role. Cmdlet and parameters verified offline with Get-Command in MicrosoftTeams 6.7.0.",
+    "verified": "Verified on the test tenant 2026-11-21 (T14-09), app-only Connect-MicrosoftTeams -AccessTokens (Graph + Teams admin token; the pipeline app holds Teams Administrator at tenant scope), MicrosoftTeams 6.7.0: read and a no-op Set-CsTeamsClientConfiguration succeed.",
     "notes": ""
   },
   "TMS-012": {
@@ -355,7 +355,7 @@
       "resource": "microsoft.teams.apppermissionpolicy",
       "note": "S-02 not done; candidate resource name, unconfirmed"
     },
-    "verified": "not verified on tenant: host api.interfaces.records.teams.microsoft.com refused by the container's network proxy (T14-09, 2026-11-21). Connect-MicrosoftTeams -AccessTokens (Graph + Teams admin token) succeeds app-only; the pipeline app's token carries the Teams Administrator role. Cmdlet and parameters verified offline with Get-Command in MicrosoftTeams 6.7.0.",
+    "verified": "Verified on the test tenant 2026-11-21 (T14-09), app-only Connect-MicrosoftTeams -AccessTokens (Graph + Teams admin token; the pipeline app holds Teams Administrator at tenant scope), MicrosoftTeams 6.7.0: Set-CsTeamsAppPermissionPolicy and Set-CsTeamsSettingsCustomApp applied by policy.teams; Set-CsTeamsAppSetupPolicy read only (no change planned).",
     "notes": "Tenants moved to app-centric management ignore app permission policies; there each app's availability is set with Update-M365TeamsApp, and the org-wide 'third-party apps' toggle has no documented cmdlet. If the test tenant is app-centric, the org-wide toggle becomes a gate (Teams admin centre > Manage apps > Org-wide app settings) checked by Get-M365TeamsApp showing no third-party app available to everyone. The approved lists have no home in the configuration schema yet. Baseline apps: third_party blocked, custom blocked."
   },
   "TMS-013": {
@@ -383,7 +383,7 @@
       "resource": "microsoft.teams.channelspolicy",
       "note": "S-02 not done; candidate resource name, unconfirmed"
     },
-    "verified": "not verified on tenant: host api.interfaces.records.teams.microsoft.com refused by the container's network proxy (T14-09, 2026-11-21). Connect-MicrosoftTeams -AccessTokens (Graph + Teams admin token) succeeds app-only; the pipeline app's token carries the Teams Administrator role. Cmdlet and parameters verified offline with Get-Command in MicrosoftTeams 6.7.0.",
+    "verified": "Verified on the test tenant 2026-11-21 (T14-09), app-only Connect-MicrosoftTeams -AccessTokens (Graph + Teams admin token; the pipeline app holds Teams Administrator at tenant scope), MicrosoftTeams 6.7.0: Set-CsTeamsChannelsPolicy applied by policy.teams.",
     "notes": "Entra cross-tenant access B2B direct connect stays at its default (blocked); that is the entra area."
   },
   "TMS-014": {

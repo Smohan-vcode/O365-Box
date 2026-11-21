@@ -84,6 +84,17 @@ function Resolve-TeamsPayload {
   return @{ cmdlets = $out; skipped = $skipped; from = $from; placeholders = $placeholders }
 }
 
+# True when Teams answered 403 / errorCode 40301. On the test tenant
+# (2026-11-21) Teams refuses every app-only write to TeamsMeetingPolicy
+# (Set- and New-) and ExternalAccessPolicy with this code, while reads and
+# writes to the other policy types succeed with the same tokens, with
+# -AccessTokens and with -Certificate alike; the Teams Administrator role is
+# assigned at tenant scope (docs/spec-changes.md SC-28).
+function Test-TeamsForbidden($ErrorRecord) {
+  $text = "$($ErrorRecord.Exception.Message) $($ErrorRecord.ErrorDetails.Message)"
+  return ($text -match '"errorCode"\s*:\s*40301' -or $text -match '"code"\s*:\s*"Forbidden"')
+}
+
 # Differences between an object read from Teams and the wanted parameters
 # (Identity selects the object and is not compared).
 function Compare-TeamsValues {
@@ -126,6 +137,7 @@ function Get-TeamsPolicyChanges($In, [switch] $Apply) {
   $script:AuditSkipped = @()
   Connect-Teams
   $changes = @()
+  $failed = @()
   foreach ($cmd in $r.cmdlets.Keys) {
     $want = $r.cmdlets[$cmd]
     if ($audit) {
@@ -152,9 +164,20 @@ function Get-TeamsPolicyChanges($In, [switch] $Apply) {
       $sp = @{ ErrorAction = 'Stop' }
       if ($want.Contains('Identity')) { $sp.Identity = $want['Identity'] }
       foreach ($d in $diff) { $sp[$d.name] = ConvertTo-TeamsParameter $d.name $want[$d.name] }
-      & $cmd @sp | Out-Null
+      # One cmdlet's failure does not stop the others: each write is
+      # independent and repeatable (R4); the step still fails below.
+      try { & $cmd @sp | Out-Null }
+      catch {
+        $ids = @($diff | ForEach-Object { $r.from["$cmd $($_.name)"] } | Sort-Object -Unique) -join ', '
+        if (Test-TeamsForbidden $_) {
+          $failed += "$cmd ($ids): Teams refused the app-only write (403, errorCode 40301) although the pipeline app holds Teams Administrator; see docs/spec-changes.md SC-28"
+        } else {
+          $failed += "$cmd ($ids): $($_.Exception.Message)"
+        }
+      }
     }
   }
+  if ($failed.Count) { throw ("teams policy writes failed; the other cmdlets were applied:`n  " + ($failed -join "`n  ")) }
   return $changes
 }
 

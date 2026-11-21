@@ -199,7 +199,8 @@ func (s *session) appCredentials() error {
 			return nil, err
 		}
 		s.red.AddSecret(tok.Access)
-		out := map[string]any{"app": map[string]any{"access_token": tok.Access, "resource": res}}
+		// Only tokens: the worker redacts every credential string it receives.
+		out := map[string]any{"app": map[string]any{"access_token": tok.Access}}
 		if res == "https://graph.microsoft.com" {
 			out["graph"] = out["app"]
 		} else {

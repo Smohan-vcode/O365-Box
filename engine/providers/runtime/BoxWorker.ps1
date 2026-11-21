@@ -160,7 +160,10 @@ while ($true) {
     $data = Invoke-BoxRequest $req
     Write-BoxEvent @{ id = $script:CurrentId; ev = 'result'; data = $data }
   } catch {
-    Write-BoxEvent @{ id = $script:CurrentId; ev = 'error'; error = @{ type = $_.Exception.GetType().FullName; message = (Hide-BoxSecret $_.Exception.Message) } }
+    $where = ''
+    $ii = $_.InvocationInfo
+    if ($ii -and $ii.ScriptName) { $where = " (at $([IO.Path]::GetFileName($ii.ScriptName)):$($ii.ScriptLineNumber) $($ii.MyCommand))" }
+    Write-BoxEvent @{ id = $script:CurrentId; ev = 'error'; error = @{ type = $_.Exception.GetType().FullName; message = (Hide-BoxSecret ($_.Exception.Message + $where)) } }
   }
 }
 exit 0

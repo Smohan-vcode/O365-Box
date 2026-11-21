@@ -51,3 +51,4 @@ jobs:
           ./bin/box check-literals
           ./bin/box check-connectors
           ./bin/box backlog check
+          ./bin/box runbook --check

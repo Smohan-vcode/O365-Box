@@ -85,7 +85,8 @@ function Get-SiteChanges($In, [switch] $Apply) {
     }
     # Site collection admins are the break-glass accounts only.
     $sc = Connect-Site $u
-    $admins = @(Get-PnPSiteCollectionAdmin -Connection $sc | ForEach-Object { ([string]$_.Email).ToLower() })
+    # Unlicensed accounts have no email: compare the claims login name's UPN.
+    $admins = @(Get-PnPSiteCollectionAdmin -Connection $sc | ForEach-Object { (([string]$_.LoginName) -split '\|')[-1].ToLower() })
     foreach ($bg in Get-BreakGlassUpns $In) {
       if ($bg.ToLower() -notin $admins) {
         $changes += New-BoxChange update "site collection admin $bg on $u"
@@ -120,6 +121,16 @@ function Get-SiteChanges($In, [switch] $Apply) {
 }
 
 # ---------- sharepoint.libraries ----------
+function Get-ListPrincipals($Conn, [string] $Title) {
+  # Login names holding a role on a list with unique permissions.
+  $ctx = $Conn.Context
+  $ras = $ctx.Web.Lists.GetByTitle($Title).RoleAssignments
+  $ctx.Load($ras)
+  $ctx.ExecuteQuery()
+  foreach ($ra in $ras) { $ctx.Load($ra.Member) }
+  $ctx.ExecuteQuery()
+  return @($ras | ForEach-Object { [string]$_.Member.LoginName })
+}
 function Get-LibUrl([string] $Title) { return ($Title -replace '[^A-Za-z0-9]', '') }
 function Add-Folders($sc, [string] $Parent, $Folders, [ref] $Changes, [switch] $Apply) {
   foreach ($f in @($Folders | Where-Object { $_ })) {
@@ -165,10 +176,7 @@ function Get-LibraryChanges($In, [switch] $Apply) {
           if ($Apply) { Set-PnPList -Identity $l.name -BreakRoleInheritance -CopyRoleAssignments:$false -ClearSubscopes -Connection $sc | Out-Null }
         }
         $ras = @()
-        if ($list.HasUniqueRoleAssignments) {
-          $ctx = Get-PnPContext -Connection $sc
-          $ras = @(Get-PnPProperty -ClientObject $list -Property RoleAssignments -Connection $sc | ForEach-Object { Get-PnPProperty -ClientObject $_ -Property Member -Connection $sc | Out-Null; [string]$_.Member.LoginName })
-        }
+        if ($list.HasUniqueRoleAssignments) { $ras = Get-ListPrincipals $sc $l.name }
         foreach ($p in $l.access.PSObject.Properties) {
           $login = Get-GroupLogin $p.Name
           if ($login -notin $ras) {

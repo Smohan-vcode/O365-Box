@@ -13,3 +13,5 @@ TestResults/
 *.box-draft
 *.box-export
 .psmodules/
+# Agent worktrees (temporary working copies)
+/.claude/worktrees/

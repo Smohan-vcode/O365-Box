@@ -57,6 +57,7 @@ func loadValidConfig(root, path string, out io.Writer) (*config.Document, error)
 func newBootstrapCmd(g *globals) *cobra.Command {
 	var cfgPath, repo string
 	var live bool
+	var auditReader string
 	c := &cobra.Command{Use: "bootstrap", Short: "Sign in as Global Administrator once and create the pipeline app, its permissions and the break-glass accounts (SPEC §18.5)",
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
@@ -117,7 +118,11 @@ func newBootstrapCmd(g *globals) *cobra.Command {
 					len(d.Domains), len(d.Plans), d.Users, d.SecurityDefaultsOn != nil && *d.SecurityDefaultsOn)
 			}
 			say := func(f string, a ...any) { fmt.Fprintf(out, f+"\n", a...) }
-			res, err := bootstrap.Run(ctx, admin, bootstrap.Options{Tenant: tenant, Permissions: perms, BreakGlass: bg,
+			var reader *bootstrap.BreakGlassUser
+			if auditReader != "" {
+				reader = &bootstrap.BreakGlassUser{Alias: auditReader, DisplayName: "Audit reader (read-only)"}
+			}
+			res, err := bootstrap.Run(ctx, admin, bootstrap.Options{Tenant: tenant, Permissions: perms, BreakGlass: bg, AuditReader: reader,
 				GitHubRepo: repo, PrimaryDomain: cfg.Company.PrimaryDomain, Keys: ks, Say: say})
 			// R12: the Global Administrator token is dropped here and never stored.
 			tok.Access, admin = "", nil
@@ -133,6 +138,7 @@ func newBootstrapCmd(g *globals) *cobra.Command {
 	c.Flags().StringVar(&cfgPath, "config", "", "configuration document")
 	c.Flags().StringVar(&repo, "github-repo", "", "owner/name of the company's copy of this repository, for the federated credential")
 	c.Flags().BoolVar(&live, "live", false, "allow a live tenant")
+	c.Flags().StringVar(&auditReader, "audit-reader", "", "also create a read-only account with this alias for box audit (Global Reader, Security Reader, Reports Reader)")
 	return c
 }
 

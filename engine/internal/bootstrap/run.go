@@ -37,6 +37,9 @@ var RoleTemplates = map[string]string{
 	"Compliance Administrator": "17315797-102d-40b4-93e0-432062caca18",
 	"Security Administrator":   "194ae4cb-b126-40b2-bd5b-6091b380977d",
 	"Intune Administrator":     "3a2c62db-5318-420d-8d74-23affee5d9d5",
+	"Global Reader":            "f2ef992c-3afb-46b9-b7cf-a126ee74c451",
+	"Security Reader":          "5d6b6bb7-de71-4623-b4af-96380a352509",
+	"Reports Reader":           "4a5d8f65-41da-4de4-8968-e035b65339cf",
 }
 
 // PipelineAppName is the display name of the pipeline app registration.
@@ -130,9 +133,12 @@ func Credential(ks keystore.Store, tenant string) (*auth.AppCredential, *Pipelin
 
 // Options for a bootstrap run.
 type Options struct {
-	Tenant        string
-	Permissions   Permissions
-	BreakGlass    []BreakGlassUser
+	Tenant      string
+	Permissions Permissions
+	BreakGlass  []BreakGlassUser
+	// AuditReader, when set, is a read-only account for box audit (SPEC
+	// §26): Global Reader, Security Reader and Reports Reader, nothing else.
+	AuditReader   *BreakGlassUser
 	GitHubRepo    string // owner/name of the company's copy; optional
 	PrimaryDomain string
 	Keys          keystore.Store
@@ -265,6 +271,11 @@ func Run(ctx context.Context, c *graph.Client, opt Options) (*Result, error) {
 	if len(opt.BreakGlass) > 0 {
 		res.Gates = append(res.Gates, "G-02")
 		say("⏸ gate G-02: register two FIDO2 keys per break-glass account; until then they cannot sign in")
+	}
+	if r := opt.AuditReader; r != nil {
+		if err := ensureAuditReader(ctx, c, *r, initial, say); err != nil {
+			return nil, err
+		}
 	}
 	if err := savePipeline(pl); err != nil {
 		return nil, err
@@ -575,4 +586,41 @@ func retryList[T any](ctx context.Context, c *graph.Client, path string) ([]T, e
 		return err
 	})
 	return out, err
+}
+
+// AuditReaderRoles are the only roles of the audit reader account.
+var AuditReaderRoles = []string{"Global Reader", "Security Reader", "Reports Reader"}
+
+// ensureAuditReader creates the read-only audit account with a random
+// password nobody sees: the owner sets one in the Microsoft 365 admin centre
+// (Users > Reset password), so no sign-in secret passes through the box.
+func ensureAuditReader(ctx context.Context, c *graph.Client, u BreakGlassUser, domain string, say func(string, ...any)) error {
+	upn := u.Alias + "@" + domain
+	var existing struct{ ID string }
+	err := c.Get(ctx, "/users/"+url.PathEscape(upn)+"?$select=id", &existing)
+	var ge *graph.Error
+	switch {
+	case err == nil:
+	case errors.As(err, &ge) && ge.Status == http.StatusNotFound:
+		pw := make([]byte, 32)
+		_, _ = rand.Read(pw)
+		var created struct{ ID string }
+		if err := c.Do(ctx, http.MethodPost, "/users", map[string]any{
+			"accountEnabled": true, "displayName": u.DisplayName, "mailNickname": u.Alias, "userPrincipalName": upn,
+			"passwordProfile": map[string]any{"password": "Rd!" + base64.RawURLEncoding.EncodeToString(pw), "forceChangePasswordNextSignIn": true},
+		}, &created); err != nil {
+			return fmt.Errorf("create audit reader %s: %w", upn, err)
+		}
+		existing.ID = created.ID
+		say("+ audit reader %s created; set its password in the Microsoft 365 admin centre (Users > Reset password)", upn)
+	default:
+		return err
+	}
+	for _, r := range AuditReaderRoles {
+		if err := ensureRole(ctx, c, existing.ID, r, say, upn); err != nil {
+			return err
+		}
+	}
+	say("✓ audit reader %s holds only: %s", upn, strings.Join(AuditReaderRoles, ", "))
+	return nil
 }

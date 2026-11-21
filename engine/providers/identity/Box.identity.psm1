@@ -4,6 +4,7 @@
 Import-Module (Join-Path $PSScriptRoot '..' 'common' 'BoxProvider.psm1') -Force
 Import-Module (Join-Path $PSScriptRoot '..' 'common' 'BoxGraph.psm1') -Force
 Import-Module (Join-Path $PSScriptRoot 'BoxIdentityPolicy.psm1') -Force
+Import-Module (Join-Path $PSScriptRoot 'BoxIdentityMfa.psm1') -Force
 
 $GlobalAdmin = '62e90394-69f5-4237-9190-012177145e10'
 # Roles treated as privileged by CA03 and CA05.
@@ -192,7 +193,43 @@ function Get-AuthMethodChanges($In, [switch] $Apply) {
       }
     }
   }
+  # Registration campaign (T14-17): not a catalogue setting yet, so this
+  # step owns it (baseline registration_campaign; docs/spec-changes.md SC-27).
+  $rc = $In.defaults.baseline_identity.registration_campaign
+  if ($rc) {
+    $bg = Get-GroupByName ([string]$rc.exclude_group)
+    if (-not $bg) { throw "the registration campaign exclusion group $($rc.exclude_group) does not exist (run box bootstrap)" }
+    $changes += @(Get-BoxCampaignChanges -Baseline $rc -ExcludeGroupId $bg.id -Apply:$Apply)
+  }
   return $changes
+}
+
+# MFA registration and CA01 readiness (T14-17). The home screen calls this
+# (and plan shows it) to propose enforcing CA01; it never enforces.
+function Get-MfaState($In) {
+  $name = [string]$In.defaults.baseline_identity.registration_campaign.exclude_group
+  if (-not $name) { $name = 'grp-break-glass' }
+  $bg = Get-GroupByName $name
+  $reg = Get-BoxMfaRegistration -ExcludeIds @(if ($bg) { Get-MemberIds $bg.id })
+  $g02 = [bool](& $script:Steps['identity.gate-g02'].verify $In).ok
+  return @{ registration = $reg; readiness = (Get-BoxCA01Readiness -Counts $reg.counts -G02 $g02 -ReportError $reg.error) }
+}
+function Get-BoxMfaEnforcementReadiness($In, $State) {
+  # Counts and object ids only (no names): safe to keep.
+  $s = if ($State) { $State } else { Get-MfaState $In }
+  $c = $s.registration.counts
+  $out = [ordered]@{ ready = $s.readiness.ready; message = $s.readiness.message; reasons = @($s.readiness.reasons) }
+  if ($c) { foreach ($k in 'members', 'members_unregistered', 'admins', 'admins_unregistered', 'unregistered_ids') { $out[$k] = $c[$k] } }
+  return $out
+}
+function Get-AuthMethodVerify($In) {
+  $c = @(Get-AuthMethodChanges $In | Where-Object { $_ })
+  $s = Get-MfaState $In
+  # People still to register are not drift this step can fix: warnings
+  # (counts and object ids; the audit keeps verify warnings) and the report.
+  Write-BoxRegistrationWarnings $s.registration $s.readiness
+  $r = Get-BoxMfaEnforcementReadiness $In $s
+  return @{ ok = ($c.Count -eq 0); drift = $c; report = @((Format-BoxRegistrationSummary $s.registration.counts), $s.readiness.message); mfa = $r }
 }
 
 # ---------- identity.conditional-access (T1-05) ----------
@@ -413,10 +450,18 @@ $script:Steps = [ordered]@{
   }
   'identity.auth-methods' = @{
     test = $ok
-    plan = { param($In) Result-Changes (Get-AuthMethodChanges $In) }
+    plan = { param($In)
+      $r = Result-Changes (Get-AuthMethodChanges $In)
+      $s = Get-MfaState $In   # who still has to register: names on screen only, never in audit mode
+      Write-BoxRegistrationWarnings $s.registration $s.readiness -Names:($In.environment -ne 'audit')
+      $r }
     apply = { param($In) Result-Changes (Get-AuthMethodChanges $In -Apply) }
-    verify = { param($In) $c = @(Get-AuthMethodChanges $In | Where-Object { $_ }); @{ ok = ($c.Count -eq 0); drift = $c } }
-    evidence = { param($In) New-Evidence 'authentication-methods' 'states equal baseline/identity.yaml' }
+    verify = { param($In) Get-AuthMethodVerify $In }
+    evidence = { param($In)
+      $s = Get-MfaState $In
+      @{ items = @(
+          @{ kind = 'authentication-methods'; ref = 'tenant:authentication-methods'; summary = 'states and registration campaign equal baseline/identity.yaml' }
+          @{ kind = 'mfa-registration'; ref = 'tenant:mfa-registration'; summary = "$(Format-BoxRegistrationSummary $s.registration.counts); $($s.readiness.message)" }) } }
   }
   'identity.directory-settings' = @{
     test = $ok
@@ -492,5 +537,6 @@ function Invoke-BoxStep {
 }
 function Get-BoxStepIds { @($script:Steps.Keys) }
 function Get-BoxStepProblems { Test-BoxStepTable -Steps $script:Steps }
-Export-ModuleMember -Function Invoke-BoxStep, Get-BoxStepIds, Get-BoxStepProblems, Get-NotCoveredUsers,
+Export-ModuleMember -Function Invoke-BoxStep, Get-BoxStepIds, Get-BoxStepProblems, Get-NotCoveredUsers, Get-BoxMfaEnforcementReadiness,
+  Get-BoxCampaignWant, Get-BoxCampaignDrift, Get-BoxMfaRegistrationCounts, Get-BoxCA01Readiness, Format-BoxRegistrationSummary,
   Compare-BoxValue, Resolve-BoxPayload, Get-BoxCAState, Merge-BoxGroupSettingValues, Get-BoxIdleTimeout, Get-BoxEntraClaims

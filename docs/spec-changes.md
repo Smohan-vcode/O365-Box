@@ -1212,3 +1212,46 @@ works on any Microsoft 365 tenant, including one the box never built.
 mode in the executor; T16-02 inventories; T16-03 control mapping and
 status; T16-04 pack writer (HTML, CSV, evidence, manifest); T16-05 the
 "Prepare for an audit" path in the TUI.
+
+## SC-27  MFA registration campaign as a catalogue setting (proposed, T14-17)
+
+**Why.** IAM-01 and IAM-02 (docs/gap-closure.md, cause D) need people to
+register a sign-in method before CA01 can be enforced. The authentication
+methods registration campaign prompts them after sign-in. No catalogue
+setting covers it (policy/settings/entra.yaml, expected-state/setting-ids/
+entra.json have no `registrationEnforcement` entry), so T14-17 sets it from
+`baseline/identity.yaml` (`registration_campaign`) in the
+`identity.auth-methods` step, which owns it until this change is approved.
+
+**Proposed catalogue entry** (next free ENT id, centre entra, tier core,
+mode enforce, requirements IAM-01, IAM-02):
+
+- name: Authentication methods: registration campaign (Microsoft Authenticator)
+- apply: `PATCH /beta/policies/authenticationMethodsPolicy` with
+  `registrationEnforcement.authenticationMethodsRegistrationCampaign`:
+  `state: enabled`, `snoozeDurationInDays: 1`,
+  `enforceRegistrationAfterAllowedSnoozes: true`, `includeTargets:
+  [{id: all_users, targetType: group, targetedAuthenticationMethod:
+  microsoftAuthenticator}]`, `excludeTargets: [{id: {group:grp-break-glass},
+  targetType: group}]`
+- read: `GET /beta/policies/authenticationMethodsPolicy` (the
+  enforce-after-snoozes property is beta only; v1.0 omits it)
+- permissions: `graph:Policy.ReadWrite.AuthenticationMethod` (already in
+  the `base` bundle)
+- verified: applied on the test tenant 2026-11-21; second plan 0 changes.
+
+**Also proposed.**
+1. The audit pack reads MFA registration (`GET
+   /reports/authenticationMethods/userRegistrationDetails`, counts and object
+   ids only) as evidence for IAM-01 and IAM-02. Today the audit runs only the
+   policy steps, so the registration count shows in `identity.auth-methods`
+   plan, verify and evidence but not in the pack.
+2. The home screen's "Enforce" action for Sign-in and accounts (§25.3) is
+   offered for CA01 only when `Get-BoxMfaEnforcementReadiness` (identity
+   provider) is ready: every non-break-glass member registered and gate G-02
+   passing. Enforcing stays an owner approval (§25.1).
+3. `snooze_days` could become a choice (§24) if owners want a different
+   prompt rhythm; 1 day is the suggestion.
+
+When approved: add the ENT entry and mapping, remove `registration_campaign`
+from `baseline/identity.yaml`, and let `policy.entra` own the object.

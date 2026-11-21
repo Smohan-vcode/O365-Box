@@ -7,6 +7,17 @@ authentication_methods:
   sms: {state: disabled}
   voice: {state: disabled}
   email_otp: {state: disabled}
+# MFA registration campaign (T14-17): prompts every member without the
+# Authenticator app to register it after sign-in; break-glass accounts are
+# excluded (they use FIDO2, gate G-02). snooze_days: 0 to 14; after three
+# snoozes registration is required. Not a catalogue setting yet (SC-27).
+registration_campaign:
+  state: enabled
+  method: microsoft_authenticator
+  include: all_users
+  exclude_group: grp-break-glass
+  snooze_days: 1
+  enforce_after_snoozes: true
 conditional_access:
   exclude_group: grp-break-glass
   policies:

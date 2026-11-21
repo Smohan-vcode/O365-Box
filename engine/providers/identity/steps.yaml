@@ -26,10 +26,11 @@ steps:
     depends_on: [identity.users]
     reads: [groups, users, company]
   - id: identity.auth-methods
-    title: Authentication methods
+    title: Authentication methods and MFA registration campaign
     track: T1
     task: T1-05
     depends_on: [identity.break-glass]
+    reads: [tenant, users]   # gate G-02 check for CA01 readiness (T14-17)
   - id: identity.directory-settings
     title: Directory settings (app registration, consent, guests, admin consent workflow)
     track: T1

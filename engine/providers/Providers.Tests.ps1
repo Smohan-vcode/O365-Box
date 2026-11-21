@@ -99,6 +99,72 @@ Describe 'policy.capabilities: users not covered (T14-02)' {
   }
 }
 
+Describe 'MFA registration campaign and CA01 readiness (T14-17)' {
+  BeforeAll {
+    Import-Module (Join-Path $PSScriptRoot 'identity' 'Box.identity.psm1') -Force
+    $script:base = [pscustomobject]@{ state = 'enabled'; method = 'microsoft_authenticator'; include = 'all_users'; exclude_group = 'grp-break-glass'; snooze_days = 1; enforce_after_snoozes = $true }
+    $script:rows = @(
+      [pscustomobject]@{ id = 'u1'; userDisplayName = 'A'; userType = 'member'; isAdmin = $true; isMfaRegistered = $true }
+      [pscustomobject]@{ id = 'u2'; userDisplayName = 'B'; userType = 'member'; isAdmin = $true; isMfaRegistered = $false }
+      [pscustomobject]@{ id = 'u3'; userDisplayName = 'C'; userType = 'member'; isAdmin = $false; isMfaRegistered = $false }
+      [pscustomobject]@{ id = 'g1'; userDisplayName = 'G'; userType = 'guest'; isAdmin = $false; isMfaRegistered = $false }
+      [pscustomobject]@{ id = 'bg1'; userDisplayName = 'BG'; userType = 'member'; isAdmin = $true; isMfaRegistered = $false })
+  }
+  It 'targets everyone with the Authenticator app and excludes the break-glass group' {
+    $w = Get-BoxCampaignWant -Baseline $base -ExcludeGroupId 'grp-id'
+    $w.state | Should -Be 'enabled'
+    $w.snoozeDurationInDays | Should -Be 1
+    $w.includeTargets[0].id | Should -Be 'all_users'
+    $w.includeTargets[0].targetedAuthenticationMethod | Should -Be 'microsoftAuthenticator'
+    $w.excludeTargets[0].id | Should -Be 'grp-id'
+  }
+  It 'rejects a snooze outside 0 to 14 days and an unknown method' {
+    { Get-BoxCampaignWant -Baseline ([pscustomobject]@{ state = 'enabled'; method = 'microsoft_authenticator'; snooze_days = 15 }) } | Should -Throw '*0 to 14*'
+    { Get-BoxCampaignWant -Baseline ([pscustomobject]@{ state = 'enabled'; method = 'sms'; snooze_days = 1 }) } | Should -Throw '*not known*'
+  }
+  It 'finds no drift when Graph holds the campaign, whatever the case' {
+    $w = Get-BoxCampaignWant -Baseline $base -ExcludeGroupId 'GRP-ID'
+    $have = [pscustomobject]@{ state = 'enabled'; snoozeDurationInDays = 1; enforceRegistrationAfterAllowedSnoozes = $true
+      includeTargets = @([pscustomobject]@{ id = 'all_users'; targetType = 'group'; targetedAuthenticationMethod = 'microsoftAuthenticator' })
+      excludeTargets = @([pscustomobject]@{ id = 'grp-id'; targetType = 'group' }) }
+    @(Get-BoxCampaignDrift -Want $w -Have $have).Count | Should -Be 0
+  }
+  It 'reports the default Microsoft-managed campaign as drift' {
+    $w = Get-BoxCampaignWant -Baseline $base -ExcludeGroupId 'grp-id'
+    $have = [pscustomobject]@{ state = 'default'; snoozeDurationInDays = 1; enforceRegistrationAfterAllowedSnoozes = $true
+      includeTargets = @([pscustomobject]@{ id = 'all_users'; targetType = 'group'; targetedAuthenticationMethod = 'microsoftAuthenticator' }); excludeTargets = @() }
+    $d = @(Get-BoxCampaignDrift -Want $w -Have $have)
+    $d.Count | Should -Be 2
+    $d[0] | Should -BeLike 'state (default, want enabled)'
+    $d[1] | Should -BeLike 'excludeTargets*'
+  }
+  It 'counts members and administrators not registered, leaving out guests and break-glass accounts' {
+    $c = Get-BoxMfaRegistrationCounts -Details $rows -ExcludeIds @('BG1')
+    $c.members | Should -Be 3
+    $c.members_unregistered | Should -Be 2
+    $c.admins | Should -Be 2
+    $c.admins_unregistered | Should -Be 1
+    $c.unregistered_ids | Should -Be @('u2', 'u3')
+    Format-BoxRegistrationSummary $c | Should -Be '2 of 3 member(s) and 1 of 2 administrator(s) not registered for MFA'
+  }
+  It 'says CA01 can be enforced only when everyone is registered and G-02 passes' {
+    $all = Get-BoxMfaRegistrationCounts -Details @($rows[0]) -ExcludeIds @()
+    (Get-BoxCA01Readiness -Counts $all -G02 $true).ready | Should -BeTrue
+    (Get-BoxCA01Readiness -Counts $all -G02 $true).message | Should -BeLike 'CA01 can be enforced*'
+    $r = Get-BoxCA01Readiness -Counts $all -G02 $false
+    $r.ready | Should -BeFalse
+    $r.reasons | Should -Be @('gate G-02: a break-glass account has no FIDO2 key')
+    $open = Get-BoxMfaRegistrationCounts -Details $rows -ExcludeIds @('bg1')
+    $r = Get-BoxCA01Readiness -Counts $open -G02 $true
+    $r.ready | Should -BeFalse
+    $r.message | Should -BeLike '*2 of 3 member(s) not registered*'
+  }
+  It 'is not ready when the report cannot be read or lists nobody' {
+    (Get-BoxCA01Readiness -Counts $null -G02 $true -ReportError 'denied').ready | Should -BeFalse
+    (Get-BoxCA01Readiness -Counts (Get-BoxMfaRegistrationCounts -Details @()) -G02 $true).ready | Should -BeFalse
+  }
+}
+
 Describe 'policy steps of the identity provider: pure functions (T14-04)' {
   BeforeAll { Import-Module (Join-Path $PSScriptRoot 'identity' 'Box.identity.psm1') -Force }
   It 'matches when the tenant holds every wanted value, ignoring extra properties and order' {

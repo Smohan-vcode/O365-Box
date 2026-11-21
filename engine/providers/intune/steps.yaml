@@ -1,0 +1,6 @@
+# Steps of the intune provider: Device enrolment, compliance and app protection (T1-04).
+# One Microsoft module per provider (spike S-05). Steps are added by the
+# tasks named above; each needs a handler in Box.intune.psm1.
+provider: intune
+modules: [Microsoft.Graph.Authentication]
+steps: []

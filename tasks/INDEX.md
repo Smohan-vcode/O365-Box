@@ -16,7 +16,7 @@ CI runs `box backlog check`.
 | S-08 | Fresh-tenant discovery and browser sign-in | P0 | S | T0-01 | yes | TODO |
 | T0-01 | Configuration schema and repository checks | P0 | S | none |  | DONE |
 | T0-02 | Orchestrator: step contract, graph, state and events | P0 | M | T0-01, S-05 |  | DONE |
-| T0-03 | Provider runner and box doctor | P0 | S | T0-02 |  | TODO |
+| T0-03 | Provider runner and box doctor | P0 | S | T0-02 |  | DONE |
 | T0-04 | Sign-in, discovery and bootstrap | P0 | M | T0-03, S-06, S-08 | yes | TODO |
 | T0-05 | Pipeline and scheduled jobs | P0 | S | T0-04, T0-06 |  | TODO |
 | T0-06 | Configuration store | P0 | M | T0-02, T0-04 |  | TODO |

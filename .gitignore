@@ -12,3 +12,4 @@ TestResults/
 /.box/
 *.box-draft
 *.box-export
+.psmodules/

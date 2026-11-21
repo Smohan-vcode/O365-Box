@@ -1,0 +1,6 @@
+# Steps of the exchange provider: Shared mailboxes, lists, aliases, transport rules, disclaimers and mail baseline (T2).
+# One Microsoft module per provider (spike S-05). Steps are added by the
+# tasks named above; each needs a handler in Box.exchange.psm1.
+provider: exchange
+modules: [ExchangeOnlineManagement]
+steps: []

@@ -1,0 +1,6 @@
+# Steps of the powerplatform provider: Flow solution deployment with the Power Platform CLI (T5).
+# One Microsoft module per provider (spike S-05). Steps are added by the
+# tasks named above; each needs a handler in Box.powerplatform.psm1.
+provider: powerplatform
+modules: []
+steps: []

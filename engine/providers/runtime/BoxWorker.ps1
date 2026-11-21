@@ -8,6 +8,7 @@
     {"id":"r1","op":"hello"}
     {"id":"r2","op":"auth","data":{"graph":{"access_token":"..."}}}
     {"id":"r3","op":"invoke","data":{"step":"x","operation":"plan","input":{...}}}
+    {"id":"r5","op":"steps"}            (step ids the provider implements)
     {"id":"r4","op":"shutdown"}
   The worker answers with lines that start with the marker U+001E "BOX:"
   followed by one JSON event:
@@ -105,6 +106,11 @@ function Invoke-BoxRequest($Request) {
         $stored += $p.Name
       }
       return @{ stored = $stored }
+    }
+    'steps' {
+      $cmd = Get-Command Get-BoxStepIds -Module $script:ProviderName -ErrorAction SilentlyContinue
+      if (-not $cmd) { return @() }
+      return @(& $cmd)
     }
     'invoke' {
       $d = $Request.data

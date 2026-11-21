@@ -60,7 +60,7 @@ func New(out, errOut io.Writer) *cobra.Command {
 	root.SetErr(errOut)
 	root.PersistentFlags().StringVar(&g.repo, "repo", "", "path inside the engine repository (default: current directory)")
 	root.PersistentFlags().BoolVar(&g.asJSON, "json", false, "print machine-readable JSON")
-	root.AddCommand(newConfigCmd(g), newCheckLiteralsCmd(g), newCheckConnectorsCmd(g), newBacklogCmd(g))
+	root.AddCommand(newConfigCmd(g), newCheckLiteralsCmd(g), newCheckConnectorsCmd(g), newBacklogCmd(g), newDoctorCmd(g))
 	root.AddCommand(newRunCommands(g)...)
 	return root
 }

@@ -1,0 +1,6 @@
+# Steps of the dns provider: DNS records through the configured adapter (T2-03).
+# One Microsoft module per provider (spike S-05). Steps are added by the
+# tasks named above; each needs a handler in Box.dns.psm1.
+provider: dns
+modules: []
+steps: []

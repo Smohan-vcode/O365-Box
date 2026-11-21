@@ -248,6 +248,26 @@ func (w *Worker) Hello(ctx context.Context) (*Hello, error) {
 	return &h, json.Unmarshal(raw, &h)
 }
 
+// Steps returns the step ids the provider module implements.
+func (w *Worker) Steps(ctx context.Context) ([]string, error) {
+	raw, err := w.Call(ctx, "steps", nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	var ids []string
+	if len(raw) > 0 && string(raw) != "null" {
+		if err := json.Unmarshal(raw, &ids); err != nil {
+			// A single id is serialised as a string.
+			var one string
+			if json.Unmarshal(raw, &one) != nil {
+				return nil, err
+			}
+			ids = []string{one}
+		}
+	}
+	return ids, nil
+}
+
 // Auth hands credentials to the worker over stdin. They are never written
 // to arguments, environment or disk.
 func (w *Worker) Auth(ctx context.Context, creds map[string]any) error {

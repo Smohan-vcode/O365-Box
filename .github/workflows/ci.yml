@@ -1,0 +1,53 @@
+# Validation on every push and pull request (first part of T0-05).
+name: ci
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      BOX_MODULE_PATH: ${{ github.workspace }}/.psmodules
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Cache PowerShell modules
+        uses: actions/cache@v4
+        with:
+          path: .psmodules
+          key: psmodules-${{ hashFiles('expected-state/modules.yaml') }}-pester-5.6.1
+
+      - name: Build box
+        run: go build -o bin/box ./engine/cmd/box
+
+      - name: Install pinned modules and Pester
+        shell: pwsh
+        run: |
+          ./bin/box doctor --module-path $env:BOX_MODULE_PATH --install
+          if (-not (Test-Path "$env:BOX_MODULE_PATH/Pester/5.6.1")) {
+            Save-PSResource -Name Pester -Version 5.6.1 -Path $env:BOX_MODULE_PATH -TrustRepository
+          }
+
+      - name: Vet and format
+        run: |
+          go vet ./...
+          test -z "$(gofmt -l .)" || { gofmt -l .; exit 1; }
+
+      - name: Tests (race detector, real modules, Pester, end to end)
+        run: go test -race -count=1 ./...
+
+      - name: Repository checks
+        run: |
+          ./bin/box config validate examples/acme/box-config.yaml
+          ./bin/box check-literals
+          ./bin/box check-connectors
+          ./bin/box backlog check

@@ -1,0 +1,6 @@
+# Steps of the sharepoint provider: Hub, sites, libraries, folders, permissions and register lists (T3, T4).
+# One Microsoft module per provider (spike S-05). Steps are added by the
+# tasks named above; each needs a handler in Box.sharepoint.psm1.
+provider: sharepoint
+modules: [PnP.PowerShell]
+steps: []

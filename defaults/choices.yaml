@@ -175,6 +175,57 @@ choices:
         cost: none
         effects: {values: {values.mfa_snooze_days: "7"}}
 
+  # ---------- Security step: values only the company supplies (SPEC §25, T14-04) ----------
+  - id: signin.banned_passwords
+    step: security
+    question: Stop staff using the company's own names in passwords?
+    help: Attackers try a company's name, web address and products first. Microsoft already blocks common passwords; this adds your own names.
+    options:
+      - value: company
+        label: Yes, block our company and product names
+        detail: Your trading name, legal name and web address, and the product names you list in the Dictionary (company.product_names). They follow your company details when those change.
+        recommended: true
+        cost: none
+      - value: none
+        label: No, only Microsoft's list of common passwords
+        cost: none
+        effects: {exceptions: [ENT-026]}
+
+  - id: signin.managed_plan_users
+    step: security
+    question: Who must use a managed computer or a protected app for company data?
+    help: Company data opens only on computers the company manages and, on phones, in apps that protect it. This needs a plan that includes device management (Business Premium).
+    options:
+      - value: plan
+        label: Everyone on Business Premium
+        detail: We keep a group, plan-business_premium, of the people you put on Business Premium, and apply the rule to it.
+        recommended: true
+        cost: none
+        effects: {values: {values.managed_plan_group: plan-business_premium}}
+      - value: all
+        label: All users
+        detail: Also covers anyone on a plan without device management; they cannot open company data until their device is managed.
+        cost: none
+        effects: {variants: {ENT-004: all-users, ENT-005: all-users}}
+
+  - id: devices.join
+    step: security
+    question: Who may join Windows PCs to the company (Microsoft Entra)?
+    help: Joining a Windows PC makes it a company computer. Limiting who can do it stops a stolen account adding an attacker's PC.
+    when: module devices
+    options:
+      - value: admins
+        label: Only administrators
+        detail: We keep a group, grp-device-join, holding your administrators (grp-admins). Anyone else who sets up PCs can be added to it.
+        recommended: true
+        cost: none
+        effects: {values: {values.device_join_group: grp-device-join}}
+      - value: all
+        label: Any member of staff
+        detail: Anyone can join a PC with their own account (two-step sign-in still applies).
+        cost: none
+        effects: {variants: {ENT-039: all-users}}
+
   - id: forms.external_responses
     step: security
     question: Can people outside the company fill in your Microsoft Forms?

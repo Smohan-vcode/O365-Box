@@ -210,6 +210,12 @@ Describe 'policy steps of the identity provider: pure functions (T14-04)' {
     { Resolve-BoxPayload -Payload @{ g = @('{group:plan-x}') } -Groups @{ 'plan-x' = $null } } | Should -Throw '*unresolved*plan-x*'
     { Resolve-BoxPayload -Payload @{ v = '{dictionary:company.trading_name}\t{config:policy.x}' } -Groups @{} } | Should -Throw '*unresolved*'
   }
+  It 'derives banned password terms from the company names, domains and products' {
+    $t = Get-BoxBannedTerms -Names @('Acme', 'Acme Widgets Ltd', 'RocketSkates', 'Roadrunner Detector 3000', '') -Domains @('acme-widgets.example', 'acme.example')
+    # Joined names over 16 characters, words under 4, numbers and legal forms are left out; case-insensitive duplicates once.
+    $t | Should -Be @('Acme', 'AcmeWidgets', 'Widgets', 'RocketSkates', 'Roadrunner', 'Detector')
+    @(Get-BoxBannedTerms -Names @() -Domains @()).Count | Should -Be 0
+  }
   It 'fills text, number and terms placeholders from the values the choices supply' {
     $r = Resolve-BoxPayload -Payload @{ n = '{number:days}'; t = 'at {text:time}'; l = '{terms:company}' } -Groups @{} -Fill @{ 'number:days' = 3; 'text:time' = '02:00'; 'terms:company' = "A`tB" }
     $r.n | Should -Be 3

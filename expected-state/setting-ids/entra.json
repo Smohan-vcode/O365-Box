@@ -282,7 +282,7 @@
       "note": "S-02 not done; TCM support for this resource type not confirmed"
     },
     "verified": "read-only GET /v1.0/identity/conditionalAccess/policies returned 200 with CA01-CA05 (state enabledForReportingButNotEnforced)",
-    "notes": "DIFFERS from CA04 as built today: Get-PolicyBody targets includeUsers ['All'] and baseline CA04 lists platforms windows, macOS, iOS, android. The setting says desktop and web apps for users on a managed plan, so iOS/Android move to ENT-005 and the scope must be a group of users holding the managed plan. No such group exists in the configuration schema ({group:plan-business_premium} is a placeholder): a decision is needed (dynamic group on assignedPlans needs Entra P1; or a group maintained by identity.users). mode staged: payload_audit is the report-only form (state enabledForReportingButNotEnforced) with the same scope; the identity provider also keeps blocking policies report-only until gate G-02 passes (SPEC 20.2). Whether the enforce step goes first to rollout.pilot_group or straight to all users is an orchestrator decision not settled here.",
+    "notes": "DIFFERS from CA04 as built today: Get-PolicyBody targets includeUsers ['All'] and baseline CA04 lists platforms windows, macOS, iOS, android. The setting says desktop and web apps for users on a managed plan, so iOS/Android move to ENT-005 and the scope must be a group of users holding the managed plan. Choice signin.managed_plan_users (T14-04): 'plan' (recommended) scopes it to plan-business_premium, which identity.groups creates and fills with the users the configuration puts on Business Premium (defaults/structure.yaml choice_groups); 'all' targets all users (variant all-users). mode staged: payload_audit is the report-only form (state enabledForReportingButNotEnforced) with the same scope; the identity provider also keeps blocking policies report-only until gate G-02 passes (SPEC 20.2). Whether the enforce step goes first to rollout.pilot_group or straight to all users is an orchestrator decision not settled here.",
     "payload_audit": {
       "displayName": "CA04 Compliant device for managed-plan users",
       "state": "enabledForReportingButNotEnforced",
@@ -316,6 +316,82 @@
         "builtInControls": [
           "compliantDevice"
         ]
+      }
+    },
+    "variants": {
+      "all-users": {
+        "payload": {
+          "displayName": "CA04 Compliant device for managed-plan users",
+          "state": "enabled",
+          "conditions": {
+            "users": {
+              "includeUsers": [
+                "All"
+              ],
+              "excludeGroups": [
+                "{group:grp-break-glass}"
+              ]
+            },
+            "applications": {
+              "includeApplications": [
+                "All"
+              ]
+            },
+            "clientAppTypes": [
+              "browser",
+              "mobileAppsAndDesktopClients"
+            ],
+            "platforms": {
+              "includePlatforms": [
+                "windows",
+                "macOS"
+              ]
+            }
+          },
+          "grantControls": {
+            "operator": "OR",
+            "builtInControls": [
+              "compliantDevice"
+            ]
+          }
+        },
+        "payload_audit": {
+          "displayName": "CA04 Compliant device for managed-plan users",
+          "state": "enabledForReportingButNotEnforced",
+          "conditions": {
+            "users": {
+              "includeUsers": [
+                "All"
+              ],
+              "excludeGroups": [
+                "{group:grp-break-glass}"
+              ]
+            },
+            "applications": {
+              "includeApplications": [
+                "All"
+              ]
+            },
+            "clientAppTypes": [
+              "browser",
+              "mobileAppsAndDesktopClients"
+            ],
+            "platforms": {
+              "includePlatforms": [
+                "windows",
+                "macOS"
+              ]
+            }
+          },
+          "grantControls": {
+            "operator": "OR",
+            "builtInControls": [
+              "compliantDevice"
+            ]
+          }
+        },
+        "check": "state == 'enabled'; conditions.users.includeUsers == ['All']; conditions.platforms.includePlatforms == ['windows','macOS']; conditions.clientAppTypes == ['browser','mobileAppsAndDesktopClients']; excludeGroups contains {group:grp-break-glass}; grantControls.builtInControls == ['compliantDevice']",
+        "notes": "All users, not only the managed-plan group (choice signin.managed_plan_users=all)."
       }
     }
   },
@@ -372,7 +448,7 @@
       "note": "S-02 not done; TCM support for this resource type not confirmed"
     },
     "verified": "not created yet; GET /v1.0/identity/conditionalAccess/policies returned 200, so the collection and the conditions schema are readable with the granted permissions",
-    "notes": "'Require approved client app' (approvedApplication) is retired by Microsoft; 'Require app protection policy' (compliantApplication) is the control that delivers 'approved app with app protection policy'. Needs the Intune app protection policies from the intune area to exist first. Policy name CA06 is proposed. Same {group:plan-business_premium} scope gap as ENT-004. mode staged: payload_audit is the report-only form (state enabledForReportingButNotEnforced) with the same scope; the identity provider also keeps blocking policies report-only until gate G-02 passes (SPEC 20.2). Whether the enforce step goes first to rollout.pilot_group or straight to all users is an orchestrator decision not settled here.",
+    "notes": "'Require approved client app' (approvedApplication) is retired by Microsoft; 'Require app protection policy' (compliantApplication) is the control that delivers 'approved app with app protection policy'. Needs the Intune app protection policies from the intune area to exist first. Policy name CA06 is proposed. Same plan-business_premium scope and choice signin.managed_plan_users as ENT-004. mode staged: payload_audit is the report-only form (state enabledForReportingButNotEnforced) with the same scope; the identity provider also keeps blocking policies report-only until gate G-02 passes (SPEC 20.2). Whether the enforce step goes first to rollout.pilot_group or straight to all users is an orchestrator decision not settled here.",
     "payload_audit": {
       "displayName": "CA06 App protection on iOS and Android",
       "state": "enabledForReportingButNotEnforced",
@@ -406,6 +482,82 @@
         "builtInControls": [
           "compliantApplication"
         ]
+      }
+    },
+    "variants": {
+      "all-users": {
+        "payload": {
+          "displayName": "CA06 App protection on iOS and Android",
+          "state": "enabled",
+          "conditions": {
+            "users": {
+              "includeUsers": [
+                "All"
+              ],
+              "excludeGroups": [
+                "{group:grp-break-glass}"
+              ]
+            },
+            "applications": {
+              "includeApplications": [
+                "All"
+              ]
+            },
+            "clientAppTypes": [
+              "browser",
+              "mobileAppsAndDesktopClients"
+            ],
+            "platforms": {
+              "includePlatforms": [
+                "iOS",
+                "android"
+              ]
+            }
+          },
+          "grantControls": {
+            "operator": "OR",
+            "builtInControls": [
+              "compliantApplication"
+            ]
+          }
+        },
+        "payload_audit": {
+          "displayName": "CA06 App protection on iOS and Android",
+          "state": "enabledForReportingButNotEnforced",
+          "conditions": {
+            "users": {
+              "includeUsers": [
+                "All"
+              ],
+              "excludeGroups": [
+                "{group:grp-break-glass}"
+              ]
+            },
+            "applications": {
+              "includeApplications": [
+                "All"
+              ]
+            },
+            "clientAppTypes": [
+              "browser",
+              "mobileAppsAndDesktopClients"
+            ],
+            "platforms": {
+              "includePlatforms": [
+                "iOS",
+                "android"
+              ]
+            }
+          },
+          "grantControls": {
+            "operator": "OR",
+            "builtInControls": [
+              "compliantApplication"
+            ]
+          }
+        },
+        "check": "conditions.users.includeUsers == ['All']; state == 'enabled'; conditions.platforms.includePlatforms == ['iOS','android']; excludeGroups contains {group:grp-break-glass}; grantControls.builtInControls == ['compliantApplication']",
+        "notes": "All users, not only the managed-plan group (choice signin.managed_plan_users=all)."
       }
     }
   },
@@ -1308,7 +1460,7 @@
         },
         {
           "name": "BannedPasswordList",
-          "value": "{dictionary:company.trading_name}\\t{dictionary:company.legal_name}\\t{config:policy.banned_password_terms}"
+          "value": "{terms:company}"
         },
         {
           "name": "LockoutThreshold",
@@ -1321,9 +1473,10 @@
       ]
     },
     "read": "GET /groupSettings?$filter=templateId eq '5cf42378-d67d-4f36-ba46-e8b86229381d'",
-    "check": "values[name=EnableBannedPasswordCheck].value == 'true'; values[name=BannedPasswordList].value contains every configured term",
+    "check": "values[name=EnableBannedPasswordCheck].value == 'true'; values[name=BannedPasswordList].value holds every term derived from the company's names (choice signin.banned_passwords)",
     "permissions": [
-      "graph:Directory.ReadWrite.All"
+      "graph:Directory.ReadWrite.All",
+      "graph:Sites.FullControl.All"
     ],
     "roles": [],
     "tcm": {
@@ -1331,7 +1484,7 @@
       "note": "S-02 not done; TCM support for this resource type not confirmed"
     },
     "verified": "GET /v1.0/groupSettingTemplates/5cf42378-d67d-4f36-ba46-e8b86229381d returned the six values (BannedPasswordCheckOnPremisesMode, EnableBannedPasswordCheckOnPremises, EnableBannedPasswordCheck, LockoutDurationInSeconds, LockoutThreshold, BannedPasswordList); no Password Rule Settings object exists on the test tenant yet",
-    "notes": "One directory setting object carries ENT-026 and ENT-027; write both together. Creating/updating a tenant directory setting needs Directory.ReadWrite.All (not granted). Terms are company data and must come from the Dictionary (R11), not configuration; the trading and legal names exist, but there is no key for product names: a Dictionary key is needed. BannedPasswordList is tab-separated. The on-premises keys are irrelevant (cloud only)."
+    "notes": "One directory setting object carries ENT-026 and ENT-027; the provider merges both into it. The terms are the company's own values (T14-04, SPEC 25): {terms:company} is filled by the identity provider from the configuration's company.trading_name, company.legal_name and the first label of each company domain, plus the product names in the Dictionary key company.product_names (comma, semicolon or line separated; read from the Admin site's Dictionary list). Each name gives itself (spaces removed) and its words; terms of 4 to 16 characters are kept, legal-form words (Ltd, Inc, LLC ...) dropped, at most 1000, tab-separated. Choice signin.banned_passwords: 'company' (recommended) applies them; 'none' leaves ENT-026 out (Microsoft's global banned list still applies). The on-premises keys are irrelevant (cloud only)."
   },
   "ENT-027": {
     "status": "resolved",
@@ -1655,13 +1808,13 @@
           "@odata.type": "#microsoft.graph.enumeratedDeviceRegistrationMembership",
           "users": [],
           "groups": [
-            "{group:device-join}"
+            "{group:grp-device-join}"
           ]
         }
       }
     },
     "read": "GET /beta/policies/deviceRegistrationPolicy",
-    "check": "azureADJoin.allowedToJoin.@odata.type == '#microsoft.graph.enumeratedDeviceRegistrationMembership' and groups == [{group:device-join}]",
+    "check": "azureADJoin.allowedToJoin.@odata.type == '#microsoft.graph.enumeratedDeviceRegistrationMembership' and groups == [{group:grp-device-join}]",
     "permissions": [
       "graph:Policy.ReadWrite.DeviceConfiguration"
     ],
@@ -1671,7 +1824,21 @@
       "note": "S-02 not done; TCM support for this resource type not confirmed"
     },
     "verified": "read-only GET (v1.0 and beta) returned 200: allowedToJoin allDeviceRegistrationMembership (drift)",
-    "notes": "Write is beta only (PUT, whole object) and needs Policy.ReadWrite.DeviceConfiguration (not granted). CONFIGURATION GAP: 'named group' is not defined in the configuration; a key naming the join group (for example grp-staff) is needed. Autopilot/Intune enrolment also requires the enrolling users to be in this group."
+    "notes": "Write is beta only (PUT, whole object) and needs Policy.ReadWrite.DeviceConfiguration (devices bundle). Choice devices.join: 'admins' (recommended) limits joining to grp-device-join, which identity.groups creates and fills with the members of grp-admins (defaults/structure.yaml choice_groups); 'all' lets every user join (variant all-users). Autopilot/Intune enrolment also requires the enrolling users to be in this group.",
+    "variants": {
+      "all-users": {
+        "payload": {
+          "azureADJoin": {
+            "isAdminConfigurable": true,
+            "allowedToJoin": {
+              "@odata.type": "#microsoft.graph.allDeviceRegistrationMembership"
+            }
+          }
+        },
+        "check": "azureADJoin.allowedToJoin.@odata.type == '#microsoft.graph.allDeviceRegistrationMembership'",
+        "notes": "Every user may join devices to Microsoft Entra (choice devices.join=all)."
+      }
+    }
   },
   "ENT-040": {
     "status": "resolved",

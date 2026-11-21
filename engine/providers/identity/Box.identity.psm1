@@ -144,7 +144,23 @@ function Get-DesiredGroups($In) {
     foreach ($g in @($u.access_groups)) { if ($groups.Contains($g)) { $groups[$g].members += $upn } }
     foreach ($r in @($u.roles)) { if ($groups.Contains("role-$r")) { $groups["role-$r"].members += $upn } }
   }
+  foreach ($cg in @(Get-ChoiceGroups $In)) {
+    $members = @(foreach ($u in @($In.config.users | Where-Object { -not $_.break_glass })) {
+        $from = $cg.members_from
+        if (($from.access_group -and $from.access_group -in @($u.access_groups)) -or ($from.plan -and [string]$u.plan -eq [string]$from.plan)) { "$($u.primary)@$(Get-Domain $In)" }
+      })
+    $groups[[string]$cg.name] = @{ desc = [string]$cg.title; members = $members }
+  }
   return $groups
+}
+# Groups a choice suggests (defaults/structure.yaml choice_groups, T14-04):
+# wanted while the configuration value values.<value> the choice's answer
+# sets names the group.
+function Get-ChoiceGroups($In) {
+  $vals = $In.config.values
+  foreach ($cg in @($In.defaults.structure.choice_groups | Where-Object { $_ })) {
+    if ($vals -and [string]$vals.($cg.value) -eq [string]$cg.name) { $cg }
+  }
 }
 function Get-GroupChanges($In, [switch] $Apply) {
   $changes = @()
@@ -532,4 +548,4 @@ function Get-BoxStepIds { @($script:Steps.Keys) }
 function Get-BoxStepProblems { Test-BoxStepTable -Steps $script:Steps }
 Export-ModuleMember -Function Invoke-BoxStep, Get-BoxStepIds, Get-BoxStepProblems, Get-NotCoveredUsers, Get-BoxMfaEnforcementReadiness,
   Get-BoxCampaignDrift, Get-BoxMfaRegistrationCounts, Get-BoxCA01Readiness, Format-BoxRegistrationSummary,
-  Compare-BoxValue, Resolve-BoxPayload, Get-BoxCAState, Merge-BoxGroupSettingValues, Get-BoxIdleTimeout, Get-BoxEntraClaims
+  Compare-BoxValue, Resolve-BoxPayload, Get-BoxCAState, Merge-BoxGroupSettingValues, Get-BoxIdleTimeout, Get-BoxEntraClaims, Get-BoxBannedTerms

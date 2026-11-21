@@ -67,3 +67,19 @@ func TestCheckMappings(t *testing.T) {
 		t.Errorf("coverage map: %v\n%s", err, cov[:200])
 	}
 }
+
+func TestSettingsByStepVariantAuditForm(t *testing.T) {
+	// A variant of a staged setting has its own audit form (T14-04): the
+	// audit stage writes it, the enforce stage the variant's payload.
+	m := Mapping{Status: "resolved", Step: "policy.entra", Payload: "p", PayloadAudit: "pa",
+		Variants: map[string]Variant{"v": {Payload: "vp", PayloadAudit: "vpa"}, "n": {Notes: "notes only"}}}
+	for _, tc := range []struct{ mode, variant, want string }{
+		{ModeAudit, "", "pa"}, {ModeEnforce, "", "p"}, {ModeAudit, "v", "vpa"}, {ModeEnforce, "v", "vp"}, {ModeAudit, "n", "pa"},
+	} {
+		res := &Result{Applied: []AppliedCentre{{ID: "entra", Settings: []AppliedSetting{{ID: "ENT-X", Mode: tc.mode, Variant: tc.variant}}}}}
+		got := SettingsByStep(res, map[string]Mapping{"ENT-X": m})["policy.entra"]
+		if len(got) != 1 || got[0].Payload != tc.want {
+			t.Errorf("mode %s variant %q: %+v, want payload %s", tc.mode, tc.variant, got, tc.want)
+		}
+	}
+}

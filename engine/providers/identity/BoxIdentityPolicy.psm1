@@ -229,6 +229,34 @@ function Get-BoxEntraClaims {
   return $out
 }
 
+# Legal-form words that are not worth banning on their own.
+$script:LegalForms = @('limited', 'ltd', 'inc', 'incorporated', 'llc', 'llp', 'plc', 'corp', 'corporation', 'company', 'gmbh', 'sarl', 'pty', 'group', 'holdings', 'the')
+function Get-BoxBannedTerms {
+  # ENT-026: the custom banned password terms derived from the company's own
+  # names (SPEC 25: the suggestion comes from its values, not a fixed list).
+  # Each name gives itself with spaces removed and each of its words; a
+  # domain gives its first label. Entra takes terms of 4 to 16 characters,
+  # at most 1000; legal-form words are dropped; the first spelling of a
+  # term (case-insensitive) is kept, in input order.
+  param([string[]] $Names = @(), [string[]] $Domains = @())
+  $cand = [System.Collections.Generic.List[string]]::new()
+  $all = @($Names) + @($Domains | Where-Object { $_ } | ForEach-Object { ([string]$_).Split('.')[0] })
+  foreach ($n in $all) {
+    if (-not $n) { continue }
+    $words = @([regex]::Split($n, '[^\p{L}\p{N}]+') | Where-Object { $_ -and $_.ToLowerInvariant() -notin $script:LegalForms })
+    $cand.Add(($words -join ''))
+    foreach ($w in $words) { $cand.Add($w) }
+  }
+  $seen = @{}; $out = [System.Collections.Generic.List[string]]::new()
+  foreach ($t in $cand) {
+    $k = $t.ToLowerInvariant()
+    if ($t.Length -lt 4 -or $t.Length -gt 16 -or $seen[$k] -or $t -notmatch '\p{L}') { continue }
+    $seen[$k] = $true; $out.Add($t)
+    if ($out.Count -ge 1000) { break }
+  }
+  return $out.ToArray()
+}
+
 # ---------------------------------------------------------------- tenant helpers
 
 function Get-BoxGroupIds([string[]] $Names) {
@@ -417,6 +445,45 @@ function Sync-BoxRegistrationCampaign($Ctx, $S) {
   if ($drift.Count -eq 0) { return }
   Add-BoxChange $Ctx $S update 'registration campaign (Microsoft Authenticator)' ($drift -join '; ')
   if ($Ctx.Apply) { Invoke-BoxGraph -Method PATCH -Uri $uri -Body $r.body | Out-Null }
+}
+
+# --- banned passwords (ENT-026) ---
+function Get-BoxDictionaryValue($Ctx, [string] $Key) {
+  # One value from the Admin site's Dictionary list (SPEC 9.2), or $null
+  # when the register or the key does not exist yet. A read that fails
+  # otherwise throws, so a term list is never shortened by a refused call.
+  $sp = [string]$Ctx.In.tenant.sharepoint
+  $admin = @($Ctx.In.config.structure.sites | Where-Object { $_.name -eq 'Admin' })
+  if (-not $sp -or $admin.Count -ne 1) { throw "the step's input has no Admin site: add 'structure' to its reads" }
+  $site = Get-BoxGraphOne "/sites/$(([uri]$sp).Host):/sites/$($admin[0].url)?`$select=id"
+  if (-not $site) { return $null }
+  $list = Get-BoxGraphOne "/sites/$($site.id)/lists/Dictionary?`$select=id"
+  if (-not $list) { return $null }
+  foreach ($i in @(Get-BoxGraphAll "/sites/$($site.id)/lists/$($list.id)/items?`$expand=fields(`$select=key,value)&`$top=500")) {
+    if ([string]$i.fields.key -eq $Key) { return [string]$i.fields.value }
+  }
+  return $null
+}
+function Get-BoxCompanyTerms($Ctx) {
+  # The company's names: trading and legal name and domains from the
+  # configuration, product names from the Dictionary (company.product_names,
+  # comma, semicolon or line separated).
+  $co = $Ctx.In.config.company
+  $products = Get-BoxDictionaryValue $Ctx 'company.product_names'
+  if (-not $products) { $Ctx.Report.Add('ENT-026: no product names in the Dictionary (company.product_names); the banned list holds the company names only') }
+  $names = @([string]$co.trading_name, [string]$co.legal_name) + @(([string]$products) -split '[,;\r\n]+' | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+  $domains = @([string]$co.primary_domain) + @($co.domain_aliases | Where-Object { $_ })
+  return @(Get-BoxBannedTerms -Names $names -Domains $domains)
+}
+function Sync-BoxBannedPasswords($Ctx, $S) {
+  # {terms:company} is filled here; the terms are company data, so changes
+  # and the report name the setting and a count, never the terms.
+  $terms = @(Get-BoxCompanyTerms $Ctx)
+  if ($terms.Count -eq 0) { Add-BoxSkip $Ctx $S 'the configuration names no company to derive banned password terms from'; return }
+  $r = Get-BoxResolved $Ctx $S @{ 'terms:company' = ($terms -join "`t") }
+  if (-not $r.ok) { return }
+  $Ctx.Report.Add("ENT-026: $($terms.Count) banned password term(s) derived from the company's names")
+  Sync-BoxGroupSetting $Ctx $S $r.body.templateId $r.body.values
 }
 
 # --- directory settings (groupSettings from a template) ---
@@ -635,7 +702,7 @@ $script:Handlers = @{
   'ENT-025' = { param($c, $s) Sync-BoxMfaMigration $c $s }
   'ENT-050' = { param($c, $s) Sync-BoxRegistrationCampaign $c $s }
   # password rule directory setting
-  'ENT-026' = { param($c, $s) $r = Get-BoxResolved $c $s; if ($r.ok) { Sync-BoxGroupSetting $c $s $r.body.templateId $r.body.values } }
+  'ENT-026' = { param($c, $s) Sync-BoxBannedPasswords $c $s }
   'ENT-027' = { param($c, $s) $r = Get-BoxResolved $c $s; if ($r.ok) { Sync-BoxGroupSetting $c $s $r.body.templateId $r.body.values } }
   'ENT-028' = { param($c, $s) Sync-BoxDomainExpiry $c $s }
   # authorization policy and consent
@@ -736,4 +803,4 @@ function Get-BoxPolicyEvidence($In, [string] $Kind) {
 }
 
 Export-ModuleMember -Function Set-BoxPolicyRoles, ConvertTo-BoxPlain, Compare-BoxValue, Resolve-BoxPayload, Get-BoxCAState,
-  Merge-BoxGroupSettingValues, Get-BoxIdleTimeout, Get-BoxEntraClaims, Get-BoxPolicyPlan, Invoke-BoxPolicyApply, Test-BoxPolicyVerify, Get-BoxPolicyEvidence
+  Merge-BoxGroupSettingValues, Get-BoxIdleTimeout, Get-BoxEntraClaims, Get-BoxBannedTerms, Get-BoxPolicyPlan, Invoke-BoxPolicyApply, Test-BoxPolicyVerify, Get-BoxPolicyEvidence

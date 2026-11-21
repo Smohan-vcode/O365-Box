@@ -95,6 +95,7 @@ CI runs `box backlog check`.
 | T14-14 | Exceptions | P1 | S | T14-13 |  | TODO |
 | T14-15 | Evidence per requirement and monthly coverage | P1 | M | T14-04, T10-01 |  | TODO |
 | T14-16 | Standards rendered from requirements | P1 | S | T14-01, T9-01 |  | TODO |
+| T14-17 | MFA registration campaign | P0 | M | T14-04 | yes | TODO |
 | T15-01 | Directory mode: cloud or hybrid | P1 | M | T13-09, T0-07 | yes | TODO |
 | T15-02 | Domain control | P1 | S | T13-09, T2-03 | yes | TODO |
 | T15-03 | Azure provider and discovery | P1 | M | T13-09, T0-07 | yes | TODO |
@@ -104,3 +105,4 @@ CI runs `box backlog check`.
 | T16-03 | Control status per framework | P1 | M | T16-01 |  | TODO |
 | T16-04 | Pack writer | P1 | M | T16-02, T16-03 |  | TODO |
 | T16-05 | Prepare for an audit path in the TUI | P1 | M | T16-04, T13-11 |  | TODO |
+| T16-06 | Audit reads Exchange, SharePoint, Teams and Purview | P0 | M | T16-01 |  | TODO |

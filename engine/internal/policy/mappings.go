@@ -121,6 +121,9 @@ func (c *Catalogue) CheckMappings(maps map[string]Mapping, file map[string]strin
 			if m.Apply == "" || m.Read == "" || m.Check == "" {
 				add(f, id, "a resolved setting needs apply, read and check")
 			}
+			if st := c.Setting(id); st != nil && !strings.HasPrefix(m.Step+".", "policy."+st.Centre+".") {
+				add(f, id, fmt.Sprintf("step %q is not policy.%s or policy.%s.<provider>", m.Step, st.Centre, st.Centre))
+			}
 			if st := c.Setting(id); st != nil && st.Mode == "staged" && m.PayloadAudit == nil {
 				add(f, id, "a staged setting needs payload_audit (its audit or report-only form)")
 			}
@@ -177,4 +180,48 @@ func (c *Catalogue) CoverageMap(maps map[string]Mapping) ([]byte, error) {
 		return nil, err
 	}
 	return append([]byte(head), b...), nil
+}
+
+// StepSetting is one applied setting as a policy.<area> step receives it
+// (T14-04): the payload to write is the variant's, else the audit form when
+// the mode is audit or report and the mapping has one, else the payload.
+type StepSetting struct {
+	ID           string   `json:"id"`
+	Centre       string   `json:"centre"`
+	Name         string   `json:"name"`
+	Value        string   `json:"value"`
+	Mode         string   `json:"mode"`
+	Variant      string   `json:"variant,omitempty"`
+	Method       string   `json:"method"`
+	Payload      any      `json:"payload"`
+	Check        string   `json:"check"`
+	Requirements []string `json:"requirements"`
+}
+
+// SettingsByStep groups the applied, resolved settings by mapping step.
+func SettingsByStep(res *Result, maps map[string]Mapping) map[string][]StepSetting {
+	out := map[string][]StepSetting{}
+	for _, c := range res.Applied {
+		for _, s := range c.Settings {
+			m, ok := maps[s.ID]
+			if !ok || m.Status != "resolved" || m.Step == "" {
+				continue
+			}
+			payload, check := m.Payload, m.Check
+			if (s.Mode == ModeAudit || s.Mode == ModeReport) && m.PayloadAudit != nil {
+				payload = m.PayloadAudit
+			}
+			if v, ok := m.Variants[s.Variant]; ok {
+				if v.Payload != nil {
+					payload = v.Payload
+				}
+				if v.Check != "" {
+					check = v.Check
+				}
+			}
+			out[m.Step] = append(out[m.Step], StepSetting{ID: s.ID, Centre: c.ID, Name: s.Name, Value: s.Value, Mode: s.Mode,
+				Variant: s.Variant, Method: m.Method, Payload: payload, Check: check, Requirements: s.Requirements})
+		}
+	}
+	return out
 }

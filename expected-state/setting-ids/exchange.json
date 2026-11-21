@@ -444,7 +444,7 @@
   "EXO-017": {
     "status": "resolved",
     "provider": "dns",
-    "step": "policy.exchange",
+    "step": "policy.exchange.dns",
     "method": "rest",
     "apply": "dns provider records (T2-03) and dated staging (T2-04): SPF TXT, DMARC TXT p=none -> quarantine (day 14) -> reject (day 45), TLS-RPT TXT, MTA-STS TXT plus policy file mode testing -> enforce",
     "payload": {

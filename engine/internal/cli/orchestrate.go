@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/Smohan-vcode/O365-Box/engine/internal/policy"
 	"io"
 	"os"
 	"os/signal"
@@ -259,7 +260,13 @@ func (s *session) policyInput() (map[string]any, error) {
 	if err != nil {
 		return nil, err
 	}
-	s.policyIn = map[string]any{"plan": planName, "applied": res.AppliedCount(), "capabilities_needed": needed, "service_plans": sp}
+	_, maps, err := grantData(s.root)
+	if err != nil {
+		return nil, err
+	}
+	s.policyIn = map[string]any{"plan": planName, "applied": res.AppliedCount(), "capabilities_needed": needed, "service_plans": sp,
+		"rollout": map[string]any{"stage": sel.Stage, "pilot_group": s.doc.Config.Policy.Rollout.PilotGroup},
+		"by_step": policy.SettingsByStep(res, maps)}
 	return s.policyIn, nil
 }
 
@@ -339,7 +346,15 @@ func (s *session) input(step *plan.Step) any {
 			in["dictionary"] = s.dictionary
 		case "@policy":
 			if p, err := s.policyInput(); err == nil {
-				in["policy"] = p
+				// A policy.<area> step sees only its own settings (T14-04).
+				q := map[string]any{}
+				for k, v := range p {
+					if k != "by_step" {
+						q[k] = v
+					}
+				}
+				q["settings"] = p["by_step"].(map[string][]policy.StepSetting)[step.ID]
+				in["policy"] = q
 			} else {
 				in["policy_error"] = err.Error()
 			}

@@ -273,7 +273,7 @@
   "SPO-011": {
     "status": "resolved",
     "provider": "intune",
-    "step": "policy.sharepoint",
+    "step": "policy.sharepoint.intune",
     "method": "graph-beta",
     "apply": "POST /beta/deviceManagement/configurationPolicies (Windows settings catalog) with the OneDrive tenant allow list; device condition by Conditional Access (ENT-004)",
     "payload": {

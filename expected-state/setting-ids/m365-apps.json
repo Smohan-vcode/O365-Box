@@ -516,7 +516,7 @@
   "OFC-009": {
     "status": "resolved",
     "provider": "exchange",
-    "step": "policy.m365-apps",
+    "step": "policy.m365-apps.exchange",
     "method": "cmdlet",
     "apply": "Get-ManagementRoleAssignment -RoleAssignee 'Default Role Assignment Policy' | Where-Object Role -in 'My Custom Apps','My Marketplace Apps','My ReadWriteMailbox Apps' | Remove-ManagementRoleAssignment -Confirm:$false (same as EXO-014)",
     "payload": {
@@ -692,7 +692,7 @@
   "OFC-013": {
     "status": "resolved",
     "provider": "exchange",
-    "step": "policy.m365-apps",
+    "step": "policy.m365-apps.exchange",
     "method": "cmdlet",
     "apply": "Set-LabelPolicy -Identity 'Default label policy' -Settings @{mandatory='true'} (same label policy object as PVW-007, Security & Compliance PowerShell)",
     "payload": {

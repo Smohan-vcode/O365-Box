@@ -28,7 +28,7 @@
   "PVW-002": {
     "status": "resolved",
     "provider": "identity",
-    "step": "policy.purview",
+    "step": "policy.purview.identity",
     "method": "graph",
     "apply": "weekly job: GET /v1.0/auditLogs/directoryAudits?$filter=activityDateTime ge <last run> and GET /v1.0/auditLogs/signIns?$filter=createdDateTime ge <last run>; optional Exchange and SharePoint admin activity: Search-UnifiedAuditLog -StartDate <last run> -EndDate <now> -RecordType ExchangeAdmin,SharePoint -SessionCommand ReturnLargeSet; write the export as a file to the Compliance site's evidence library (PUT /v1.0/sites/{site:compliance}/drive/root:/<evidence path>:/content)",
     "payload": {

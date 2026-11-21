@@ -188,7 +188,7 @@
   "ADM-008": {
     "status": "resolved",
     "provider": "exchange",
-    "step": "policy.m365-admin",
+    "step": "policy.m365-admin.exchange",
     "method": "cmdlet",
     "apply": "Set-SharingPolicy -Identity '{exchange:default-sharing-policy}' -Domains @('*:CalendarSharingFreeBusySimple')",
     "payload": {

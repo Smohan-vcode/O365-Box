@@ -39,8 +39,8 @@ settings:
     - setting: ADM-008
       centre: m365-admin
       status: resolved
-      apply_by: exchange step policy.m365-admin (cmdlet)
-      monitor_by: box drift (policy.m365-admin verify); configuration monitor microsoft.exchange.sharingpolicy after SC-20
+      apply_by: exchange step policy.m365-admin.exchange (cmdlet)
+      monitor_by: box drift (policy.m365-admin.exchange verify); configuration monitor microsoft.exchange.sharingpolicy after SC-20
     - setting: ADM-009
       centre: m365-admin
       status: gate
@@ -509,8 +509,8 @@ settings:
     - setting: EXO-017
       centre: exchange
       status: resolved
-      apply_by: dns step policy.exchange (rest)
-      monitor_by: box drift (policy.exchange verify)
+      apply_by: dns step policy.exchange.dns (rest)
+      monitor_by: box drift (policy.exchange.dns verify)
     - setting: EXO-018
       centre: exchange
       status: resolved
@@ -844,8 +844,8 @@ settings:
     - setting: OFC-009
       centre: m365-apps
       status: resolved
-      apply_by: exchange step policy.m365-apps (cmdlet)
-      monitor_by: box drift (policy.m365-apps verify); configuration monitor microsoft.exchange.roleassignmentpolicy after SC-20
+      apply_by: exchange step policy.m365-apps.exchange (cmdlet)
+      monitor_by: box drift (policy.m365-apps.exchange verify); configuration monitor microsoft.exchange.roleassignmentpolicy after SC-20
     - setting: OFC-010
       centre: m365-apps
       status: resolved
@@ -864,8 +864,8 @@ settings:
     - setting: OFC-013
       centre: m365-apps
       status: resolved
-      apply_by: exchange step policy.m365-apps (cmdlet)
-      monitor_by: box drift (policy.m365-apps verify); configuration monitor microsoft.securityandcompliance.labelpolicy after SC-20
+      apply_by: exchange step policy.m365-apps.exchange (cmdlet)
+      monitor_by: box drift (policy.m365-apps.exchange verify); configuration monitor microsoft.securityandcompliance.labelpolicy after SC-20
     - setting: PPL-001
       centre: power-platform
       status: gate
@@ -909,8 +909,8 @@ settings:
     - setting: PVW-002
       centre: purview
       status: resolved
-      apply_by: identity step policy.purview (graph)
-      monitor_by: box drift (policy.purview verify)
+      apply_by: identity step policy.purview.identity (graph)
+      monitor_by: box drift (policy.purview.identity verify)
     - setting: PVW-003
       centre: purview
       status: resolved
@@ -1109,8 +1109,8 @@ settings:
     - setting: SPO-011
       centre: sharepoint
       status: resolved
-      apply_by: intune step policy.sharepoint (graph-beta)
-      monitor_by: box drift (policy.sharepoint verify)
+      apply_by: intune step policy.sharepoint.intune (graph-beta)
+      monitor_by: box drift (policy.sharepoint.intune verify)
     - setting: SPO-012
       centre: sharepoint
       status: resolved
@@ -1214,8 +1214,8 @@ settings:
     - setting: TMS-014
       centre: teams
       status: resolved
-      apply_by: identity step policy.teams (graph)
-      monitor_by: box drift (policy.teams verify); configuration monitor microsoft.entra.groupsetting (candidate) after SC-20
+      apply_by: identity step policy.teams.identity (graph)
+      monitor_by: box drift (policy.teams.identity verify); configuration monitor microsoft.entra.groupsetting (candidate) after SC-20
     - setting: WIN-001
       centre: intune-windows
       status: resolved

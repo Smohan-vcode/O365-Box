@@ -5172,5 +5172,55 @@
         }
       ]
     }
+  },
+  "WIN-091": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.intune-windows",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceManagement/configurationPolicies (policy \"Box - Windows - Microsoft Edge\") when absent; PUT /beta/deviceManagement/configurationPolicies/{policy:win-edge} with the full settings list when a setting differs; POST .../{policy:win-edge}/assign (all devices)",
+    "payload": {
+      "policy": {
+        "name": "Box - Windows - Microsoft Edge",
+        "platforms": "windows10",
+        "technologies": "mdm"
+      },
+      "settings": [
+        {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+          "settingInstance": {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+            "settingDefinitionId": "device_vendor_msft_policy_config_microsoft_edge~policy~microsoft_edge~extensions_extensioninstallforcelist",
+            "choiceSettingValue": {
+              "value": "device_vendor_msft_policy_config_microsoft_edge~policy~microsoft_edge~extensions_extensioninstallforcelist_1",
+              "children": [
+                {
+                  "@odata.type": "#microsoft.graph.deviceManagementConfigurationSimpleSettingCollectionInstance",
+                  "settingDefinitionId": "device_vendor_msft_policy_config_microsoft_edge~policy~microsoft_edge~extensions_extensioninstallforcelist_extensioninstallforcelistdesc",
+                  "simpleSettingCollectionValue": [
+                    {
+                      "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue",
+                      "value": "{list:devices.browser.forced_extensions}"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "read": "GET /beta/deviceManagement/configurationPolicies/{policy:win-edge}/settings",
+    "check": "settingInstance[device_vendor_msft_policy_config_microsoft_edge~policy~microsoft_edge~extensions_extensioninstallforcelist] == device_vendor_msft_policy_config_microsoft_edge~policy~microsoft_edge~extensions_extensioninstallforcelist_1 AND settingInstance[device_vendor_msft_policy_config_microsoft_edge~policy~microsoft_edge~extensions_extensioninstallforcelist_extensioninstallforcelistdesc] == devices.browser.forced_extensions (one entry per id; the Microsoft Edge Add-ons update URL is the default when none is given)",
+    "permissions": [
+      "graph:DeviceManagementConfiguration.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": "microsoft.intune.settingCatalogCustomPolicyWindows10",
+      "note": "S-02 is not done; resource type is the Microsoft365DSC/UTCM name expected to cover this object, not verified"
+    },
+    "verified": "settings-catalogue definitions GET /beta/deviceManagement/configurationSettings/device_vendor_msft_policy_config_microsoft_edge~policy~microsoft_edge~extensions_extensioninstallforcelist (choice, options _0/_1) and device_vendor_msft_policy_config_microsoft_edge~policy~microsoft_edge~extensions_extensioninstallforcelist_extensioninstallforcelistdesc (string collection, 1 to 1000 entries, child of _1) returned 200 on the test tenant (2026-11-21)",
+    "notes": "Plain settings-catalogue policy in \"Box - Windows - Microsoft Edge\" (T14-19). Applied only while the choice devices.browser_forced_extensions is everyone; the list is devices.browser.forced_extensions, ids the owner approved and marked for everyone (box extensions approve --install-for-everyone), each also in the allow list (box config validate). An id alone installs from the Microsoft Edge Add-ons store; on devices not joined to an on-premises domain Edge force-installs only store extensions. An empty list leaves the setting out (the definition takes at least one entry), and Edge then removes extensions it had force-installed."
   }
 }

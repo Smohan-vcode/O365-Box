@@ -681,6 +681,11 @@ settings:
       status: resolved
       apply_by: intune step policy.intune-macos (graph-beta)
       monitor_by: box drift (policy.intune-macos verify)
+    - setting: MAC-032
+      centre: intune-macos
+      status: resolved
+      apply_by: intune step policy.intune-macos (graph-beta)
+      monitor_by: box drift (policy.intune-macos verify)
     - setting: MOB-001
       centre: intune-mobile
       status: resolved
@@ -1667,6 +1672,11 @@ settings:
       apply_by: intune step policy.intune-windows (graph-beta)
       monitor_by: box drift (policy.intune-windows verify); configuration monitor microsoft.intune.settingCatalogCustomPolicyWindows10 after SC-20
     - setting: WIN-090
+      centre: intune-windows
+      status: resolved
+      apply_by: intune step policy.intune-windows (graph-beta)
+      monitor_by: box drift (policy.intune-windows verify); configuration monitor microsoft.intune.settingCatalogCustomPolicyWindows10 after SC-20
+    - setting: WIN-091
       centre: intune-windows
       status: resolved
       apply_by: intune step policy.intune-windows (graph-beta)

@@ -36,6 +36,16 @@ steps:
     task: T0-06
     depends_on: [sharepoint.register]
     reads: ["@document", "@dictionary", company, tenant, structure]
+  - id: sharepoint.control-tasks
+    title: Recurring control tasks
+    track: T10
+    task: T10-02
+    # The records come from the policy and procedure documents (module
+    # policies); the lists are the register's and the artefacts go to the
+    # Compliance site's Evidence library (both module records).
+    module: policies
+    depends_on: [sharepoint.register, sharepoint.libraries]
+    reads: ["@controltasks", tenant, structure, users]
   - id: policy.sharepoint
     title: Resolved sharing and site settings
     track: T14

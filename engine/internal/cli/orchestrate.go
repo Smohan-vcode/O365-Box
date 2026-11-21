@@ -408,6 +408,14 @@ func (s *session) input(step *plan.Step) any {
 			}
 		case "@dictionary":
 			in["dictionary"] = s.dictionary
+		case "@controltasks":
+			// The recurring control task schedule (T10-02), from the
+			// documents' records and defaults/controls.yaml.
+			if ct, err := controlTaskInput(s.root, time.Now().UTC()); err == nil {
+				in["control_tasks"] = ct
+			} else {
+				in["control_tasks_error"] = err.Error()
+			}
 		case "@policy":
 			if p, err := s.policyInput(); err == nil {
 				// A policy.<area> step sees only its own settings (T14-04).

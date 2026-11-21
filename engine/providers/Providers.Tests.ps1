@@ -364,3 +364,58 @@ Describe 'intune policy helpers (T14-05)' {
     }
   }
 }
+
+Describe 'sharepoint.control-tasks (T10-02)' {
+  BeforeAll {
+    Import-Module (Join-Path $PSScriptRoot 'sharepoint' 'Box.sharepoint.psm1') -Force
+    function Kind([string] $k, [string] $cur, [string] $curDue, [string] $next, [string] $prepares) {
+      [pscustomobject]@{ kind = $k; control_id = 'C-1'; owner_role = 'control-owner'; prepares = $prepares
+        current = [pscustomobject]@{ task_id = "$k-$cur"; period = $cur; due_on = $curDue }; next = [pscustomobject]@{ task_id = "$k-$next"; period = $next; due_on = '2027-03-31' } }
+    }
+  }
+  It 'creates the current task, and prepares its sheet when the kind has one' {
+    $a = @(Get-ControlTaskActions -Kinds @((Kind 'access_review' '2026-Q4' '2026-12-31' '2027-Q1' 'access_review_sheet'), (Kind 'pen_test' '2026' '2026-12-31' '2027' '')) -Items @{} -Today '2026-11-21')
+    ($a | ForEach-Object { "$($_.op) $($_.period.task_id)" }) | Should -Be @('create access_review-2026-Q4', 'prepare access_review-2026-Q4', 'create pen_test-2026')
+  }
+  It 'plans nothing when the current task exists, is open and prepared (second run)' {
+    $items = @{ 'access_review-2026-Q4' = @{ id = 1; state = 'OPEN'; due_on = '2026-12-31'; prepared_url = 'https://x/s.csv' } }
+    @(Get-ControlTaskActions -Kinds @(Kind 'access_review' '2026-Q4' '2026-12-31' '2027-Q1' 'access_review_sheet') -Items $items -Today '2026-11-21').Count | Should -Be 0
+  }
+  It 'creates the next task once the current one is DONE, and never touches a DONE one' {
+    $items = @{ 'access_review-2026-Q4' = @{ id = 1; state = 'DONE'; due_on = '2026-12-31'; prepared_url = '' }; 'access_review-2026-Q3' = @{ id = 0; state = 'DONE'; due_on = '2026-09-30' } }
+    $a = @(Get-ControlTaskActions -Kinds @(Kind 'access_review' '2026-Q4' '2026-12-31' '2027-Q1' 'access_review_sheet') -Items $items -Today '2026-11-21')
+    $a.Count | Should -Be 1
+    $a[0].op | Should -Be 'create'
+    $a[0].period.task_id | Should -Be 'access_review-2027-Q1'
+  }
+  It 'marks an open task past its due date OVERDUE, not a DONE or already OVERDUE one' {
+    $items = @{ 'x-2026-10' = @{ id = 1; state = 'OPEN'; due_on = '2026-10-31' }; 'x-2026-09' = @{ id = 2; state = 'DONE'; due_on = '2026-09-30' }
+      'x-2026-08' = @{ id = 3; state = 'OVERDUE'; due_on = '2026-08-31' }; 'x-2026-11' = @{ id = 4; state = 'OPEN'; due_on = '2026-11-30' } }
+    $a = @(Get-ControlTaskActions -Kinds @(Kind 'x' '2026-11' '2026-11-30' '2026-12' '') -Items $items -Today '2026-11-21')
+    ($a | ForEach-Object { "$($_.op) $($_.task_id)" }) | Should -Be @('overdue x-2026-10')
+  }
+  It 'refuses to close a task without an output, twice, or without the person' {
+    @(Test-CloseRequest @{ task_id = 'a-2026-Q4'; by = 'u' } @{ state = 'OPEN' }) | Should -Match 'output is required'
+    @(Test-CloseRequest @{ task_id = 'a-2026-Q4'; by = 'u'; output_url = 'https://x/y' } @{ state = 'DONE' }) | Should -Match 'already DONE'
+    @(Test-CloseRequest @{ task_id = 'a-2026-Q4'; output_url = 'http://x/y' } @{ state = 'OPEN' }).Count | Should -Be 2
+    @(Test-CloseRequest @{ task_id = 'a-2026-Q4'; by = 'u'; output_url = 'https://x/y' } @{ state = 'OVERDUE' }).Count | Should -Be 0
+    @(Test-CloseRequest @{ task_id = 'a-2026-Q4'; by = 'u'; file_name = 'r.pdf' } $null) | Should -Match 'no ControlTasks item'
+  }
+  It 'reads a SharePoint date-only value as its calendar date' {
+    ConvertTo-BoxDay ([datetime]::new(2026, 12, 31, 6, 0, 0, [DateTimeKind]::Utc)) | Should -Be '2026-12-31'
+    ConvertTo-BoxDay ([datetime]::new(2026, 12, 30, 14, 0, 0, [DateTimeKind]::Utc)) | Should -Be '2026-12-31'
+    ConvertTo-BoxDay '2026-12-31' | Should -Be '2026-12-31'
+    ConvertTo-BoxDay $null | Should -Be ''
+  }
+  It 'reads back the validation formula SharePoint stores without brackets' {
+    InModuleScope Box.sharepoint {
+      Test-SameFormula '=OR(state<>"DONE",LEN(output_url)>0)' $DoneNeedsOutput | Should -BeTrue
+      Test-SameFormula '' $DoneNeedsOutput | Should -BeFalse
+    }
+  }
+  It 'lists the enum values a choice column lacks' {
+    $f = [pscustomobject]@{ InternalName = 'frequency'; SchemaXml = '<Field Type="Choice" Name="frequency"><CHOICES><CHOICE>weekly</CHOICE><CHOICE>monthly</CHOICE></CHOICES></Field>' }
+    Get-MissingChoices $f @('daily', 'weekly', 'monthly', 'semiannually') | Should -Be @('daily', 'semiannually')
+    @(Get-MissingChoices ([pscustomobject]@{ SchemaXml = '' }) @('daily')).Count | Should -Be 0
+  }
+}

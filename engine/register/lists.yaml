@@ -73,9 +73,11 @@ enums:
   - DONE
   - OVERDUE
   frequency:
+  - daily
   - weekly
   - monthly
   - quarterly
+  - semiannually
   - annually
   - on_event
   lead_state:
@@ -799,6 +801,10 @@ lists:
       required: true
     - name: output_url
       type: url
+      note: the output that proves the task was done; a DONE task must have one
+    - name: prepared_url
+      type: url
+      note: the review sheet the box prepared from a read, for the assignee to review and confirm
     - name: closed_by
       type: ref(People)
     - name: closed_at

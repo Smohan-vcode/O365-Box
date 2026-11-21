@@ -1,0 +1,1907 @@
+{
+  "ENT-001": {
+    "status": "resolved",
+    "provider": "identity",
+    "step": "policy.entra",
+    "method": "graph",
+    "apply": "POST /identity/conditionalAccess/policies (PATCH /identity/conditionalAccess/policies/{id} when it exists)",
+    "payload": {
+      "displayName": "CA01 Require MFA for all users",
+      "state": "enabled",
+      "conditions": {
+        "users": {
+          "includeUsers": [
+            "All"
+          ],
+          "excludeGroups": [
+            "{group:grp-break-glass}"
+          ]
+        },
+        "applications": {
+          "includeApplications": [
+            "All"
+          ]
+        },
+        "clientAppTypes": [
+          "all"
+        ]
+      },
+      "grantControls": {
+        "operator": "OR",
+        "builtInControls": [
+          "mfa"
+        ]
+      }
+    },
+    "read": "GET /identity/conditionalAccess/policies?$filter=displayName eq 'CA01 Require MFA for all users'",
+    "check": "state == 'enabled' (audit: 'enabledForReportingButNotEnforced'); conditions.users.includeUsers == ['All']; conditions.users.excludeGroups contains {group:grp-break-glass}; conditions.applications.includeApplications == ['All']; grantControls.builtInControls == ['mfa']",
+    "permissions": [
+      "graph:Policy.ReadWrite.ConditionalAccess",
+      "graph:Policy.Read.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": "microsoft.entra.conditionalaccesspolicy",
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "read-only GET /v1.0/identity/conditionalAccess/policies returned 200 with CA01-CA05 (state enabledForReportingButNotEnforced)",
+    "notes": "Same shape as CA01 in baseline/identity.yaml, built by Get-PolicyBody in Box.identity.psm1. mode staged: payload_audit is the report-only form (state enabledForReportingButNotEnforced) with the same scope; the identity provider also keeps blocking policies report-only until gate G-02 passes (SPEC 20.2). Whether the enforce step goes first to rollout.pilot_group or straight to all users is an orchestrator decision not settled here.",
+    "payload_audit": {
+      "displayName": "CA01 Require MFA for all users",
+      "state": "enabledForReportingButNotEnforced",
+      "conditions": {
+        "users": {
+          "includeUsers": [
+            "All"
+          ],
+          "excludeGroups": [
+            "{group:grp-break-glass}"
+          ]
+        },
+        "applications": {
+          "includeApplications": [
+            "All"
+          ]
+        },
+        "clientAppTypes": [
+          "all"
+        ]
+      },
+      "grantControls": {
+        "operator": "OR",
+        "builtInControls": [
+          "mfa"
+        ]
+      }
+    }
+  },
+  "ENT-002": {
+    "status": "resolved",
+    "provider": "identity",
+    "step": "policy.entra",
+    "method": "graph",
+    "apply": "POST /identity/conditionalAccess/policies (PATCH by id when it exists)",
+    "payload": {
+      "displayName": "CA02 Block legacy authentication",
+      "state": "enabled",
+      "conditions": {
+        "users": {
+          "includeUsers": [
+            "All"
+          ],
+          "excludeGroups": [
+            "{group:grp-break-glass}"
+          ]
+        },
+        "applications": {
+          "includeApplications": [
+            "All"
+          ]
+        },
+        "clientAppTypes": [
+          "exchangeActiveSync",
+          "other"
+        ]
+      },
+      "grantControls": {
+        "operator": "OR",
+        "builtInControls": [
+          "block"
+        ]
+      }
+    },
+    "read": "GET /identity/conditionalAccess/policies?$filter=displayName eq 'CA02 Block legacy authentication'",
+    "check": "state == 'enabled'; conditions.clientAppTypes == ['exchangeActiveSync','other']; excludeGroups contains {group:grp-break-glass}; grantControls.builtInControls == ['block']",
+    "permissions": [
+      "graph:Policy.ReadWrite.ConditionalAccess",
+      "graph:Policy.Read.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": "microsoft.entra.conditionalaccesspolicy",
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "read-only GET /v1.0/identity/conditionalAccess/policies returned 200 with CA01-CA05 (state enabledForReportingButNotEnforced)",
+    "notes": "Same shape as CA02 in baseline/identity.yaml. SPEC 20.2 makes legacy-auth blocking a fixed rule, yet the catalogue marks it staged; report-only first is consistent with the provider's G-02 behaviour. Exchange-side SMTP AUTH/basic auth settings are in the exchange area. mode staged: payload_audit is the report-only form (state enabledForReportingButNotEnforced) with the same scope; the identity provider also keeps blocking policies report-only until gate G-02 passes (SPEC 20.2). Whether the enforce step goes first to rollout.pilot_group or straight to all users is an orchestrator decision not settled here.",
+    "payload_audit": {
+      "displayName": "CA02 Block legacy authentication",
+      "state": "enabledForReportingButNotEnforced",
+      "conditions": {
+        "users": {
+          "includeUsers": [
+            "All"
+          ],
+          "excludeGroups": [
+            "{group:grp-break-glass}"
+          ]
+        },
+        "applications": {
+          "includeApplications": [
+            "All"
+          ]
+        },
+        "clientAppTypes": [
+          "exchangeActiveSync",
+          "other"
+        ]
+      },
+      "grantControls": {
+        "operator": "OR",
+        "builtInControls": [
+          "block"
+        ]
+      }
+    }
+  },
+  "ENT-003": {
+    "status": "resolved",
+    "provider": "identity",
+    "step": "policy.entra",
+    "method": "graph",
+    "apply": "POST /identity/conditionalAccess/policies (PATCH by id when it exists)",
+    "payload": {
+      "displayName": "CA03 Phishing-resistant MFA for administrators",
+      "state": "enabled",
+      "conditions": {
+        "users": {
+          "includeRoles": [
+            "{roles:privileged} (the 13 role template ids in Box.identity.psm1 $PrivilegedRoles)"
+          ],
+          "excludeGroups": [
+            "{group:grp-break-glass}"
+          ]
+        },
+        "applications": {
+          "includeApplications": [
+            "All"
+          ]
+        },
+        "clientAppTypes": [
+          "all"
+        ]
+      },
+      "grantControls": {
+        "operator": "OR",
+        "authenticationStrength": {
+          "id": "00000000-0000-0000-0000-000000000004"
+        }
+      }
+    },
+    "read": "GET /identity/conditionalAccess/policies?$filter=displayName eq 'CA03 Phishing-resistant MFA for administrators'",
+    "check": "state == 'enabled'; conditions.users.includeRoles == privileged role set; excludeGroups contains {group:grp-break-glass}; grantControls.authenticationStrength.id == '00000000-0000-0000-0000-000000000004'",
+    "permissions": [
+      "graph:Policy.ReadWrite.ConditionalAccess",
+      "graph:Policy.Read.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": "microsoft.entra.conditionalaccesspolicy",
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "read-only GET /v1.0/identity/conditionalAccess/policies returned 200 with CA01-CA05 (state enabledForReportingButNotEnforced); GET /identity/conditionalAccess/authenticationStrength/policies returned the built-in 'Phishing-resistant MFA' with id 00000000-0000-0000-0000-000000000004",
+    "notes": "Same shape as CA03 in baseline/identity.yaml. Requires a phishing-resistant method (ENT-019) registered by every administrator before enforce. mode staged: payload_audit is the report-only form (state enabledForReportingButNotEnforced) with the same scope; the identity provider also keeps blocking policies report-only until gate G-02 passes (SPEC 20.2). Whether the enforce step goes first to rollout.pilot_group or straight to all users is an orchestrator decision not settled here.",
+    "payload_audit": {
+      "displayName": "CA03 Phishing-resistant MFA for administrators",
+      "state": "enabledForReportingButNotEnforced",
+      "conditions": {
+        "users": {
+          "includeRoles": [
+            "{roles:privileged} (the 13 role template ids in Box.identity.psm1 $PrivilegedRoles)"
+          ],
+          "excludeGroups": [
+            "{group:grp-break-glass}"
+          ]
+        },
+        "applications": {
+          "includeApplications": [
+            "All"
+          ]
+        },
+        "clientAppTypes": [
+          "all"
+        ]
+      },
+      "grantControls": {
+        "operator": "OR",
+        "authenticationStrength": {
+          "id": "00000000-0000-0000-0000-000000000004"
+        }
+      }
+    }
+  },
+  "ENT-004": {
+    "status": "resolved",
+    "provider": "identity",
+    "step": "policy.entra",
+    "method": "graph",
+    "apply": "POST /identity/conditionalAccess/policies (PATCH by id when it exists)",
+    "payload": {
+      "displayName": "CA04 Compliant device for managed-plan users",
+      "state": "enabled",
+      "conditions": {
+        "users": {
+          "includeGroups": [
+            "{group:plan-business_premium}"
+          ],
+          "excludeGroups": [
+            "{group:grp-break-glass}"
+          ]
+        },
+        "applications": {
+          "includeApplications": [
+            "All"
+          ]
+        },
+        "clientAppTypes": [
+          "browser",
+          "mobileAppsAndDesktopClients"
+        ],
+        "platforms": {
+          "includePlatforms": [
+            "windows",
+            "macOS"
+          ]
+        }
+      },
+      "grantControls": {
+        "operator": "OR",
+        "builtInControls": [
+          "compliantDevice"
+        ]
+      }
+    },
+    "read": "GET /identity/conditionalAccess/policies?$filter=displayName eq 'CA04 Compliant device for managed-plan users'",
+    "check": "state == 'enabled'; conditions.users.includeGroups == [{group:plan-business_premium}]; conditions.platforms.includePlatforms == ['windows','macOS']; conditions.clientAppTypes == ['browser','mobileAppsAndDesktopClients']; excludeGroups contains {group:grp-break-glass}; grantControls.builtInControls == ['compliantDevice']",
+    "permissions": [
+      "graph:Policy.ReadWrite.ConditionalAccess",
+      "graph:Policy.Read.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": "microsoft.entra.conditionalaccesspolicy",
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "read-only GET /v1.0/identity/conditionalAccess/policies returned 200 with CA01-CA05 (state enabledForReportingButNotEnforced)",
+    "notes": "DIFFERS from CA04 as built today: Get-PolicyBody targets includeUsers ['All'] and baseline CA04 lists platforms windows, macOS, iOS, android. The setting says desktop and web apps for users on a managed plan, so iOS/Android move to ENT-005 and the scope must be a group of users holding the managed plan. No such group exists in the configuration schema ({group:plan-business_premium} is a placeholder): a decision is needed (dynamic group on assignedPlans needs Entra P1; or a group maintained by identity.users). mode staged: payload_audit is the report-only form (state enabledForReportingButNotEnforced) with the same scope; the identity provider also keeps blocking policies report-only until gate G-02 passes (SPEC 20.2). Whether the enforce step goes first to rollout.pilot_group or straight to all users is an orchestrator decision not settled here.",
+    "payload_audit": {
+      "displayName": "CA04 Compliant device for managed-plan users",
+      "state": "enabledForReportingButNotEnforced",
+      "conditions": {
+        "users": {
+          "includeGroups": [
+            "{group:plan-business_premium}"
+          ],
+          "excludeGroups": [
+            "{group:grp-break-glass}"
+          ]
+        },
+        "applications": {
+          "includeApplications": [
+            "All"
+          ]
+        },
+        "clientAppTypes": [
+          "browser",
+          "mobileAppsAndDesktopClients"
+        ],
+        "platforms": {
+          "includePlatforms": [
+            "windows",
+            "macOS"
+          ]
+        }
+      },
+      "grantControls": {
+        "operator": "OR",
+        "builtInControls": [
+          "compliantDevice"
+        ]
+      }
+    }
+  },
+  "ENT-005": {
+    "status": "resolved",
+    "provider": "identity",
+    "step": "policy.entra",
+    "method": "graph",
+    "apply": "POST /identity/conditionalAccess/policies (PATCH by id when it exists)",
+    "payload": {
+      "displayName": "CA06 App protection on iOS and Android",
+      "state": "enabled",
+      "conditions": {
+        "users": {
+          "includeGroups": [
+            "{group:plan-business_premium}"
+          ],
+          "excludeGroups": [
+            "{group:grp-break-glass}"
+          ]
+        },
+        "applications": {
+          "includeApplications": [
+            "All"
+          ]
+        },
+        "clientAppTypes": [
+          "browser",
+          "mobileAppsAndDesktopClients"
+        ],
+        "platforms": {
+          "includePlatforms": [
+            "iOS",
+            "android"
+          ]
+        }
+      },
+      "grantControls": {
+        "operator": "OR",
+        "builtInControls": [
+          "compliantApplication"
+        ]
+      }
+    },
+    "read": "GET /identity/conditionalAccess/policies?$filter=displayName eq 'CA06 App protection on iOS and Android'",
+    "check": "state == 'enabled'; conditions.platforms.includePlatforms == ['iOS','android']; excludeGroups contains {group:grp-break-glass}; grantControls.builtInControls == ['compliantApplication']",
+    "permissions": [
+      "graph:Policy.ReadWrite.ConditionalAccess",
+      "graph:Policy.Read.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": "microsoft.entra.conditionalaccesspolicy",
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "not created yet; GET /v1.0/identity/conditionalAccess/policies returned 200, so the collection and the conditions schema are readable with the granted permissions",
+    "notes": "'Require approved client app' (approvedApplication) is retired by Microsoft; 'Require app protection policy' (compliantApplication) is the control that delivers 'approved app with app protection policy'. Needs the Intune app protection policies from the intune area to exist first. Policy name CA06 is proposed. Same {group:plan-business_premium} scope gap as ENT-004. mode staged: payload_audit is the report-only form (state enabledForReportingButNotEnforced) with the same scope; the identity provider also keeps blocking policies report-only until gate G-02 passes (SPEC 20.2). Whether the enforce step goes first to rollout.pilot_group or straight to all users is an orchestrator decision not settled here.",
+    "payload_audit": {
+      "displayName": "CA06 App protection on iOS and Android",
+      "state": "enabledForReportingButNotEnforced",
+      "conditions": {
+        "users": {
+          "includeGroups": [
+            "{group:plan-business_premium}"
+          ],
+          "excludeGroups": [
+            "{group:grp-break-glass}"
+          ]
+        },
+        "applications": {
+          "includeApplications": [
+            "All"
+          ]
+        },
+        "clientAppTypes": [
+          "browser",
+          "mobileAppsAndDesktopClients"
+        ],
+        "platforms": {
+          "includePlatforms": [
+            "iOS",
+            "android"
+          ]
+        }
+      },
+      "grantControls": {
+        "operator": "OR",
+        "builtInControls": [
+          "compliantApplication"
+        ]
+      }
+    }
+  },
+  "ENT-006": {
+    "status": "resolved",
+    "provider": "identity",
+    "step": "policy.entra",
+    "method": "graph",
+    "apply": "POST /identity/conditionalAccess/policies (PATCH by id when it exists)",
+    "payload": {
+      "displayName": "CA07 Block unknown device platforms",
+      "state": "enabled",
+      "conditions": {
+        "users": {
+          "includeUsers": [
+            "All"
+          ],
+          "excludeGroups": [
+            "{group:grp-break-glass}"
+          ]
+        },
+        "applications": {
+          "includeApplications": [
+            "All"
+          ]
+        },
+        "clientAppTypes": [
+          "all"
+        ],
+        "platforms": {
+          "includePlatforms": [
+            "all"
+          ],
+          "excludePlatforms": [
+            "android",
+            "iOS",
+            "windows",
+            "macOS",
+            "linux"
+          ]
+        }
+      },
+      "grantControls": {
+        "operator": "OR",
+        "builtInControls": [
+          "block"
+        ]
+      }
+    },
+    "read": "GET /identity/conditionalAccess/policies?$filter=displayName eq 'CA07 Block unknown device platforms'",
+    "check": "state == 'enabled'; conditions.platforms.includePlatforms == ['all']; excludePlatforms == ['android','iOS','windows','macOS','linux']; excludeGroups contains {group:grp-break-glass}; grantControls.builtInControls == ['block']",
+    "permissions": [
+      "graph:Policy.ReadWrite.ConditionalAccess",
+      "graph:Policy.Read.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": "microsoft.entra.conditionalaccesspolicy",
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "not created yet; GET /v1.0/identity/conditionalAccess/policies returned 200, so the collection and the conditions schema are readable with the granted permissions",
+    "notes": "Policy name CA07 is proposed. Whether linux counts as 'supported' is a decision: Intune supports Ubuntu compliance; drop it from excludePlatforms to block Linux too. windowsPhone is left blocked. mode staged: payload_audit is the report-only form (state enabledForReportingButNotEnforced) with the same scope; the identity provider also keeps blocking policies report-only until gate G-02 passes (SPEC 20.2). Whether the enforce step goes first to rollout.pilot_group or straight to all users is an orchestrator decision not settled here.",
+    "payload_audit": {
+      "displayName": "CA07 Block unknown device platforms",
+      "state": "enabledForReportingButNotEnforced",
+      "conditions": {
+        "users": {
+          "includeUsers": [
+            "All"
+          ],
+          "excludeGroups": [
+            "{group:grp-break-glass}"
+          ]
+        },
+        "applications": {
+          "includeApplications": [
+            "All"
+          ]
+        },
+        "clientAppTypes": [
+          "all"
+        ],
+        "platforms": {
+          "includePlatforms": [
+            "all"
+          ],
+          "excludePlatforms": [
+            "android",
+            "iOS",
+            "windows",
+            "macOS",
+            "linux"
+          ]
+        }
+      },
+      "grantControls": {
+        "operator": "OR",
+        "builtInControls": [
+          "block"
+        ]
+      }
+    }
+  },
+  "ENT-007": {
+    "status": "resolved",
+    "provider": "identity",
+    "step": "policy.entra",
+    "method": "graph",
+    "apply": "POST /identity/conditionalAccess/policies (PATCH by id when it exists)",
+    "payload": {
+      "displayName": "CA05 Sign-in frequency for administrators",
+      "state": "enabled",
+      "conditions": {
+        "users": {
+          "includeRoles": [
+            "{roles:privileged} (the 13 role template ids in Box.identity.psm1 $PrivilegedRoles)"
+          ],
+          "excludeGroups": [
+            "{group:grp-break-glass}"
+          ]
+        },
+        "applications": {
+          "includeApplications": [
+            "All"
+          ]
+        },
+        "clientAppTypes": [
+          "all"
+        ]
+      },
+      "sessionControls": {
+        "signInFrequency": {
+          "value": 8,
+          "type": "hours",
+          "isEnabled": true,
+          "frequencyInterval": "timeBased",
+          "authenticationType": "primaryAndSecondaryAuthentication"
+        },
+        "persistentBrowser": {
+          "mode": "never",
+          "isEnabled": true
+        }
+      }
+    },
+    "read": "GET /identity/conditionalAccess/policies?$filter=displayName eq 'CA05 Sign-in frequency for administrators'",
+    "check": "state == 'enabled'; includeRoles == privileged role set; excludeGroups contains {group:grp-break-glass}; sessionControls.signInFrequency == {value: 8, type: 'hours', isEnabled: true}; sessionControls.persistentBrowser == {mode: 'never', isEnabled: true}",
+    "permissions": [
+      "graph:Policy.ReadWrite.ConditionalAccess",
+      "graph:Policy.Read.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": "microsoft.entra.conditionalaccesspolicy",
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "read-only GET /v1.0/identity/conditionalAccess/policies returned 200 with CA01-CA05 (state enabledForReportingButNotEnforced)",
+    "notes": "Extends CA05 from baseline/identity.yaml: CA05 today sets signInFrequency only; persistentBrowser {mode: never} must be added to baseline and Get-PolicyBody. Mode is enforce, but the provider keeps it report-only until G-02 passes (session-only policy, so report-only has no blocking risk either way)."
+  },
+  "ENT-008": {
+    "status": "resolved",
+    "provider": "identity",
+    "step": "policy.entra",
+    "method": "graph",
+    "apply": "POST /identity/conditionalAccess/policies (PATCH by id when it exists)",
+    "payload": {
+      "displayName": "CA08 Sign-in frequency on unmanaged devices",
+      "state": "enabled",
+      "conditions": {
+        "users": {
+          "includeUsers": [
+            "All"
+          ],
+          "excludeGroups": [
+            "{group:grp-break-glass}"
+          ]
+        },
+        "applications": {
+          "includeApplications": [
+            "All"
+          ]
+        },
+        "clientAppTypes": [
+          "all"
+        ],
+        "devices": {
+          "deviceFilter": {
+            "mode": "include",
+            "rule": "device.isCompliant -ne True -and device.trustType -ne \"ServerAD\""
+          }
+        }
+      },
+      "sessionControls": {
+        "signInFrequency": {
+          "value": 12,
+          "type": "hours",
+          "isEnabled": true,
+          "frequencyInterval": "timeBased",
+          "authenticationType": "primaryAndSecondaryAuthentication"
+        },
+        "persistentBrowser": {
+          "mode": "never",
+          "isEnabled": true
+        }
+      }
+    },
+    "read": "GET /identity/conditionalAccess/policies?$filter=displayName eq 'CA08 Sign-in frequency on unmanaged devices'",
+    "check": "state == 'enabled'; conditions.devices.deviceFilter == {mode: 'include', rule: 'device.isCompliant -ne True -and device.trustType -ne \"ServerAD\"'}; excludeGroups contains {group:grp-break-glass}; sessionControls.signInFrequency.value == 12 and type == 'hours'; sessionControls.persistentBrowser.mode == 'never'",
+    "permissions": [
+      "graph:Policy.ReadWrite.ConditionalAccess",
+      "graph:Policy.Read.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": "microsoft.entra.conditionalaccesspolicy",
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "not created yet; GET /v1.0/identity/conditionalAccess/policies returned 200, so the collection and the conditions schema are readable with the granted permissions",
+    "notes": "Policy name CA08 is proposed. 'Unmanaged' is expressed as a device filter (not compliant and not hybrid joined); devices that send no device identity also match an include filter. persistentBrowser requires includeApplications ['All'], which this payload has."
+  },
+  "ENT-009": {
+    "status": "resolved",
+    "provider": "identity",
+    "step": "policy.entra",
+    "method": "graph",
+    "apply": "POST /identity/conditionalAccess/policies (PATCH by id when it exists)",
+    "payload": {
+      "displayName": "CA09 App-enforced restrictions on unmanaged devices",
+      "state": "enabled",
+      "conditions": {
+        "users": {
+          "includeUsers": [
+            "All"
+          ],
+          "excludeGroups": [
+            "{group:grp-break-glass}"
+          ]
+        },
+        "applications": {
+          "includeApplications": [
+            "Office365"
+          ]
+        },
+        "clientAppTypes": [
+          "browser"
+        ],
+        "devices": {
+          "deviceFilter": {
+            "mode": "include",
+            "rule": "device.isCompliant -ne True -and device.trustType -ne \"ServerAD\""
+          }
+        }
+      },
+      "sessionControls": {
+        "applicationEnforcedRestrictions": {
+          "isEnabled": true
+        }
+      }
+    },
+    "read": "GET /identity/conditionalAccess/policies?$filter=displayName eq 'CA09 App-enforced restrictions on unmanaged devices'",
+    "check": "state == 'enabled'; applications.includeApplications == ['Office365']; clientAppTypes == ['browser']; excludeGroups contains {group:grp-break-glass}; sessionControls.applicationEnforcedRestrictions.isEnabled == true",
+    "permissions": [
+      "graph:Policy.ReadWrite.ConditionalAccess",
+      "graph:Policy.Read.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": "microsoft.entra.conditionalaccesspolicy",
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "not created yet; GET /v1.0/identity/conditionalAccess/policies returned 200, so the collection and the conditions schema are readable with the granted permissions",
+    "notes": "Policy name CA09 is proposed. Has effect only with the service-side settings: SharePoint Set-SPOTenant -ConditionalAccessPolicy AllowLimitedAccess and Exchange Set-OwaMailboxPolicy -ConditionalAccessPolicy ReadOnly (sharepoint and exchange areas). Office365 app group is used because SharePoint and Exchange cannot be targeted separately without breaking Teams/OneDrive dependencies."
+  },
+  "ENT-010": {
+    "status": "resolved",
+    "provider": "identity",
+    "step": "policy.entra",
+    "method": "graph",
+    "apply": "POST /identity/conditionalAccess/policies (PATCH by id when it exists)",
+    "payload": {
+      "displayName": "CA10 MFA to register or join devices",
+      "state": "enabled",
+      "conditions": {
+        "users": {
+          "includeUsers": [
+            "All"
+          ],
+          "excludeGroups": [
+            "{group:grp-break-glass}"
+          ]
+        },
+        "applications": {
+          "includeUserActions": [
+            "urn:user:registerdevice"
+          ]
+        },
+        "clientAppTypes": [
+          "all"
+        ]
+      },
+      "grantControls": {
+        "operator": "OR",
+        "builtInControls": [
+          "mfa"
+        ]
+      }
+    },
+    "read": "GET /identity/conditionalAccess/policies?$filter=displayName eq 'CA10 MFA to register or join devices'; GET /policies/deviceRegistrationPolicy",
+    "check": "state == 'enabled'; applications.includeUserActions == ['urn:user:registerdevice']; excludeGroups contains {group:grp-break-glass}; grantControls.builtInControls == ['mfa']; and deviceRegistrationPolicy.multiFactorAuthConfiguration == 'notRequired'",
+    "permissions": [
+      "graph:Policy.ReadWrite.ConditionalAccess",
+      "graph:Policy.Read.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": "microsoft.entra.conditionalaccesspolicy",
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "not created yet; GET /v1.0/identity/conditionalAccess/policies returned 200, so the collection and the conditions schema are readable with the granted permissions; GET /v1.0/policies/deviceRegistrationPolicy returned multiFactorAuthConfiguration 'notRequired'",
+    "notes": "Policy name CA10 is proposed. Microsoft requires the device-registration-policy MFA switch to stay 'notRequired' when the CA user action is used; the read-back checks both. clientAppTypes 'all' is required for user actions."
+  },
+  "ENT-011": {
+    "status": "resolved",
+    "provider": "identity",
+    "step": "policy.entra",
+    "method": "graph",
+    "apply": "POST /identity/conditionalAccess/policies (PATCH by id when it exists)",
+    "payload": {
+      "displayName": "CA11 MFA to register security information",
+      "state": "enabled",
+      "conditions": {
+        "users": {
+          "includeUsers": [
+            "All"
+          ],
+          "excludeGroups": [
+            "{group:grp-break-glass}"
+          ]
+        },
+        "applications": {
+          "includeUserActions": [
+            "urn:user:registersecurityinfo"
+          ]
+        },
+        "clientAppTypes": [
+          "all"
+        ]
+      },
+      "grantControls": {
+        "operator": "OR",
+        "builtInControls": [
+          "mfa"
+        ]
+      }
+    },
+    "read": "GET /identity/conditionalAccess/policies?$filter=displayName eq 'CA11 MFA to register security information'",
+    "check": "state == 'enabled'; applications.includeUserActions == ['urn:user:registersecurityinfo']; excludeGroups contains {group:grp-break-glass}; grantControls.builtInControls == ['mfa']",
+    "permissions": [
+      "graph:Policy.ReadWrite.ConditionalAccess",
+      "graph:Policy.Read.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": "microsoft.entra.conditionalaccesspolicy",
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "not created yet; GET /v1.0/identity/conditionalAccess/policies returned 200, so the collection and the conditions schema are readable with the granted permissions",
+    "notes": "Policy name CA11 is proposed. A temporary access pass (ENT-021) satisfies the MFA grant, which delivers 'MFA or TAP'. New users get a TAP for first registration, so this must be enforced only after ENT-021."
+  },
+  "ENT-012": {
+    "status": "resolved",
+    "provider": "identity",
+    "step": "policy.entra",
+    "method": "graph",
+    "apply": "POST /identity/conditionalAccess/policies (PATCH by id when it exists)",
+    "payload": {
+      "displayName": "CA12 Block device code and authentication transfer",
+      "state": "enabled",
+      "conditions": {
+        "users": {
+          "includeUsers": [
+            "All"
+          ],
+          "excludeGroups": [
+            "{group:grp-break-glass}"
+          ]
+        },
+        "applications": {
+          "includeApplications": [
+            "All"
+          ]
+        },
+        "clientAppTypes": [
+          "all"
+        ],
+        "authenticationFlows": {
+          "transferMethods": "deviceCodeFlow,authenticationTransfer"
+        }
+      },
+      "grantControls": {
+        "operator": "OR",
+        "builtInControls": [
+          "block"
+        ]
+      }
+    },
+    "read": "GET /identity/conditionalAccess/policies?$filter=displayName eq 'CA12 Block device code and authentication transfer'",
+    "check": "state == 'enabled'; conditions.authenticationFlows.transferMethods == 'deviceCodeFlow,authenticationTransfer'; excludeGroups contains {group:grp-break-glass}; grantControls.builtInControls == ['block']",
+    "permissions": [
+      "graph:Policy.ReadWrite.ConditionalAccess",
+      "graph:Policy.Read.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": "microsoft.entra.conditionalaccesspolicy",
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "not created yet; GET /v1.0/identity/conditionalAccess/policies returned 200, so the collection and the conditions schema are readable with the granted permissions",
+    "notes": "Policy name CA12 is proposed. authenticationFlows is a flags string, not an array. The box CLI's own owner sign-in uses device code (auth.SignInDeviceCode): blocking device code for all users would break `box` sign-in for the owner. Decide: exclude {group:role-owner} or move the CLI to another flow before enforce. mode staged: payload_audit is the report-only form (state enabledForReportingButNotEnforced) with the same scope; the identity provider also keeps blocking policies report-only until gate G-02 passes (SPEC 20.2). Whether the enforce step goes first to rollout.pilot_group or straight to all users is an orchestrator decision not settled here.",
+    "payload_audit": {
+      "displayName": "CA12 Block device code and authentication transfer",
+      "state": "enabledForReportingButNotEnforced",
+      "conditions": {
+        "users": {
+          "includeUsers": [
+            "All"
+          ],
+          "excludeGroups": [
+            "{group:grp-break-glass}"
+          ]
+        },
+        "applications": {
+          "includeApplications": [
+            "All"
+          ]
+        },
+        "clientAppTypes": [
+          "all"
+        ],
+        "authenticationFlows": {
+          "transferMethods": "deviceCodeFlow,authenticationTransfer"
+        }
+      },
+      "grantControls": {
+        "operator": "OR",
+        "builtInControls": [
+          "block"
+        ]
+      }
+    }
+  },
+  "ENT-013": {
+    "status": "resolved",
+    "provider": "identity",
+    "step": "policy.entra",
+    "method": "graph",
+    "apply": "POST /identity/conditionalAccess/policies (PATCH by id when it exists)",
+    "payload": {
+      "displayName": "CA13 MFA for Azure management",
+      "state": "enabled",
+      "conditions": {
+        "users": {
+          "includeUsers": [
+            "All"
+          ],
+          "excludeGroups": [
+            "{group:grp-break-glass}"
+          ]
+        },
+        "applications": {
+          "includeApplications": [
+            "797f4846-ba00-4fd7-ba43-dac1f8f63013"
+          ]
+        },
+        "clientAppTypes": [
+          "all"
+        ]
+      },
+      "grantControls": {
+        "operator": "OR",
+        "builtInControls": [
+          "mfa"
+        ]
+      }
+    },
+    "read": "GET /identity/conditionalAccess/policies?$filter=displayName eq 'CA13 MFA for Azure management'",
+    "check": "state == 'enabled'; applications.includeApplications == ['797f4846-ba00-4fd7-ba43-dac1f8f63013']; excludeGroups contains {group:grp-break-glass}; grantControls.builtInControls == ['mfa']",
+    "permissions": [
+      "graph:Policy.ReadWrite.ConditionalAccess",
+      "graph:Policy.Read.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": "microsoft.entra.conditionalaccesspolicy",
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "not created yet; GET /v1.0/identity/conditionalAccess/policies returned 200, so the collection and the conditions schema are readable with the granted permissions",
+    "notes": "Policy name CA13 is proposed. 797f4846-ba00-4fd7-ba43-dac1f8f63013 is the well-known Windows Azure Service Management API app id (Microsoft, not tenant data). Overlaps CA01 deliberately so the control survives an exception on CA01."
+  },
+  "ENT-014": {
+    "status": "resolved",
+    "provider": "identity",
+    "step": "policy.entra",
+    "method": "graph",
+    "apply": "POST /identity/conditionalAccess/namedLocations (countryNamedLocation), then POST /identity/conditionalAccess/policies",
+    "payload": {
+      "namedLocation": {
+        "@odata.type": "#microsoft.graph.countryNamedLocation",
+        "displayName": "Allowed countries",
+        "countriesAndRegions": [
+          "{config:policy.allowed_countries}"
+        ],
+        "includeUnknownCountriesAndRegions": false,
+        "countryLookupMethod": "clientIpAddress"
+      },
+      "policy": {
+        "displayName": "CA14 Block countries outside the allowed list",
+        "state": "enabled",
+        "conditions": {
+          "users": {
+            "includeUsers": [
+              "All"
+            ],
+            "excludeGroups": [
+              "{group:grp-break-glass}"
+            ]
+          },
+          "applications": {
+            "includeApplications": [
+              "All"
+            ]
+          },
+          "clientAppTypes": [
+            "all"
+          ],
+          "locations": {
+            "includeLocations": [
+              "All"
+            ],
+            "excludeLocations": [
+              "{namedLocation:allowed-countries}"
+            ]
+          }
+        },
+        "grantControls": {
+          "operator": "OR",
+          "builtInControls": [
+            "block"
+          ]
+        }
+      }
+    },
+    "read": "GET /identity/conditionalAccess/namedLocations; GET /identity/conditionalAccess/policies?$filter=displayName eq 'CA14 Block countries outside the allowed list'",
+    "check": "named location 'Allowed countries' countriesAndRegions == configured list; policy state == 'enabled'; locations.excludeLocations == [that location id]; excludeGroups contains {group:grp-break-glass}; grantControls.builtInControls == ['block']",
+    "permissions": [
+      "graph:Policy.ReadWrite.ConditionalAccess",
+      "graph:Policy.Read.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": "microsoft.entra.conditionalaccesspolicy + microsoft.entra.namedlocationpolicy",
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "GET /v1.0/identity/conditionalAccess/namedLocations returned 200 (no locations yet)",
+    "notes": "Tier enhanced. CONFIGURATION GAP: the value says 'list from deployment configuration' but the configuration schema has no allowed-countries key (examples/acme has none); a key such as policy.allowed_countries (ISO 3166 alpha-2) must be added before this can apply. Policy name CA14 is proposed. mode staged: payload_audit is the report-only form (state enabledForReportingButNotEnforced) with the same scope; the identity provider also keeps blocking policies report-only until gate G-02 passes (SPEC 20.2). Whether the enforce step goes first to rollout.pilot_group or straight to all users is an orchestrator decision not settled here.",
+    "payload_audit": {
+      "namedLocation": {
+        "@odata.type": "#microsoft.graph.countryNamedLocation",
+        "displayName": "Allowed countries",
+        "countriesAndRegions": [
+          "{config:policy.allowed_countries}"
+        ],
+        "includeUnknownCountriesAndRegions": false,
+        "countryLookupMethod": "clientIpAddress"
+      },
+      "policy": {
+        "displayName": "CA14 Block countries outside the allowed list",
+        "state": "enabledForReportingButNotEnforced",
+        "conditions": {
+          "users": {
+            "includeUsers": [
+              "All"
+            ],
+            "excludeGroups": [
+              "{group:grp-break-glass}"
+            ]
+          },
+          "applications": {
+            "includeApplications": [
+              "All"
+            ]
+          },
+          "clientAppTypes": [
+            "all"
+          ],
+          "locations": {
+            "includeLocations": [
+              "All"
+            ],
+            "excludeLocations": [
+              "{namedLocation:allowed-countries}"
+            ]
+          }
+        },
+        "grantControls": {
+          "operator": "OR",
+          "builtInControls": [
+            "block"
+          ]
+        }
+      }
+    }
+  },
+  "ENT-015": {
+    "status": "resolved",
+    "provider": "identity",
+    "step": "policy.entra",
+    "method": "graph",
+    "apply": "PATCH /identity/conditionalAccess/policies/{id} adding {group:grp-break-glass} to conditions.users.excludeGroups of any policy that lacks it",
+    "payload": {
+      "conditions": {
+        "users": {
+          "excludeGroups": [
+            "<existing ids>",
+            "{group:grp-break-glass}"
+          ]
+        }
+      }
+    },
+    "read": "GET /identity/conditionalAccess/policies",
+    "check": "for every policy in the collection (not only CA01-CA14): conditions.users.excludeGroups contains {group:grp-break-glass}",
+    "permissions": [
+      "graph:Policy.ReadWrite.ConditionalAccess",
+      "graph:Policy.Read.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": "microsoft.entra.conditionalaccesspolicy",
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "read-only GET /v1.0/identity/conditionalAccess/policies returned 200 with CA01-CA05 (state enabledForReportingButNotEnforced)",
+    "notes": "Verify-on-each-apply over ALL policies, including ones not created by Box; Get-CAChanges in Box.identity.psm1 today checks only the policies it declares, so it must be extended. SPEC 20.2 fixed rule; never overridable."
+  },
+  "ENT-016": {
+    "status": "not-applied",
+    "provider": "identity",
+    "step": "policy.entra",
+    "method": "graph",
+    "apply": "",
+    "payload": {},
+    "read": "",
+    "check": "",
+    "permissions": [],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "not verified: addon",
+    "notes": "Tier addon, capability entra_p2 (risk-based Conditional Access). Never applied."
+  },
+  "ENT-017": {
+    "status": "not-applied",
+    "provider": "identity",
+    "step": "policy.entra",
+    "method": "graph",
+    "apply": "",
+    "payload": {},
+    "read": "",
+    "check": "",
+    "permissions": [],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "not verified: addon",
+    "notes": "Tier addon, capability entra_p2 (Privileged Identity Management). Never applied."
+  },
+  "ENT-018": {
+    "status": "resolved",
+    "provider": "identity",
+    "step": "policy.entra",
+    "method": "graph",
+    "apply": "PATCH /policies/identitySecurityDefaultsEnforcementPolicy",
+    "payload": {
+      "isEnabled": false
+    },
+    "read": "GET /policies/identitySecurityDefaultsEnforcementPolicy",
+    "check": "isEnabled == false, only after CA01-CA03 have state 'enabled'",
+    "permissions": [
+      "graph:Policy.ReadWrite.SecurityDefaults (not granted: proposed)"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": "microsoft.entra.securitydefaults",
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "read-only GET returned 200; isEnabled is currently true on the test tenant",
+    "notes": "Ordering: CA policies cannot be switched to 'enabled' while security defaults are on, and security defaults must not go off before the CA policies are enforced; the step must do both in one apply. Write permission is Policy.ReadWrite.SecurityDefaults, which is NOT in app-permissions.yaml: the existing identity.security-defaults fallback step also PATCHes this object and would get 403."
+  },
+  "ENT-019": {
+    "status": "resolved",
+    "provider": "identity",
+    "step": "policy.entra",
+    "method": "graph",
+    "apply": "PATCH /policies/authenticationMethodsPolicy/authenticationMethodConfigurations/Fido2",
+    "payload": {
+      "@odata.type": "#microsoft.graph.fido2AuthenticationMethodConfiguration",
+      "state": "enabled",
+      "isSelfServiceRegistrationAllowed": true,
+      "includeTargets": [
+        {
+          "targetType": "group",
+          "id": "all_users",
+          "isRegistrationRequired": false
+        }
+      ]
+    },
+    "read": "GET /policies/authenticationMethodsPolicy/authenticationMethodConfigurations/Fido2",
+    "check": "state == 'enabled'; includeTargets[*].id contains 'all_users'; isSelfServiceRegistrationAllowed == true",
+    "permissions": [
+      "graph:Policy.ReadWrite.AuthenticationMethod"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": "microsoft.entra.authenticationmethodpolicyfido2",
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "read-only GET returned 200: state enabled, includeTargets all_users, self-service registration allowed",
+    "notes": "Same object identity.auth-methods already sets (fido2: enabled). Passkey profiles (passkeyProfiles, defaultPasskeyProfile) now appear on the object; the default profile is left unchanged."
+  },
+  "ENT-020": {
+    "status": "resolved",
+    "provider": "identity",
+    "step": "policy.entra",
+    "method": "graph",
+    "apply": "PATCH /policies/authenticationMethodsPolicy/authenticationMethodConfigurations/MicrosoftAuthenticator",
+    "payload": {
+      "@odata.type": "#microsoft.graph.microsoftAuthenticatorAuthenticationMethodConfiguration",
+      "state": "enabled",
+      "featureSettings": {
+        "displayAppInformationRequiredState": {
+          "state": "enabled",
+          "includeTarget": {
+            "targetType": "group",
+            "id": "all_users"
+          }
+        }
+      }
+    },
+    "read": "GET /policies/authenticationMethodsPolicy/authenticationMethodConfigurations/MicrosoftAuthenticator",
+    "check": "state == 'enabled'; featureSettings.displayAppInformationRequiredState.state == 'enabled' and includeTarget.id == 'all_users'",
+    "permissions": [
+      "graph:Policy.ReadWrite.AuthenticationMethod"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": "microsoft.entra.authenticationmethodpolicyauthenticator",
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "read-only GET returned 200: state enabled; displayAppInformationRequiredState.state is 'default' (drift: must become 'enabled')",
+    "notes": "Number matching is enforced by Microsoft for every Authenticator push and is no longer a configurable property, so the 'number matching' part needs no write and has no read-back other than this note. baseline/identity.yaml has number_matching: on, which the provider ignores; the provider must add the featureSettings write for 'application name shown'."
+  },
+  "ENT-021": {
+    "status": "resolved",
+    "provider": "identity",
+    "step": "policy.entra",
+    "method": "graph",
+    "apply": "PATCH /policies/authenticationMethodsPolicy/authenticationMethodConfigurations/TemporaryAccessPass",
+    "payload": {
+      "@odata.type": "#microsoft.graph.temporaryAccessPassAuthenticationMethodConfiguration",
+      "state": "enabled",
+      "isUsableOnce": true,
+      "defaultLifetimeInMinutes": 60,
+      "maximumLifetimeInMinutes": 60,
+      "minimumLifetimeInMinutes": 60
+    },
+    "read": "GET /policies/authenticationMethodsPolicy/authenticationMethodConfigurations/TemporaryAccessPass",
+    "check": "state == 'enabled'; isUsableOnce == true; defaultLifetimeInMinutes == 60; maximumLifetimeInMinutes == 60",
+    "permissions": [
+      "graph:Policy.ReadWrite.AuthenticationMethod"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": "microsoft.entra.authenticationmethodpolicytemporary",
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "read-only GET returned 200: state enabled, isUsableOnce false, default 60, maximum 480 (drift on isUsableOnce and maximum)",
+    "notes": "baseline has one_time: true but the provider writes only state; it must add isUsableOnce and lifetimes. minimumLifetimeInMinutes must not exceed the default; set to 60 to make 1 hour the only lifetime (reviewer may prefer a lower minimum)."
+  },
+  "ENT-022": {
+    "status": "resolved",
+    "provider": "identity",
+    "step": "policy.entra",
+    "method": "graph",
+    "apply": "PATCH /policies/authenticationMethodsPolicy/authenticationMethodConfigurations/Sms",
+    "payload": {
+      "@odata.type": "#microsoft.graph.smsAuthenticationMethodConfiguration",
+      "state": "disabled"
+    },
+    "read": "GET /policies/authenticationMethodsPolicy/authenticationMethodConfigurations/Sms",
+    "check": "state == 'disabled'",
+    "permissions": [
+      "graph:Policy.ReadWrite.AuthenticationMethod"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": "microsoft.entra.authenticationmethodpolicysms",
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "read-only GET returned 200: state disabled",
+    "notes": "Same object identity.auth-methods already sets."
+  },
+  "ENT-023": {
+    "status": "resolved",
+    "provider": "identity",
+    "step": "policy.entra",
+    "method": "graph",
+    "apply": "PATCH /policies/authenticationMethodsPolicy/authenticationMethodConfigurations/Voice",
+    "payload": {
+      "@odata.type": "#microsoft.graph.voiceAuthenticationMethodConfiguration",
+      "state": "disabled"
+    },
+    "read": "GET /policies/authenticationMethodsPolicy/authenticationMethodConfigurations/Voice",
+    "check": "state == 'disabled'",
+    "permissions": [
+      "graph:Policy.ReadWrite.AuthenticationMethod"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": "microsoft.entra.authenticationmethodpolicyvoice",
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "read-only GET returned 200: state disabled",
+    "notes": "Same object identity.auth-methods already sets."
+  },
+  "ENT-024": {
+    "status": "resolved",
+    "provider": "identity",
+    "step": "policy.entra",
+    "method": "graph",
+    "apply": "PATCH /policies/authenticationMethodsPolicy/authenticationMethodConfigurations/Email",
+    "payload": {
+      "@odata.type": "#microsoft.graph.emailAuthenticationMethodConfiguration",
+      "state": "disabled"
+    },
+    "read": "GET /policies/authenticationMethodsPolicy/authenticationMethodConfigurations/Email",
+    "check": "state == 'disabled'",
+    "permissions": [
+      "graph:Policy.ReadWrite.AuthenticationMethod"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": "microsoft.entra.authenticationmethodpolicyemail",
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "read-only GET returned 200: state disabled",
+    "notes": "Same object identity.auth-methods already sets. Covers members' email OTP as an MFA/SSPR method only; guest email one-time passcode for B2B sign-in is allowExternalIdToUseEmailOtp on the same object (currently 'default') and is not changed by this setting."
+  },
+  "ENT-025": {
+    "status": "resolved",
+    "provider": "identity",
+    "step": "policy.entra",
+    "method": "graph-beta",
+    "apply": "PATCH /policies/authenticationMethodsPolicy (only when preMigration or migrationInProgress); PATCH /beta/users/{id}/authentication/requirements per user whose perUserMfaState is not disabled",
+    "payload": {
+      "policy": {
+        "policyMigrationState": "migrationComplete"
+      },
+      "perUser": {
+        "perUserMfaState": "disabled"
+      }
+    },
+    "read": "GET /policies/authenticationMethodsPolicy; GET /beta/users/{id}/authentication/requirements for each user",
+    "check": "policyMigrationState in [null, 'migrationComplete']; every user's perUserMfaState == 'disabled'",
+    "permissions": [
+      "graph:Policy.ReadWrite.AuthenticationMethod",
+      "graph:UserAuthenticationMethod.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": "microsoft.entra.authenticationmethodpolicy",
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "read-only GET returned policyMigrationState null (v1.0 and beta): the tenant has no legacy MFA/SSPR method policies to migrate; GET /beta/users/{id}/authentication/requirements returned perUserMfaState 'disabled' for a sampled user",
+    "notes": "Microsoft retired the legacy MFA and SSPR method policies in 2025; on a new tenant the unified policy is the only one and migration state is null. The per-user MFA read is beta only."
+  },
+  "ENT-026": {
+    "status": "resolved",
+    "provider": "identity",
+    "step": "policy.entra",
+    "method": "graph",
+    "apply": "POST /groupSettings from template 5cf42378-d67d-4f36-ba46-e8b86229381d (Password Rule Settings) when absent; PATCH /groupSettings/{id} after",
+    "payload": {
+      "templateId": "5cf42378-d67d-4f36-ba46-e8b86229381d",
+      "values": [
+        {
+          "name": "EnableBannedPasswordCheck",
+          "value": "true"
+        },
+        {
+          "name": "BannedPasswordList",
+          "value": "{dictionary:company.trading_name}\\t{dictionary:company.legal_name}\\t{config:policy.banned_password_terms}"
+        },
+        {
+          "name": "LockoutThreshold",
+          "value": "10"
+        },
+        {
+          "name": "LockoutDurationInSeconds",
+          "value": "60"
+        }
+      ]
+    },
+    "read": "GET /groupSettings?$filter=templateId eq '5cf42378-d67d-4f36-ba46-e8b86229381d'",
+    "check": "values[name=EnableBannedPasswordCheck].value == 'true'; values[name=BannedPasswordList].value contains every configured term",
+    "permissions": [
+      "graph:Directory.ReadWrite.All (not granted: proposed)"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": "microsoft.entra.passwordrulesettings",
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "GET /v1.0/groupSettingTemplates/5cf42378-d67d-4f36-ba46-e8b86229381d returned the six values (BannedPasswordCheckOnPremisesMode, EnableBannedPasswordCheckOnPremises, EnableBannedPasswordCheck, LockoutDurationInSeconds, LockoutThreshold, BannedPasswordList); no Password Rule Settings object exists on the test tenant yet",
+    "notes": "One directory setting object carries ENT-026 and ENT-027; write both together. Creating/updating a tenant directory setting needs Directory.ReadWrite.All (not granted). Terms are company data and must come from the Dictionary (R11), not configuration; the trading and legal names exist, but there is no key for product names: a Dictionary key is needed. BannedPasswordList is tab-separated. The on-premises keys are irrelevant (cloud only)."
+  },
+  "ENT-027": {
+    "status": "resolved",
+    "provider": "identity",
+    "step": "policy.entra",
+    "method": "graph",
+    "apply": "PATCH /groupSettings/{id} (Password Rule Settings, same object as ENT-026)",
+    "payload": {
+      "templateId": "5cf42378-d67d-4f36-ba46-e8b86229381d",
+      "values": [
+        {
+          "name": "LockoutThreshold",
+          "value": "10"
+        },
+        {
+          "name": "LockoutDurationInSeconds",
+          "value": "60"
+        }
+      ]
+    },
+    "read": "GET /groupSettings?$filter=templateId eq '5cf42378-d67d-4f36-ba46-e8b86229381d'",
+    "check": "values[name=LockoutThreshold].value == '10'; values[name=LockoutDurationInSeconds].value == '60'",
+    "permissions": [
+      "graph:Directory.ReadWrite.All (not granted: proposed)"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": "microsoft.entra.passwordrulesettings",
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "GET /v1.0/groupSettingTemplates/5cf42378-d67d-4f36-ba46-e8b86229381d returned defaults LockoutThreshold 10 and LockoutDurationInSeconds 60 (the stated value equals the default; with no object present the defaults apply)",
+    "notes": "Capability free: lockout is available without P1, unlike the custom banned list. When no settings object exists the read-back should treat template defaults as the effective value."
+  },
+  "ENT-028": {
+    "status": "resolved",
+    "provider": "identity",
+    "step": "policy.entra",
+    "method": "graph",
+    "apply": "PATCH /domains/{domain} for every verified domain",
+    "payload": {
+      "passwordValidityPeriodInDays": 2147483647
+    },
+    "read": "GET /domains?$select=id,passwordValidityPeriodInDays",
+    "check": "every domain: passwordValidityPeriodInDays == 2147483647",
+    "permissions": [
+      "graph:Domain.ReadWrite.All (not granted: proposed)"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": "microsoft.entra.tenantdetails (password policy)",
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "read-only GET /v1.0/domains returned 200; the initial domain already has 2147483647 (never expire)",
+    "notes": "Same object as ADM-004 (Microsoft 365 admin centre password expiration policy); resolve once, check in both. New tenants default to never expire, so apply is only needed after drift or when a custom domain is added with a different value. Per-user passwordPolicies 'DisablePasswordExpiration' is not used."
+  },
+  "ENT-029": {
+    "status": "gate",
+    "provider": "identity",
+    "step": "policy.entra",
+    "method": "portal",
+    "apply": "Entra admin centre > Protection > Password reset > Properties: Self service password reset enabled = All; Authentication methods: Number of methods required to reset = 2",
+    "payload": {
+      "enabled": "All",
+      "methodsRequired": 2
+    },
+    "read": "GET /policies/authorizationPolicy (allowedToUseSSPR); GET /beta/reports/authenticationMethods/userRegistrationDetails (isSsprEnabled, isSsprRegistered)",
+    "check": "owner confirmation recorded as an Events item; automated partial check: userRegistrationDetails[*].isSsprEnabled == true for every member user",
+    "permissions": [
+      "graph:AuditLog.Read.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "read-only GET /beta/reports/authenticationMethods/userRegistrationDetails returned 200; authorizationPolicy.allowedToUseSSPR returned true",
+    "notes": "No Graph write API for the SSPR policy (scope and number of methods). authorizationPolicy.allowedToUseSSPR only governs administrators' use of SSPR, so it is not the setting. Proposed gate (R5): guide as in apply, expected value 'All; 2 methods'. With the unified authentication methods policy, the methods users may use are the ones enabled in ENT-019..ENT-024."
+  },
+  "ENT-030": {
+    "status": "resolved",
+    "provider": "identity",
+    "step": "policy.entra",
+    "method": "graph",
+    "apply": "PATCH /policies/authorizationPolicy",
+    "payload": {
+      "defaultUserRolePermissions": {
+        "allowedToCreateApps": false
+      }
+    },
+    "read": "GET /policies/authorizationPolicy",
+    "check": "defaultUserRolePermissions.allowedToCreateApps == false",
+    "permissions": [
+      "graph:Policy.ReadWrite.Authorization"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": "microsoft.entra.authorizationpolicy",
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "read-only GET returned 200: allowedToCreateApps false",
+    "notes": "Same object and property identity.directory-settings already sets (users_can_register_apps: false)."
+  },
+  "ENT-031": {
+    "status": "resolved",
+    "provider": "identity",
+    "step": "policy.entra",
+    "method": "graph",
+    "apply": "PATCH /policies/authorizationPolicy",
+    "payload": {
+      "defaultUserRolePermissions": {
+        "permissionGrantPoliciesAssigned": []
+      }
+    },
+    "read": "GET /policies/authorizationPolicy",
+    "check": "defaultUserRolePermissions.permissionGrantPoliciesAssigned == []",
+    "permissions": [
+      "graph:Policy.ReadWrite.Authorization"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": "microsoft.entra.authorizationpolicy",
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "read-only GET returned 200: permissionGrantPoliciesAssigned []",
+    "notes": "Same object and property identity.directory-settings already sets (users_can_consent_to_apps: false). Group-owner consent is a separate directory setting (Consent Policy Settings, EnableGroupSpecificConsent) whose object already exists on the test tenant; not part of this setting's value."
+  },
+  "ENT-032": {
+    "status": "resolved",
+    "provider": "identity",
+    "step": "policy.entra",
+    "method": "graph",
+    "apply": "PUT /policies/adminConsentRequestPolicy",
+    "payload": {
+      "isEnabled": true,
+      "notifyReviewers": true,
+      "remindersEnabled": true,
+      "requestDurationInDays": 30,
+      "reviewers": [
+        {
+          "query": "/groups/{group:role-owner}/transitiveMembers/microsoft.graph.user",
+          "queryType": "MicrosoftGraph",
+          "queryRoot": null
+        }
+      ]
+    },
+    "read": "GET /policies/adminConsentRequestPolicy",
+    "check": "isEnabled == true; reviewers[*].query (without a '/v1.0' prefix) contains '/groups/{group:role-owner}/transitiveMembers/microsoft.graph.user'",
+    "permissions": [
+      "graph:Policy.ReadWrite.ConsentRequest"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": "microsoft.entra.adminconsentrequestpolicy",
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "read-only GET returned 200: isEnabled true, notifyReviewers true, requestDurationInDays 30",
+    "notes": "Same object and body identity.directory-settings already PUTs (admin_consent_workflow: enabled; reviewers role-owner, queryRoot null required)."
+  },
+  "ENT-033": {
+    "status": "resolved",
+    "provider": "identity",
+    "step": "policy.entra",
+    "method": "graph",
+    "apply": "PATCH /policies/authorizationPolicy",
+    "payload": {
+      "defaultUserRolePermissions": {
+        "allowedToCreateTenants": false
+      }
+    },
+    "read": "GET /policies/authorizationPolicy",
+    "check": "defaultUserRolePermissions.allowedToCreateTenants == false",
+    "permissions": [
+      "graph:Policy.ReadWrite.Authorization"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": "microsoft.entra.authorizationpolicy",
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "read-only GET returned 200: allowedToCreateTenants true (drift)",
+    "notes": "Same object as identity.directory-settings; property not yet written by the provider."
+  },
+  "ENT-034": {
+    "status": "resolved",
+    "provider": "identity",
+    "step": "policy.entra",
+    "method": "graph",
+    "apply": "PATCH /policies/authorizationPolicy; POST /groupSettings from template 62375ab9-6b52-47ed-826b-58e47e0e304b (Group.Unified) when absent, PATCH /groupSettings/{id} after",
+    "payload": {
+      "authorizationPolicy": {
+        "defaultUserRolePermissions": {
+          "allowedToCreateSecurityGroups": false
+        }
+      },
+      "groupSettings": {
+        "templateId": "62375ab9-6b52-47ed-826b-58e47e0e304b",
+        "values": [
+          {
+            "name": "EnableGroupCreation",
+            "value": "false"
+          },
+          {
+            "name": "GroupCreationAllowedGroupId",
+            "value": ""
+          }
+        ]
+      }
+    },
+    "read": "GET /policies/authorizationPolicy; GET /groupSettings?$filter=templateId eq '62375ab9-6b52-47ed-826b-58e47e0e304b'",
+    "check": "defaultUserRolePermissions.allowedToCreateSecurityGroups == false; Group.Unified values[name=EnableGroupCreation].value == 'false'",
+    "permissions": [
+      "graph:Policy.ReadWrite.Authorization",
+      "graph:Directory.ReadWrite.All (not granted: proposed)"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": "microsoft.entra.authorizationpolicy + microsoft.entra.groupssettings",
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "read-only GETs returned 200: allowedToCreateSecurityGroups true (drift); template 62375ab9-6b52-47ed-826b-58e47e0e304b has EnableGroupCreation (default true); no Group.Unified object exists yet",
+    "notes": "Two objects: security groups via authorizationPolicy, Microsoft 365 groups via the Group.Unified directory setting. Administrators keep the right through their roles, so GroupCreationAllowedGroupId stays empty. The Group.Unified object also carries guest settings (AllowToAddGuests, AllowGuestsToAccessGroups) that the sharepoint/teams areas may set: one writer must own the object to avoid overwrites."
+  },
+  "ENT-035": {
+    "status": "gate",
+    "provider": "identity",
+    "step": "policy.entra",
+    "method": "portal",
+    "apply": "Entra admin centre > Identity > Users > User settings: 'Restrict access to Microsoft Entra admin center' = Yes",
+    "payload": {
+      "restrictNonAdminUsers": true
+    },
+    "read": "none via Graph",
+    "check": "owner confirmation recorded as an Events item with a dated screenshot in evidence",
+    "permissions": [],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "not verified: no Graph read exists for this switch",
+    "notes": "No Graph API reads or writes this switch (it only hides the portal; it does not block Graph or PowerShell). Proposed gate (R5). authorizationPolicy.blockMsolPowerShell is a different control."
+  },
+  "ENT-036": {
+    "status": "resolved",
+    "provider": "identity",
+    "step": "policy.entra",
+    "method": "graph",
+    "apply": "PATCH /policies/authorizationPolicy",
+    "payload": {
+      "allowInvitesFrom": "adminsAndGuestInviters"
+    },
+    "read": "GET /policies/authorizationPolicy",
+    "check": "allowInvitesFrom == 'adminsAndGuestInviters'",
+    "permissions": [
+      "graph:Policy.ReadWrite.Authorization"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": "microsoft.entra.authorizationpolicy",
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "read-only GET returned 200: allowInvitesFrom adminsAndGuestInviters",
+    "notes": "Same object and property identity.directory-settings already sets (guest_invitations: admins_only)."
+  },
+  "ENT-037": {
+    "status": "resolved",
+    "provider": "identity",
+    "step": "policy.entra",
+    "method": "graph",
+    "apply": "PATCH /policies/authorizationPolicy",
+    "payload": {
+      "guestUserRoleId": "2af84b1e-32c8-42b7-82bc-daa82404023b"
+    },
+    "read": "GET /policies/authorizationPolicy",
+    "check": "guestUserRoleId == '2af84b1e-32c8-42b7-82bc-daa82404023b'",
+    "permissions": [
+      "graph:Policy.ReadWrite.Authorization"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": "microsoft.entra.authorizationpolicy",
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "read-only GET returned 200: guestUserRoleId 2af84b1e-32c8-42b7-82bc-daa82404023b (restricted)",
+    "notes": "Same object and property identity.directory-settings already sets (guest_access: restricted). The id is Microsoft's well-known restricted guest role."
+  },
+  "ENT-038": {
+    "status": "gate",
+    "provider": "identity",
+    "step": "policy.entra",
+    "method": "portal",
+    "apply": "Entra admin centre > External Identities > External collaboration settings > Collaboration restrictions: 'Allow invitations only to the specified domains', list empty",
+    "payload": {
+      "B2BManagementPolicy": {
+        "InvitationsAllowedAndBlockedDomainsPolicy": {
+          "AllowedDomains": []
+        }
+      }
+    },
+    "read": "GET /beta/legacy/policies (type B2BManagementPolicy)",
+    "check": "a B2BManagementPolicy exists whose definition InvitationsAllowedAndBlockedDomainsPolicy.AllowedDomains == [] (an allow list, not a block list)",
+    "permissions": [],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "read-only GET /beta/legacy/policies returned 200 with no policies (collaboration restrictions not set)",
+    "notes": "Tier enhanced. The only programmatic surface is the undocumented beta legacy policy type B2BManagementPolicy; not used for writes (preview/undocumented, permission unclear). Gate with an automated read-back. Cross-tenant access settings (/policies/crossTenantAccessPolicy) cover Entra tenants only, not domains, so they do not deliver this value."
+  },
+  "ENT-039": {
+    "status": "resolved",
+    "provider": "identity",
+    "step": "policy.entra",
+    "method": "graph-beta",
+    "apply": "PUT /beta/policies/deviceRegistrationPolicy (full object; read, modify, write back)",
+    "payload": {
+      "azureADJoin": {
+        "isAdminConfigurable": true,
+        "allowedToJoin": {
+          "@odata.type": "#microsoft.graph.enumeratedDeviceRegistrationMembership",
+          "users": [],
+          "groups": [
+            "{group:device-join}"
+          ]
+        }
+      }
+    },
+    "read": "GET /beta/policies/deviceRegistrationPolicy",
+    "check": "azureADJoin.allowedToJoin.@odata.type == '#microsoft.graph.enumeratedDeviceRegistrationMembership' and groups == [{group:device-join}]",
+    "permissions": [
+      "graph:Policy.ReadWrite.DeviceConfiguration (not granted: proposed)"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": "microsoft.entra.deviceregistrationpolicy",
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "read-only GET (v1.0 and beta) returned 200: allowedToJoin allDeviceRegistrationMembership (drift)",
+    "notes": "Write is beta only (PUT, whole object) and needs Policy.ReadWrite.DeviceConfiguration (not granted). CONFIGURATION GAP: 'named group' is not defined in the configuration; a key naming the join group (for example grp-staff) is needed. Autopilot/Intune enrolment also requires the enrolling users to be in this group."
+  },
+  "ENT-040": {
+    "status": "resolved",
+    "provider": "identity",
+    "step": "policy.entra",
+    "method": "graph-beta",
+    "apply": "PUT /beta/policies/deviceRegistrationPolicy (same object as ENT-039)",
+    "payload": {
+      "azureADJoin": {
+        "localAdmins": {
+          "enableGlobalAdmins": true,
+          "registeringUsers": {
+            "@odata.type": "#microsoft.graph.noDeviceRegistrationMembership"
+          }
+        }
+      }
+    },
+    "read": "GET /beta/policies/deviceRegistrationPolicy; GET /roleManagement/directory/roleAssignments?$filter=roleDefinitionId eq '9f06204d-73c1-4d4c-880a-6edb90606fd8'",
+    "check": "azureADJoin.localAdmins.registeringUsers.@odata.type == '#microsoft.graph.noDeviceRegistrationMembership'; no assignments of the Microsoft Entra Joined Device Local Administrator role",
+    "permissions": [
+      "graph:Policy.ReadWrite.DeviceConfiguration (not granted: proposed)"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": "microsoft.entra.deviceregistrationpolicy",
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "read-only GET returned 200: registeringUsers allDeviceRegistrationMembership (drift); roleAssignments read works with Directory.Read.All",
+    "notes": "'Additional local administrators' in the portal is the Microsoft Entra Joined Device Local Administrator role (template 9f06204d-73c1-4d4c-880a-6edb90606fd8); the check confirms it has no holders. enableGlobalAdmins stays true (Global Administrators are break-glass only). Intune Autopilot profiles can also make the user an admin: the intune area must set the profile's user account type to standard."
+  },
+  "ENT-041": {
+    "status": "resolved",
+    "provider": "identity",
+    "step": "policy.entra",
+    "method": "graph-beta",
+    "apply": "PUT /beta/policies/deviceRegistrationPolicy (same object as ENT-039)",
+    "payload": {
+      "userDeviceQuota": 5
+    },
+    "read": "GET /beta/policies/deviceRegistrationPolicy",
+    "check": "userDeviceQuota == 5",
+    "permissions": [
+      "graph:Policy.ReadWrite.DeviceConfiguration (not granted: proposed)"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": "microsoft.entra.deviceregistrationpolicy",
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "read-only GET returned 200: userDeviceQuota 50 (drift)",
+    "notes": "Same object as ENT-039."
+  },
+  "ENT-042": {
+    "status": "resolved",
+    "provider": "identity",
+    "step": "policy.entra",
+    "method": "graph-beta",
+    "apply": "PUT /beta/policies/deviceRegistrationPolicy (same object as ENT-039)",
+    "payload": {
+      "localAdminPassword": {
+        "isEnabled": true
+      }
+    },
+    "read": "GET /beta/policies/deviceRegistrationPolicy",
+    "check": "localAdminPassword.isEnabled == true",
+    "permissions": [
+      "graph:Policy.ReadWrite.DeviceConfiguration (not granted: proposed)"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": "microsoft.entra.deviceregistrationpolicy",
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "read-only GET returned 200: localAdminPassword.isEnabled false (drift)",
+    "notes": "Directory side only; Windows LAPS on devices needs the Intune LAPS policy (intune area). Reading stored passwords (deviceLocalCredentials) needs DeviceLocalCredential.Read.All, which the read-back does not need (GET returned 403 as expected)."
+  },
+  "ENT-043": {
+    "status": "gate",
+    "provider": "identity",
+    "step": "policy.entra",
+    "method": "graph",
+    "apply": "none by the pipeline: gate G-05 removes the founder's standing role; bootstrap assigns the role to break-glass accounts",
+    "payload": {},
+    "read": "GET /roleManagement/directory/roleAssignments?$filter=roleDefinitionId eq '62e90394-69f5-4237-9190-012177145e10'",
+    "check": "the set of principalId values == the members of {group:grp-break-glass} (exactly two user accounts, the configured break-glass accounts)",
+    "permissions": [
+      "graph:Directory.Read.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "read-only GET returned 200 with the current Global Administrator assignments",
+    "notes": "Existing gate G-05 (SPEC 22) plus an automated check. Removing a role needs RoleManagement.ReadWrite.Directory, which the pipeline must not hold; the pipeline reports drift only. Also covered by SPEC 20.2 (no standing Global Administrator other than break-glass)."
+  },
+  "ENT-044": {
+    "status": "resolved",
+    "provider": "identity",
+    "step": "policy.entra",
+    "method": "graph",
+    "apply": "none to create (identity.users creates administrator accounts cloud-only and assigns no plan to them); on drift POST /users/{id}/assignLicense removing mailbox plans",
+    "payload": {
+      "addLicenses": [],
+      "removeLicenses": [
+        "{sku:mailbox-plan}"
+      ]
+    },
+    "read": "GET /roleManagement/directory/roleAssignments?$expand=principal; GET /users/{id}?$select=onPremisesSyncEnabled,assignedLicenses,assignedPlans",
+    "check": "every user holding a directory role: onPremisesSyncEnabled != true and no assignedPlans with service 'exchange' and capabilityStatus 'Enabled'",
+    "permissions": [
+      "graph:Directory.Read.All",
+      "graph:User.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "read-only GET of role assignments and organization.onPremisesSyncEnabled (null: cloud only) succeeded",
+    "notes": "The configuration has no separate administrator accounts beyond break-glass; if a daily user holds an admin role (founder before G-05) the check fails by design. Removing a licence is allowed (User.ReadWrite.All) but never assigns a paid licence."
+  },
+  "ENT-045": {
+    "status": "unresolved",
+    "provider": "identity",
+    "step": "policy.entra",
+    "method": "graph",
+    "apply": "",
+    "payload": {},
+    "read": "GET /auditLogs/signIns?$filter=userId eq '{user:break-glass-1}' or userId eq '{user:break-glass-2}'",
+    "check": "",
+    "permissions": [
+      "graph:AuditLog.Read.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "read-only GET /v1.0/auditLogs/signIns returned 200 (sign-in log readable); Connect-IPPSSession has no -AccessToken parameter in the installed module, so Purview alert policies could not be inspected app-only",
+    "notes": "No free, app-only API creates a 'mail on sign-in' alert. Available: (a) Azure Monitor log alert on SigninLogs (needs an Azure subscription and Log Analytics: paid, host blocked); (b) Purview alert policy New-ProtectionAlert on Entra 'UserLoggedIn' activity for the two accounts (Security & Compliance PowerShell, app-only connection unproven, licence rules for custom alerts unconfirmed); (c) a scheduled Box job polling /auditLogs/signIns and raising an Events item that the existing alerts path mails (Mail.Send is forbidden, so the mail must come from an existing flow/list). Decision needed."
+  },
+  "ENT-046": {
+    "status": "resolved",
+    "provider": "identity",
+    "step": "policy.entra",
+    "method": "graph",
+    "apply": "none by the pipeline (fixed rule SPEC 20.2): box bootstrap / box handoff add the federated credential; a client secret found fails verify and the owner removes it",
+    "payload": {
+      "federatedIdentityCredential": {
+        "issuer": "https://token.actions.githubusercontent.com",
+        "subject": "repo:{github:repo}:environment:{github:environment}",
+        "audiences": [
+          "api://AzureADTokenExchange"
+        ]
+      }
+    },
+    "read": "GET /applications(appId='{app:pipeline}')?$select=passwordCredentials,keyCredentials; GET /applications/{id}/federatedIdentityCredentials",
+    "check": "passwordCredentials == []; after box handoff federatedIdentityCredentials contains the configured GitHub subject",
+    "permissions": [
+      "graph:Directory.Read.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "read-only GET /v1.0/applications returned 200 with passwordCredentials empty for the readable application",
+    "notes": "Reuses bootstrap.Credentials (counts secrets and certificates). Note: local runs use a certificate (keyCredentials) from the encrypted key store, which is not a federated credential; the value 'federated credential' holds only after box handoff. A reviewer should confirm the certificate is acceptable as 'no client secret'."
+  },
+  "ENT-047": {
+    "status": "resolved",
+    "provider": "identity",
+    "step": "policy.entra",
+    "method": "graph",
+    "apply": "none (report)",
+    "payload": {},
+    "read": "GET /applications?$select=appId,displayName,passwordCredentials",
+    "check": "report every passwordCredentials[*] whose startDateTime is more than 180 days ago; report weekly",
+    "permissions": [
+      "graph:Directory.Read.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "read-only GET /v1.0/applications returned 200 with passwordCredentials",
+    "notes": "Mode report: evidence only. Service principal secrets (GET /servicePrincipals?$select=passwordCredentials) should be included for apps registered in other tenants' consent. Display names are tenant data: keep them out of logs (R1)."
+  },
+  "ENT-048": {
+    "status": "gate",
+    "provider": "identity",
+    "step": "policy.entra",
+    "method": "portal",
+    "apply": "Entra admin centre > Identity > Users > User settings > LinkedIn account connections: No",
+    "payload": {
+      "linkedInAccountConnections": "No"
+    },
+    "read": "none via Graph",
+    "check": "owner confirmation recorded as an Events item with a dated screenshot",
+    "permissions": [],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "not verified: no Graph read or write exists for this switch",
+    "notes": "No Graph API for LinkedIn account connections. Proposed gate (R5)."
+  },
+  "ENT-049": {
+    "status": "resolved",
+    "provider": "identity",
+    "step": "policy.entra",
+    "method": "graph",
+    "apply": "none (report): weekly read and upload to the evidence library",
+    "payload": {},
+    "read": "GET /auditLogs/signIns?$filter=createdDateTime ge {now-7d}; GET /auditLogs/directoryAudits?$filter=activityDateTime ge {now-7d}",
+    "check": "weekly export file exists in the evidence library covering the previous 7 days without gaps",
+    "permissions": [
+      "graph:AuditLog.Read.All",
+      "graph:Directory.Read.All",
+      "graph:Sites.FullControl.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "read-only GET /v1.0/auditLogs/signIns and /auditLogs/directoryAudits returned 200",
+    "notes": "Mode report. The sign-in log API needs Entra P1 in the tenant; a tenant without P1 keeps only 7 days and the signIns API may refuse, so weekly is the longest safe interval. Exports hold personal data (user names, IP addresses): store only in the evidence library, never in logs (R1/R8)."
+  }
+}

@@ -1,24 +1,47 @@
-# Policy index. Text templates live in defaults/policies/<id>.md and are
-# rendered with company values to the Compliance site's Policies library.
+# Policy and procedure index (SPEC §15, §23). Each entry's file is a
+# Markdown template with front matter (id, title, version, owner_role,
+# approver_role, review_months, requirements, controls, enforced_by,
+# records); the box renders it with company values to the Compliance
+# site's Policies library. kind: policy | procedure. requirements must equal
+# the file's front matter list; summary is a plain-words note on how the
+# policy is enforced. Placeholders are listed in defaults/policies/PLACEHOLDERS.md.
+# Checked by engine/internal/docs (go test).
 policies:
-  - {id: POL-01, title: Information security, enforced_by: "security baseline"}
-  - {id: POL-02, title: Acceptable use, enforced_by: "acknowledgement"}
-  - {id: POL-03, title: Identity and access, enforced_by: "Conditional Access MFA, admin separation, groups"}
-  - {id: POL-04, title: Email and external communication, enforced_by: "role groups, send-as, forwarding off"}
-  - {id: POL-05, title: Data classification and handling, enforced_by: "site classification, sharing defaults"}
-  - {id: POL-06, title: Document and file management, enforced_by: "site and library structure"}
-  - {id: POL-07, title: Records retention, enforced_by: "retention defaults; enforced by upgrades/retention.md"}
-  - {id: POL-08, title: Contract and document management, enforced_by: "Approvals flow, register"}
-  - {id: POL-09, title: Quotation and pricing, enforced_by: "register, compliance rule"}
-  - {id: POL-10, title: Meeting recording and notes, enforced_by: "Teams meeting policy, recording notice"}
-  - {id: POL-11, title: Vendor accounts and third-party risk, enforced_by: "accounts address, allowed-apps list"}
-  - {id: POL-12, title: Privacy and data-subject requests, enforced_by: "request register"}
-  - {id: POL-13, title: Incident response, enforced_by: "security intake, alert rules"}
-  - {id: POL-14, title: Change management, enforced_by: "pull-request approval"}
-  - {id: POL-15, title: Risk assessment, enforced_by: "annual control task"}
-  - {id: POL-16, title: Business continuity and backup, enforced_by: "annual test"}
-  - {id: POL-17, title: Secure development and vulnerability management, enforced_by: "manual"}
-  - {id: POL-18, title: Logging and monitoring, enforced_by: "audit log export"}
-  - {id: POL-19, title: Encryption and key management, enforced_by: "manual"}
-  - {id: POL-20, title: Personnel security, enforced_by: "joiner and leaver checklists"}
-  - {id: POL-21, title: Use of AI, enforced_by: "Teams app policy, user consent off, allowed-apps list"}
+  - {id: POL-01, title: Information security, kind: policy, file: defaults/policies/POL-01.md, requirements: [GOV-01, GOV-04, GOV-05], summary: "security baseline"}
+  - {id: POL-02, title: Acceptable use, kind: policy, file: defaults/policies/POL-02.md, requirements: [AWR-02, EML-06, DAT-07, DEV-01, DEV-02, DEV-03, DEV-04, DEV-05, DEV-06, DEV-07, DEV-08, DEV-09, DEV-10], summary: "acknowledgement"}
+  - {id: POL-03, title: Identity and access, kind: policy, file: defaults/policies/POL-03.md, requirements: [IAM-01, IAM-02, IAM-03, IAM-04, IAM-05, IAM-06, IAM-07, IAM-08, IAM-09, IAM-10, IAM-11, IAM-12, IAM-13, IAM-14, IAM-15, IAM-16, IAM-17], summary: "Conditional Access MFA, admin separation, groups"}
+  - {id: POL-04, title: Email and external communication, kind: policy, file: defaults/policies/POL-04.md, requirements: [EML-01, EML-02, EML-03, EML-04, EML-05, EML-06, EML-07, EML-08], summary: "role groups, send-as, forwarding off"}
+  - {id: POL-05, title: Data classification and handling, kind: policy, file: defaults/policies/POL-05.md, requirements: [DAT-01, DAT-02, DAT-03, DAT-04, DAT-05, DAT-06, DAT-07, DAT-08, DAT-09, DAT-10, DAT-12], summary: "site classification, sharing defaults"}
+  - {id: POL-06, title: Document and file management, kind: policy, file: defaults/policies/POL-06.md, requirements: [COL-01, COL-02, COL-05, COL-06, BCK-01], summary: "site and library structure"}
+  - {id: POL-07, title: Records retention, kind: policy, file: defaults/policies/POL-07.md, requirements: [DAT-11], summary: "retention defaults; enforced by upgrades/retention.md"}
+  - {id: POL-08, title: Contract and document management, kind: policy, file: defaults/policies/POL-08.md, requirements: [DAT-08], summary: "Approvals flow, register"}
+  - {id: POL-09, title: Quotation and pricing, kind: policy, file: defaults/policies/POL-09.md, requirements: [DAT-08], summary: "register, compliance rule"}
+  - {id: POL-10, title: Meeting recording and notes, kind: policy, file: defaults/policies/POL-10.md, requirements: [COL-03], summary: "Teams meeting policy, recording notice"}
+  - {id: POL-11, title: Vendor accounts and third-party risk, kind: policy, file: defaults/policies/POL-11.md, requirements: [SUP-01, SUP-02, IAM-11, COL-04, EML-07, APP-02], summary: "accounts address, allowed-apps list"}
+  - {id: POL-12, title: Privacy and data-subject requests, kind: policy, file: defaults/policies/POL-12.md, requirements: [DAT-04], summary: "request register"}
+  - {id: POL-13, title: Incident response, kind: policy, file: defaults/policies/POL-13.md, requirements: [INC-01, INC-02, INC-03], summary: "security intake, alert rules"}
+  - {id: POL-14, title: Change management, kind: policy, file: defaults/policies/POL-14.md, requirements: [GOV-05, CFG-01, GOV-03], summary: "pull-request approval"}
+  - {id: POL-15, title: Risk assessment, kind: policy, file: defaults/policies/POL-15.md, requirements: [GOV-02, GOV-03], summary: "annual control task"}
+  - {id: POL-16, title: Business continuity and backup, kind: policy, file: defaults/policies/POL-16.md, requirements: [BCK-01, BCK-02, BCK-03, BCK-04, IAM-07], summary: "annual test"}
+  - {id: POL-17, title: Secure development and vulnerability management, kind: policy, file: defaults/policies/POL-17.md, requirements: [CFG-01, CFG-02, CFG-03, CFG-04, CFG-05, CFG-06, CFG-07, CFG-08, MAL-01, MAL-02, MAL-03, MAL-04, MAL-05], summary: "manual"}
+  - {id: POL-18, title: Logging and monitoring, kind: policy, file: defaults/policies/POL-18.md, requirements: [LOG-01, LOG-02, LOG-03, LOG-04, GOV-04], summary: "audit log export"}
+  - {id: POL-19, title: Encryption and key management, kind: policy, file: defaults/policies/POL-19.md, requirements: [DAT-02, DAT-09, DEV-02, EML-03, IAM-17], summary: "manual"}
+  - {id: POL-20, title: Personnel security, kind: policy, file: defaults/policies/POL-20.md, requirements: [AWR-01, AWR-02, IAM-12, DEV-08], summary: "joiner and leaver checklists"}
+  - {id: POL-21, title: Use of AI, kind: policy, file: defaults/policies/POL-21.md, requirements: [APP-01, APP-02, APP-03, DAT-13, IAM-10], summary: "Teams app policy, user consent off, allowed-apps list"}
+# Procedures: the written, recurring steps that procedural and mixed
+# requirements rest on.
+  - {id: PRC-01, title: Incident response plan, kind: procedure, file: defaults/policies/PRC-01.md, requirements: [INC-01, INC-03]}
+  - {id: PRC-02, title: Regulatory incident notification, kind: procedure, file: defaults/policies/PRC-02.md, requirements: [INC-02]}
+  - {id: PRC-03, title: Backup and restore test, kind: procedure, file: defaults/policies/PRC-03.md, requirements: [BCK-01, BCK-02, BCK-03]}
+  - {id: PRC-04, title: Business continuity plan, kind: procedure, file: defaults/policies/PRC-04.md, requirements: [BCK-04, IAM-07]}
+  - {id: PRC-05, title: Risk assessment method and register, kind: procedure, file: defaults/policies/PRC-05.md, requirements: [GOV-02]}
+  - {id: PRC-06, title: Access review, kind: procedure, file: defaults/policies/PRC-06.md, requirements: [IAM-13, IAM-06, IAM-11, IAM-17, SUP-02]}
+  - {id: PRC-07, title: Break-glass test, kind: procedure, file: defaults/policies/PRC-07.md, requirements: [IAM-07]}
+  - {id: PRC-08, title: Security alert review, kind: procedure, file: defaults/policies/PRC-08.md, requirements: [LOG-02, LOG-03, LOG-04]}
+  - {id: PRC-09, title: Vulnerability review, kind: procedure, file: defaults/policies/PRC-09.md, requirements: [CFG-04]}
+  - {id: PRC-10, title: Awareness training programme, kind: procedure, file: defaults/policies/PRC-10.md, requirements: [AWR-01, AWR-02]}
+  - {id: PRC-11, title: Supplier assessment and review, kind: procedure, file: defaults/policies/PRC-11.md, requirements: [SUP-01, SUP-02]}
+  - {id: PRC-12, title: "Joiner, mover and leaver", kind: procedure, file: defaults/policies/PRC-12.md, requirements: [IAM-12, DEV-08]}
+  - {id: PRC-13, title: Application consent review, kind: procedure, file: defaults/policies/PRC-13.md, requirements: [APP-01, IAM-10, IAM-17]}
+  - {id: PRC-14, title: Exception handling, kind: procedure, file: defaults/policies/PRC-14.md, requirements: [GOV-03]}
+  - {id: PRC-15, title: Policy and compliance review, kind: procedure, file: defaults/policies/PRC-15.md, requirements: [GOV-01, GOV-04]}

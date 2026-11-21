@@ -1310,7 +1310,7 @@ cannot pass while meeting policy differs.
 3. Open a Microsoft support case with the correlation ids from the test
    run; drop the gate if Microsoft enables app-only meeting policy writes.
 
-## SC-29  Gate G-12: phone enrolment restrictions (proposed 2026-11-21, T14-07)
+## SC-29  Gate G-12: phone enrolment restrictions (approved by the owner 2026-11-21: "Agree with the open items recommendations"; T14-07)
 
 **Why.** MOB-001 blocks personal enrolment of iOS and Android work profile
 devices and blocks Android device administrator. Intune refuses every
@@ -1343,3 +1343,13 @@ updated.
    win.
 2. WIN-040 (default Windows enrolment restriction, held until the enforce
    stage) hits the same refusal; at enforce it needs the same kind of gate.
+
+## SC-30  Windows Edge extensions blocked in the core tier (approved by the owner 2026-11-21)
+
+WIN-069 (Edge: block every extension except the approved allow list) was in
+the enhanced tier, so on a core-tier company Windows PCs did not block
+extensions although the owner had chosen "only extensions the company
+approves" (choice `devices.browser_extensions`), while Macs (MAC-030) did.
+WIN-069 moves to the core tier; the choice still decides it: option
+`store` leaves WIN-069 out. Owner direction: "Agree with the open items
+recommendations".

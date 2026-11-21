@@ -30,7 +30,7 @@ func TestPolicyResolve(t *testing.T) {
 	if code != ExitOK {
 		t.Fatalf("exit %d\n%s", code, out)
 	}
-	for _, want := range []string{"plan business_premium, tier core, stage audit", "applied 303 settings in 12 centres", "not applied 33"} {
+	for _, want := range []string{"plan business_premium, tier core, stage audit", "applied 304 settings in 12 centres", "not applied 32"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("output lacks %q\n%s", want, out)
 		}

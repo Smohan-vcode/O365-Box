@@ -122,8 +122,8 @@ func TestResolveMatchesReferenceCoverage(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.AppliedCount() != 307 || len(res.NotApplied) != 29 {
-		t.Errorf("applied %d, not applied %d; want 307 and 29 (305 before T14-19 added WIN-091 and MAC-032, which a choice leaves out by default)", res.AppliedCount(), len(res.NotApplied))
+	if res.AppliedCount() != 308 || len(res.NotApplied) != 28 {
+		t.Errorf("applied %d, not applied %d; want 308 and 28 (SC-30 moved WIN-069 to core)", res.AppliedCount(), len(res.NotApplied))
 	}
 	want := map[string]int{StatusEnforced: 62, StatusEnforcedProcedure: 11, StatusProcedure: 11, StatusAddon: 5, StatusNotSelected: 1}
 	for st, n := range want {

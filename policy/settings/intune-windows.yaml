@@ -630,7 +630,7 @@ settings:
   platform: windows
   name: 'Browser: extensions'
   value: block all except an allow list
-  tier: enhanced
+  tier: core
   mode: enforce
   capability: intune_p1
   requirements:

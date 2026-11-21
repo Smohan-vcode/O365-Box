@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -30,6 +31,19 @@ type Invoker interface {
 	Invoke(ctx context.Context, provider, step, operation string, input any, progress func(msg string, done, of int)) (json.RawMessage, error)
 }
 
+// Approvals decides which planned changes may be applied (SPEC §25.1).
+type Approvals interface {
+	// Check returns the changes of a step that are not approved and those
+	// the owner rejected (exceptions).
+	Check(step string, changes []Change) (unapproved, rejected []Change)
+	// Applied records that a step's approved changes were applied in run.
+	Applied(step string, changes []Change, run string) error
+}
+
+// ApprovalGate is the gate id of the events a step emits while it waits
+// for the owner's approval.
+const ApprovalGate = "approval"
+
 // Executor runs a graph.
 type Executor struct {
 	Graph    *plan.Graph
@@ -48,26 +62,41 @@ type Executor struct {
 	GatePoll    time.Duration
 	RunID       string
 	Now         func() time.Time
+	// Approvals gates ModeApply: a step applies only when every planned
+	// change is approved. nil means no gate (unit tests only; the CLI
+	// always sets it).
+	Approvals Approvals
+	// Proposal, when set, receives in ModePlan each step's changes that
+	// apply would need approved.
+	Proposal func(step *plan.Step, changes []Change)
 }
 
 // Summary is the outcome of a run.
 type Summary struct {
-	Run      string         `json:"run"`
-	Mode     Mode           `json:"mode"`
-	Status   map[string]int `json:"status"`  // count by state status
-	Changes  int            `json:"changes"` // planned or applied
-	Failed   []string       `json:"failed,omitempty"`
-	Waiting  []string       `json:"waiting,omitempty"` // gates
-	Drifted  []string       `json:"drifted,omitempty"`
-	Duration time.Duration  `json:"duration"`
+	Run     string         `json:"run"`
+	Mode    Mode           `json:"mode"`
+	Status  map[string]int `json:"status"`  // count by state status
+	Changes int            `json:"changes"` // planned or applied
+	Failed  []string       `json:"failed,omitempty"`
+	Waiting []string       `json:"waiting,omitempty"` // gates
+	Drifted []string       `json:"drifted,omitempty"`
+	// NeedsApproval lists steps that applied nothing because a planned
+	// change is not approved; Excepted lists steps holding a rejected change.
+	NeedsApproval []string      `json:"needs_approval,omitempty"`
+	Excepted      []string      `json:"excepted,omitempty"`
+	Duration      time.Duration `json:"duration"`
 }
 
 // OK reports whether nothing failed, drifted or is waiting.
-func (s Summary) OK() bool { return len(s.Failed) == 0 && len(s.Waiting) == 0 && len(s.Drifted) == 0 }
+func (s Summary) OK() bool {
+	return len(s.Failed) == 0 && len(s.Waiting) == 0 && len(s.Drifted) == 0 && len(s.NeedsApproval) == 0
+}
 
 type outcome struct {
-	status  string
-	changes int
+	status   string
+	changes  int
+	approval bool // waiting for the owner's approval
+	excepted bool // skipped: the owner rejected a change
 }
 
 // Run executes every node of the graph in dependency order.
@@ -96,8 +125,14 @@ func (x *Executor) Run(ctx context.Context, mode Mode) (Summary, error) {
 		case state.Drifted:
 			sum.Drifted = append(sum.Drifted, id)
 		case state.Waiting:
-			if g := x.Graph.Nodes[id].Step.Gate; g != "" {
+			if o.approval {
+				sum.NeedsApproval = append(sum.NeedsApproval, id)
+			} else if g := x.Graph.Nodes[id].Step.Gate; g != "" {
 				sum.Waiting = append(sum.Waiting, g)
+			}
+		case state.Skipped:
+			if o.excepted {
+				sum.Excepted = append(sum.Excepted, id)
 			}
 		}
 		mu.Unlock()
@@ -165,10 +200,13 @@ func (x *Executor) Run(ctx context.Context, mode Mode) (Summary, error) {
 	sort.Strings(sum.Failed)
 	sort.Strings(sum.Drifted)
 	sort.Strings(sum.Waiting)
+	sort.Strings(sum.NeedsApproval)
+	sort.Strings(sum.Excepted)
 	sum.Duration = x.Now().Sub(start)
 	x.emit(events.Event{Ev: events.RunFinished, Data: map[string]any{
 		"mode": string(mode), "changes": sum.Changes, "failed": toAny(sum.Failed),
-		"waiting": toAny(sum.Waiting), "drifted": toAny(sum.Drifted), "status": statusAny(sum.Status)}})
+		"waiting": toAny(sum.Waiting), "drifted": toAny(sum.Drifted), "needs_approval": toAny(sum.NeedsApproval),
+		"excepted": toAny(sum.Excepted), "status": statusAny(sum.Status)}})
 	return sum, ctx.Err()
 }
 
@@ -304,6 +342,19 @@ func (x *Executor) step(ctx context.Context, mode Mode, n *plan.Node) outcome {
 
 	switch mode {
 	case ModePlan:
+		if x.Proposal != nil {
+			gated := p.Changes
+			if len(gated) == 0 {
+				// Apply would repair a failing verify: that needs approval too.
+				var v VerifyResult
+				if err := x.call(ctx, n, "verify", &v); err != nil {
+					x.emit(events.Event{Ev: events.Log, Level: "warning", Step: id, Msg: "verify: " + err.Error()})
+				} else if !v.OK {
+					gated = repairChanges(id, v)
+				}
+			}
+			x.Proposal(n.Step, gated)
+		}
 		x.emit(events.Event{Ev: events.StepDone, Step: id, Msg: "planned"})
 		return outcome{status: state.Planned, changes: len(p.Changes)}
 	case ModeDrift:
@@ -322,6 +373,7 @@ func (x *Executor) step(ctx context.Context, mode Mode, n *plan.Node) outcome {
 
 	// ModeApply. Resume: nothing to change and verify passes means done.
 	applied := 0
+	gated := p.Changes
 	if len(p.Changes) == 0 {
 		var v VerifyResult
 		if err := x.call(ctx, n, "verify", &v); err != nil {
@@ -333,6 +385,10 @@ func (x *Executor) step(ctx context.Context, mode Mode, n *plan.Node) outcome {
 			x.record(id, state.Done, 0, "", "", ev)
 			return outcome{status: state.Done}
 		}
+		gated = repairChanges(id, v)
+	}
+	if o, ok := x.approved(n, gated, hash); !ok {
+		return o
 	}
 	var a PlanResult
 	var err error
@@ -366,6 +422,11 @@ func (x *Executor) step(ctx context.Context, mode Mode, n *plan.Node) outcome {
 	if !v.OK {
 		return x.fail(id, errors.New("verify failed after apply"))
 	}
+	if x.Approvals != nil {
+		if err := x.Approvals.Applied(id, gated, x.RunID); err != nil {
+			x.emit(events.Event{Ev: events.Log, Level: "error", Step: id, Msg: "approvals not updated: " + err.Error()})
+		}
+	}
 	ev := x.evidence(ctx, n)
 	x.emit(events.Event{Ev: events.StepDone, Step: id, Msg: fmt.Sprintf("%d change(s) applied", applied),
 		Data: map[string]any{"changes": applied}})
@@ -389,6 +450,53 @@ func (x *Executor) evidence(ctx context.Context, n *plan.Node) []string {
 		x.emit(events.Event{Ev: events.Log, Level: "evidence", Step: n.Step.ID, Msg: e.Items[0].Summary, Data: map[string]any{"evidence": items}})
 	}
 	return refs
+}
+
+// repairChanges are the changes an apply makes when plan is empty but
+// verify fails: the drift, or the step itself.
+func repairChanges(id string, v VerifyResult) []Change {
+	if len(v.Drift) > 0 {
+		return v.Drift
+	}
+	return []Change{{Action: "repair", Target: id, Detail: "verify failed with nothing planned"}}
+}
+
+// approved checks the approval gate (SPEC §25.1). It returns false with the
+// outcome when the step must not apply: a change is not approved (the step
+// waits and names the changes) or the owner rejected one (an exception: a
+// provider applies a step's plan as a whole, so the step applies nothing).
+func (x *Executor) approved(n *plan.Node, changes []Change, hash string) (outcome, bool) {
+	if x.Approvals == nil || len(changes) == 0 {
+		return outcome{}, true
+	}
+	id := n.Step.ID
+	unapproved, rejected := x.Approvals.Check(id, changes)
+	list := func(cs []Change) ([]any, string) {
+		data := make([]any, len(cs))
+		names := make([]string, len(cs))
+		for i, c := range cs {
+			data[i] = map[string]any{"digest": Digest(id, c), "action": c.Action, "target": c.Target, "detail": c.Detail}
+			names[i] = c.Action + " " + c.Target
+		}
+		return data, strings.Join(names, "; ")
+	}
+	if len(unapproved) > 0 {
+		data, names := list(unapproved)
+		msg := fmt.Sprintf("needs approval: %d change(s)", len(unapproved))
+		x.emit(events.Event{Ev: events.GateWaiting, Step: id, Gate: ApprovalGate, Msg: msg,
+			Data: map[string]any{"changes": data, "guide": "run box plan --proposal, then box approve"}})
+		x.record(id, state.Waiting, len(unapproved), hash, msg+": "+names, nil)
+		return outcome{status: state.Waiting, approval: true}, false
+	}
+	if len(rejected) > 0 {
+		data, names := list(rejected)
+		msg := fmt.Sprintf("owner exception: %d change(s) rejected, nothing applied", len(rejected))
+		x.emit(events.Event{Ev: events.StepSkipped, Step: id, Msg: msg,
+			Data: map[string]any{"status": state.Skipped, "exception": true, "changes": data}})
+		x.record(id, state.Skipped, 0, hash, msg+": "+names, nil)
+		return outcome{status: state.Skipped, excepted: true}, false
+	}
+	return outcome{}, true
 }
 
 // gate checks a gate before a step. It returns false with the outcome when

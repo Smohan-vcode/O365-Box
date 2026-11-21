@@ -76,8 +76,12 @@ func New(out, errOut io.Writer) *cobra.Command {
 }
 
 // Run executes box with args and returns the process exit code.
-func Run(args []string, out, errOut io.Writer) int {
+func Run(args []string, out, errOut io.Writer) int { return RunIn(args, os.Stdin, out, errOut) }
+
+// RunIn is Run reading answers (box approve's confirmation) from in.
+func RunIn(args []string, in io.Reader, out, errOut io.Writer) int {
 	cmd := New(out, errOut)
+	cmd.SetIn(in)
 	cmd.SetArgs(args)
 	cmd.SetContext(context.Background())
 	err := cmd.Execute()

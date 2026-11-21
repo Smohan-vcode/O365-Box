@@ -42,6 +42,14 @@ type EvidenceResult struct {
 	} `json:"items"`
 }
 
+// Digest identifies one planned change of a step for approval (SPEC §25.1):
+// the hex sha256 of step|action|target|detail. A change whose detail
+// differs has a different digest and needs its own approval.
+func Digest(step string, c Change) string {
+	h := sha256.Sum256([]byte(step + "|" + c.Action + "|" + c.Target + "|" + c.Detail))
+	return hex.EncodeToString(h[:])
+}
+
 func hashChanges(c []Change) string {
 	if len(c) == 0 {
 		return ""

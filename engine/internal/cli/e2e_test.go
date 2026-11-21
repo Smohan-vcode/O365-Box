@@ -79,6 +79,56 @@ func TestEndToEnd(t *testing.T) {
 		t.Fatal("plan wrote to the tenant")
 	}
 
+	// 1a. nothing is applied before the owner approves (SPEC §25.1).
+	code, evs = stream("up", "--yes")
+	if code != ExitGate {
+		t.Fatalf("up before approval: exit %d, want %d", code, ExitGate)
+	}
+	if na, _ := finished(evs).Data["needs_approval"].([]any); len(na) == 0 {
+		t.Error("run.finished names no step needing approval")
+	}
+	if w := of(evs, events.GateWaiting)["demo.groups"]; w.Gate != "approval" || !strings.Contains(w.Msg, "needs approval: 7 change(s)") {
+		t.Errorf("demo.groups waiting event %+v", w)
+	}
+	if _, err := os.Stat(store); err == nil {
+		t.Fatal("up applied changes nobody approved")
+	}
+	approve := func(args ...string) {
+		t.Helper()
+		if code, out := box(t, append(append([]string{"approve", "--yes"}, args...), common[:4]...)...); code != ExitOK {
+			t.Fatalf("approve %v: %d %s", args, code, out)
+		}
+	}
+	propose := func() {
+		t.Helper()
+		if code, out := box(t, cmd("plan", "--proposal")...); code != ExitOK || !strings.Contains(out, "proposal:") {
+			t.Fatalf("plan --proposal: %d %s", code, out)
+		}
+	}
+	if code, out := box(t, append([]string{"approve", "--all", "--yes"}, common[:4]...)...); code != ExitValidation || !strings.Contains(out, "box plan --proposal") {
+		t.Errorf("approve without a proposal: %d %s", code, out)
+	}
+	propose()
+	if _, err := os.Stat(filepath.Join(dir, "proposal.json")); err != nil {
+		t.Fatal("no proposal file next to the state")
+	}
+	// 1b. approving one step applies exactly that step; its dependents wait.
+	approve("--step", "demo.groups")
+	code, evs = stream("up", "--yes")
+	if code != ExitGate {
+		t.Fatalf("up after approving one step: exit %d", code)
+	}
+	if _, ok := of(evs, events.StepDone)["demo.groups"]; !ok {
+		t.Error("approved step demo.groups not applied")
+	}
+	if n := finished(evs).Data["changes"].(float64); n != 7 {
+		t.Errorf("applied %v changes, want the 7 approved", n)
+	}
+	if w := of(evs, events.GateWaiting)["demo.sites"]; w.Gate != "approval" {
+		t.Errorf("demo.sites not waiting for approval: %+v", w)
+	}
+	approve("--all")
+
 	// 2. up without the gate open stops at the gate (exit 3); the rest applies.
 	code, evs = stream("up", "--yes")
 	if code != ExitGate {
@@ -88,7 +138,7 @@ func TestEndToEnd(t *testing.T) {
 		t.Errorf("gate events %+v", w)
 	}
 	done := of(evs, events.StepDone)
-	for _, s := range []string{"demo.groups", "demo.sites", "demo.fragile", "demo.after-fragile", "demo.premium"} {
+	for _, s := range []string{"demo.sites", "demo.fragile", "demo.after-fragile", "demo.premium"} {
 		if _, ok := done[s]; !ok {
 			t.Errorf("%s not done", s)
 		}
@@ -152,8 +202,13 @@ func TestEndToEnd(t *testing.T) {
 	if b2, _ := os.ReadFile(store); string(b2) != string(b) {
 		t.Error("drift changed the tenant")
 	}
-	if code, _ := box(t, cmd("up", "--yes")...); code != ExitOK {
-		t.Fatal("repair failed")
+	if code, _ := box(t, cmd("up", "--yes")...); code != ExitGate {
+		t.Fatal("drift repair applied without approval")
+	}
+	propose()
+	approve("--step", "demo.sites")
+	if code, out := box(t, cmd("up", "--yes")...); code != ExitOK {
+		t.Fatalf("repair failed: %s", out)
 	}
 	if code, _ := box(t, cmd("drift")...); code != ExitOK {
 		t.Error("drift after repair")
@@ -167,6 +222,8 @@ func TestEndToEnd(t *testing.T) {
 	// 7. a failing step blocks its dependent and fails the run; other steps still run.
 	_ = os.Remove(store)
 	t.Setenv("BOX_PROVIDER_DEMO_FAIL", "1")
+	propose()
+	approve("--all")
 	code, evs = stream("up", "--yes")
 	if code != ExitFailure {
 		t.Fatalf("failing run exit %d", code)

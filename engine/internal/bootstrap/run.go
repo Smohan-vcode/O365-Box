@@ -36,6 +36,7 @@ var RoleTemplates = map[string]string{
 	"Teams Administrator":      "69091246-20e8-4a56-aa4d-066075b2a7a8",
 	"Compliance Administrator": "17315797-102d-40b4-93e0-432062caca18",
 	"Security Administrator":   "194ae4cb-b126-40b2-bd5b-6091b380977d",
+	"Intune Administrator":     "3a2c62db-5318-420d-8d74-23affee5d9d5",
 }
 
 // PipelineAppName is the display name of the pipeline app registration.

@@ -46,6 +46,8 @@ bundles:
       - DeviceManagementServiceConfig.ReadWrite.All
       - DeviceManagementScripts.ReadWrite.All
       - Policy.ReadWrite.DeviceConfiguration
+    # Phone enrolment restrictions (MOB-001) need the role; owner approved 2026-11-21.
+    entra_roles: [Intune Administrator]
 
   - id: directory
     why: Tenant-wide settings - directory setting templates, password expiry, security defaults and Microsoft 365 admin centre settings.

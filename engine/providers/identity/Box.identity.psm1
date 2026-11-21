@@ -250,6 +250,56 @@ function Get-CAChanges($In, [switch] $Apply) {
   return $changes
 }
 
+# ---------- identity.directory-settings (T1-05, SC-18) ----------
+$RestrictedGuestRole = '2af84b1e-32c8-42b7-82bc-daa82404023b'   # guests see only their own directory objects
+$GuestRoleIds = @{ restricted = $RestrictedGuestRole; limited = '10dae51f-b6af-4016-8d66-8c2a99b929b3'; same_as_members = 'a0b1b346-4d3e-4e8b-98f8-753987be4970' }
+$InviteFrom = @{ admins_only = 'adminsAndGuestInviters'; members = 'adminsGuestInvitersAndAllMembers'; everyone = 'everyone'; none = 'none' }
+function Get-DirectoryChanges($In, [switch] $Apply) {
+  $want = $In.defaults.baseline_identity.directory
+  $changes = @()
+  $ap = Invoke-BoxGraph -Uri '/policies/authorizationPolicy'
+  $patch = @{}
+  $perm = @{}
+  if ($null -ne $want.users_can_register_apps -and [bool]$ap.defaultUserRolePermissions.allowedToCreateApps -ne [bool]$want.users_can_register_apps) {
+    $changes += New-BoxChange update 'users can register apps' "$($ap.defaultUserRolePermissions.allowedToCreateApps) -> $($want.users_can_register_apps)"
+    $perm.allowedToCreateApps = [bool]$want.users_can_register_apps
+  }
+  if ($want.users_can_consent_to_apps -eq $false) {
+    $grants = @($ap.defaultUserRolePermissions.permissionGrantPoliciesAssigned | Where-Object { $_ })
+    if ($grants.Count -gt 0) {
+      $changes += New-BoxChange update 'users can consent to apps' "$($grants -join ', ') -> none"
+      $perm.permissionGrantPoliciesAssigned = @()
+    }
+  }
+  if ($perm.Count) { $patch.defaultUserRolePermissions = $perm }
+  if ($want.guest_invitations -and $ap.allowInvitesFrom -ne $InviteFrom[[string]$want.guest_invitations]) {
+    $changes += New-BoxChange update 'who can invite guests' "$($ap.allowInvitesFrom) -> $($InviteFrom[[string]$want.guest_invitations])"
+    $patch.allowInvitesFrom = $InviteFrom[[string]$want.guest_invitations]
+  }
+  if ($want.guest_access -and $ap.guestUserRoleId -ne $GuestRoleIds[[string]$want.guest_access]) {
+    $changes += New-BoxChange update 'guest access' "$($want.guest_access)"
+    $patch.guestUserRoleId = $GuestRoleIds[[string]$want.guest_access]
+  }
+  if ($Apply -and $patch.Count) { Invoke-BoxGraph -Method PATCH -Uri '/policies/authorizationPolicy' -Body $patch | Out-Null }
+
+  if ($want.admin_consent_workflow -eq 'enabled') {
+    $acr = Invoke-BoxGraph -Uri '/policies/adminConsentRequestPolicy'
+    $owners = Get-GroupByName 'role-owner'
+    if (-not $owners) { throw 'role-owner group not found (run identity.groups)' }
+    $query = "/groups/$($owners.id)/transitiveMembers/microsoft.graph.user"
+    $hasReviewer = @($acr.reviewers | Where-Object { $_.query -eq $query }).Count -gt 0
+    if (-not $acr.isEnabled -or -not $hasReviewer) {
+      $changes += New-BoxChange update 'admin consent workflow' 'enabled; reviewers: role-owner'
+      if ($Apply) {
+        Invoke-BoxGraph -Method PUT -Uri '/policies/adminConsentRequestPolicy' -Body @{
+          isEnabled = $true; notifyReviewers = $true; remindersEnabled = $true; requestDurationInDays = 30
+          reviewers = @(@{ query = $query; queryType = 'MicrosoftGraph' }) } | Out-Null
+      }
+    }
+  }
+  return $changes
+}
+
 # ---------- identity.security-defaults (fallback) ----------
 function Get-SDChanges([switch] $Apply) {
   $cur = Invoke-BoxGraph -Uri '/policies/identitySecurityDefaultsEnforcementPolicy'
@@ -300,6 +350,13 @@ $script:Steps = [ordered]@{
     apply = { param($In) Result-Changes (Get-AuthMethodChanges $In -Apply) }
     verify = { param($In) $c = @(Get-AuthMethodChanges $In | Where-Object { $_ }); @{ ok = ($c.Count -eq 0); drift = $c } }
     evidence = { param($In) New-Evidence 'authentication-methods' 'states equal baseline/identity.yaml' }
+  }
+  'identity.directory-settings' = @{
+    test = $ok
+    plan = { param($In) Result-Changes (Get-DirectoryChanges $In) }
+    apply = { param($In) Result-Changes (Get-DirectoryChanges $In -Apply) }
+    verify = { param($In) $c = @(Get-DirectoryChanges $In | Where-Object { $_ }); @{ ok = ($c.Count -eq 0); drift = $c } }
+    evidence = { param($In) New-Evidence 'directory-settings' 'authorization policy and admin consent workflow equal baseline/identity.yaml' }
   }
   'identity.conditional-access' = @{
     test = $ok

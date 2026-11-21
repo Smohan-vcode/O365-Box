@@ -14,6 +14,8 @@ graph:
   - AuditLog.Read.All
   - Reports.Read.All
   - SecurityEvents.Read.All
+  - Policy.ReadWrite.Authorization          # directory settings (SC-18)
+  - Policy.ReadWrite.ConsentRequest         # admin consent workflow (SC-18)
 exchange: ["Exchange.ManageAsApp"]
 # PnP.PowerShell app-only needs the SharePoint resource's own permission;
 # the Graph entry above does not cover SharePoint's API (SC-17).

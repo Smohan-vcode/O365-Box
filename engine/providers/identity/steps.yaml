@@ -30,6 +30,11 @@ steps:
     track: T1
     task: T1-05
     depends_on: [identity.break-glass]
+  - id: identity.directory-settings
+    title: Directory settings (app registration, consent, guests, admin consent workflow)
+    track: T1
+    task: T1-05
+    depends_on: [identity.groups]
   - id: identity.conditional-access
     title: Conditional Access policies
     track: T1

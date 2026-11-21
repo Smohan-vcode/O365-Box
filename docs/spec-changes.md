@@ -796,14 +796,15 @@ gains `sharepoint: ["Sites.FullControl.All"]`. The intent, full control of
 the company's sites, is unchanged. Recorded here so the widening is
 visible; the owner asked for the remaining work to be completed.
 
-## SC-18  Directory settings permissions (proposed, not granted)
+## SC-18  Directory settings permissions (approved 2026-11-21)
 
 T1-05 declares directory settings in `baseline/identity.yaml > directory`
 (app registration by users, user consent, guest invitations, admin consent
 workflow). Applying them needs the application permissions
 `Policy.ReadWrite.Authorization` and `Policy.ReadWrite.ConsentRequest`.
-Proposed for `expected-state/app-permissions.yaml`; until approved these
-settings are reported by `box plan` but not applied.
+Approved by the owner on 2026-11-21 and added to
+`expected-state/app-permissions.yaml`; granted by re-running `box bootstrap`
+and applied by the step `identity.directory-settings`.
 
 ## Exceptions on the test tenant (2026-11-21)
 

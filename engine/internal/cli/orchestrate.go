@@ -241,6 +241,17 @@ func (s *session) appCredentials() error {
 			s.red.AddSecret(t.Access)
 			out["teams"] = map[string]any{"access_token": t.Access}
 		}
+		if provider == "exchange" {
+			// Security & Compliance PowerShell (labels, data loss prevention,
+			// alert policies) takes a token for its own resource, under the name
+			// box audit also uses (T14-10, T16-06).
+			c, err := cred.Token(ctx, "https://ps.compliance.protection.outlook.com")
+			if err != nil {
+				return nil, err
+			}
+			s.red.AddSecret(c.Access)
+			out["ipps"] = map[string]any{"access_token": c.Access}
+		}
 		return out, nil
 	}
 	return nil

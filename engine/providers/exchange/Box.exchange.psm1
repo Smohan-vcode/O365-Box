@@ -1,5 +1,8 @@
 # Provider: exchange. Shared mailboxes, lists, aliases and automatic replies
-# (T2-01). Connects with the pipeline app's token for outlook.office365.com.
+# (T2-01), and the Exchange, Defender for Office 365 and Purview policy
+# settings (T14). Connects with the pipeline app's token for
+# outlook.office365.com, and for ps.compliance.protection.outlook.com
+# (Security & Compliance PowerShell).
 Import-Module (Join-Path $PSScriptRoot '..' 'common' 'BoxProvider.psm1') -Force
 Import-Module (Join-Path $PSScriptRoot '..' 'common' 'BoxGraph.psm1') -Force
 
@@ -16,14 +19,35 @@ function Connect-BoxExchange($In) {
 # Security & Compliance (Purview) PowerShell, for the Purview and alert
 # steps: a token for ps.compliance.protection.outlook.com under 'ipps'. box
 # audit sends a reader-only delegated token (T16-06); module 3.9 or later
-# takes -AccessToken here too.
+# takes -AccessToken here too. Its cmdlets are imported with the prefix SC
+# so they never shadow the Exchange Online ones in the same worker
+# (Get-Label is Get-SCLabel; Invoke-SC calls them by their usual names).
+# A failed connection is remembered for the token, so a run of many
+# settings does not retry it for each one.
 $script:LastIppsToken = $null
+$script:IppsError = $null
 function Connect-BoxCompliance($In) {
   $t = (Get-BoxAuth 'ipps').access_token
   if ($t -ne $script:LastIppsToken) {
-    Connect-IPPSSession -AccessToken $t -Organization ([string]$In.tenant.initial_domain) -ShowBanner:$false -ErrorAction Stop | Out-Null
+    $script:IppsError = $null
+    try {
+      Connect-IPPSSession -AccessToken $t -Organization ([string]$In.tenant.initial_domain) -Prefix SC -ShowBanner:$false -ErrorAction Stop | Out-Null
+    } catch { $script:IppsError = "Security & Compliance PowerShell: $($_.Exception.Message)" }
     $script:LastIppsToken = $t
   }
+  if (-not $script:IppsError -and -not (Get-Command Get-SCLabel -ErrorAction SilentlyContinue)) {
+    $script:IppsError = 'Security & Compliance PowerShell connected but exposes no label, DLP or alert cmdlets: the account has no Security & Compliance role (Compliance Administrator for the pipeline app)'
+  }
+  if ($script:IppsError) { throw $script:IppsError }
+}
+
+# Calls a Security & Compliance cmdlet by its unprefixed name. The name is
+# built at run time, so the worker's read-only guard cannot see it: in
+# read-only mode (box audit) only Get cmdlets pass here.
+function Invoke-SC([string] $Command, [hashtable] $Params = @{}) {
+  $verb, $noun = $Command -split '-', 2
+  if ($env:BOX_READ_ONLY -eq '1' -and $verb -ne 'Get') { throw "read-only (audit): $Command was refused; a verify must only read" }
+  & "$verb-SC$noun" @Params -ErrorAction Stop
 }
 
 function Get-Domain($In) {
@@ -170,6 +194,8 @@ function Result-Changes($c) { return @{ changes = @($c | Where-Object { $null -n
 function New-Evidence([string] $Kind, [string] $Summary) { return @{ items = @(@{ kind = $Kind; ref = "tenant:$Kind"; summary = $Summary }) } }
 $ok = { param($In) @{ ok = $true } }
 
+. (Join-Path $PSScriptRoot 'Box.exchange.policy.ps1')
+
 $script:Steps = [ordered]@{
   'exchange.shared-mailboxes' = @{
     test = $ok
@@ -191,6 +217,42 @@ $script:Steps = [ordered]@{
     apply = { param($In) Result-Changes (Get-AutoReplyChanges $In -Apply) }
     verify = { param($In) $c = @(Get-AutoReplyChanges $In | Where-Object { $_ }); @{ ok = ($c.Count -eq 0); drift = $c } }
     evidence = { param($In) New-Evidence 'auto-replies' 'automatic replies set' }
+  }
+  # Resolved policy settings (T14-04): Box.exchange.policy.ps1.
+  'policy.exchange' = @{
+    test = $ok
+    plan = { param($In) Invoke-BoxPolicyOp 'policy.exchange' plan $In }
+    apply = { param($In) Invoke-BoxPolicyOp 'policy.exchange' apply $In }
+    verify = { param($In) Invoke-BoxPolicyOp 'policy.exchange' verify $In }
+    evidence = { param($In) Invoke-BoxPolicyOp 'policy.exchange' evidence $In }
+  }
+  'policy.defender' = @{
+    test = $ok
+    plan = { param($In) Invoke-BoxPolicyOp 'policy.defender' plan $In }
+    apply = { param($In) Invoke-BoxPolicyOp 'policy.defender' apply $In }
+    verify = { param($In) Invoke-BoxPolicyOp 'policy.defender' verify $In }
+    evidence = { param($In) Invoke-BoxPolicyOp 'policy.defender' evidence $In }
+  }
+  'policy.purview' = @{
+    test = $ok
+    plan = { param($In) Invoke-BoxPolicyOp 'policy.purview' plan $In }
+    apply = { param($In) Invoke-BoxPolicyOp 'policy.purview' apply $In }
+    verify = { param($In) Invoke-BoxPolicyOp 'policy.purview' verify $In }
+    evidence = { param($In) Invoke-BoxPolicyOp 'policy.purview' evidence $In }
+  }
+  'policy.m365-admin.exchange' = @{
+    test = $ok
+    plan = { param($In) Invoke-BoxPolicyOp 'policy.m365-admin.exchange' plan $In }
+    apply = { param($In) Invoke-BoxPolicyOp 'policy.m365-admin.exchange' apply $In }
+    verify = { param($In) Invoke-BoxPolicyOp 'policy.m365-admin.exchange' verify $In }
+    evidence = { param($In) Invoke-BoxPolicyOp 'policy.m365-admin.exchange' evidence $In }
+  }
+  'policy.m365-apps.exchange' = @{
+    test = $ok
+    plan = { param($In) Invoke-BoxPolicyOp 'policy.m365-apps.exchange' plan $In }
+    apply = { param($In) Invoke-BoxPolicyOp 'policy.m365-apps.exchange' apply $In }
+    verify = { param($In) Invoke-BoxPolicyOp 'policy.m365-apps.exchange' verify $In }
+    evidence = { param($In) Invoke-BoxPolicyOp 'policy.m365-apps.exchange' evidence $In }
   }
 }
 

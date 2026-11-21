@@ -16,7 +16,7 @@ areas:
     title: Email
     plain: Spam, phishing, impersonation, forwarding, shared mailboxes and your domain's mail records.
     behind: [Exchange, Defender]
-    steps: [exchange., policy.exchange, policy.exchange., policy.defender, policy.defender.]
+    steps: [exchange., policy.exchange, policy.exchange., policy.defender, policy.defender., policy.m365-admin.exchange]
   - id: files
     title: Files and sharing
     plain: Who can share what, with whom and for how long, and the company's sites and lists.
@@ -41,7 +41,7 @@ areas:
     title: Apps and automation
     plain: Office apps, AI features and the company's automated flows.
     behind: [Microsoft 365 apps, Power Platform]
-    steps: [powerplatform., policy.m365-apps, policy.power-platform, policy.power-platform.]
+    steps: [powerplatform., policy.m365-apps, policy.m365-apps.exchange, policy.power-platform, policy.power-platform.]
   - id: web-address
     title: Your web address
     plain: The lock on your domain name and its DNS records.

@@ -963,6 +963,98 @@ ADM-005 (external responses in Microsoft Forms off) is likewise not
 applied for now: the public NDA and demo request forms (gate G-04) need
 external responses. Dated exception SC-22-ADM-005, ends 2027-03-31.
 
+## SC-23  Directory, domain control and Azure at no additional cost (proposed)
+
+Requested by the owner on 2026-11-21: add Active Directory management,
+domain control, and every Azure setting that costs nothing extra. Not
+built until the owner answers the open questions below.
+
+### A. Directory (Active Directory)
+
+The company's directory is **Microsoft Entra ID**; the engine already
+manages users, groups, roles, authentication, Conditional Access and
+directory settings in it. Recommended design for a small company:
+**cloud-only, no domain controllers**. Windows devices are Entra-joined
+and managed by Intune (T14-05), with Windows LAPS for the local
+administrator (WIN-036). This needs no server and no extra licence.
+
+Optional module `hybrid`, only for a company that already runs on-premises
+Active Directory:
+
+| Item | Mechanism | Cost |
+| --- | --- | --- |
+| Synchronise users and groups to Entra ID | Microsoft Entra Cloud Sync (lightweight agent on an existing server) | included |
+| Password hash synchronisation; seamless sign-on | Cloud Sync settings | included |
+| Writeback of passwords (self-service reset) | Cloud Sync | included with Entra ID P1 (Business Premium) |
+| Hardening of the on-premises domain (tiering, Group Policy, domain controller patching) | outside Microsoft 365: runbook and gate only | n/a |
+
+Excluded because they cost extra: **Microsoft Entra Domain Services** (a
+managed domain is billed per hour), Entra ID P2 features (Privileged
+Identity Management, risk-based access, access reviews), and any virtual
+machine hosting a domain controller.
+
+### B. Domain control
+
+Settings for the company's internet domains, all free:
+
+| Setting | Mechanism |
+| --- | --- |
+| Every domain verified, no stale unverified domains | Graph `domains` (bootstrap; drift report) |
+| SPF, DKIM, DMARC at reject, MTA-STS, TLS reporting, CAA, null MX on non-mail hosts | DNS adapter (T2-03; EXO-017) |
+| DNSSEC where the DNS provider supports it at no charge | DNS adapter, provider-specific |
+| Registrar lock, registrar account with multi-factor, auto-renew on | gate (registrars have no common API) |
+| Users cannot create tenants or verify domains in other tenants | Entra authorization policy (already planned) |
+
+### C. Azure (only when the company has an Azure subscription)
+
+Microsoft 365 does not include an Azure subscription. Creating one is free,
+but resources in it are billed. These settings cost nothing and harden the
+subscription. They apply only when discovery finds a subscription
+(capability `azure_subscription`):
+
+| Setting | Mechanism | Free because |
+| --- | --- | --- |
+| Management group for the company, subscriptions placed under it | Azure Resource Manager REST | no charge |
+| No standing Owner; administrators by group; break-glass accounts as emergency owners | Azure role-based access control | no charge |
+| Conditional Access requires multi-factor for Azure management | Entra (Business Premium) | already licensed |
+| Subscription policies: no leaving or entering the directory (ADM-012) | Azure portal (gate) | no charge |
+| Built-in Azure Policy assignments: allowed regions, required tags, no public network access on storage and databases, secure transfer, TLS 1.2 minimum, no public blob access | Azure Policy | built-in policies and their evaluation are free |
+| Microsoft cloud security benchmark and secure score | Defender for Cloud **foundational** posture management | the foundational tier is free; paid Defender plans stay off |
+| Budget with alerts at 50, 80 and 100 per cent; cost anomaly alerts | Cost Management | free |
+| Service Health and Advisor alerts to the alerts address | Azure Monitor action group (email) | email notifications within the free monthly allowance |
+| Activity log kept for its free 90 days; no export to a paid workspace | default | free |
+| Resource locks on the company's critical resources | Azure Resource Manager | free |
+| Classic administrators removed | Azure Resource Manager | free |
+
+What the pipeline app would need: the Azure Resource Manager host
+(`management.azure.com`) allowed, and Azure roles (Reader, Resource Policy
+Contributor, Cost Management Contributor, and Security Admin for Defender
+for Cloud) at the company's management group. These are Azure role
+assignments, granted once by a Global Administrator who elevates access;
+Entra permissions do not change. Proposed as part of this change; not
+granted.
+
+### How it would be built
+
+- New catalogue files `policy/settings/azure.yaml` and additions to
+  `entra.yaml` and `exchange.yaml` for domain control, each setting tied to
+  requirements and frameworks like the others; `tier: core` and capability
+  `free` or `azure_subscription`.
+- A new provider `azure` (Azure Resource Manager over REST from PowerShell,
+  no Azure module, the same pattern as Graph).
+- The optional `hybrid` module as a configuration module (SPEC §18.4) with
+  a gate for installing the Cloud Sync agent.
+
+### Open questions for the owner
+
+1. Does the company run, or plan to run, on-premises Active Directory?
+   If not, the `hybrid` module is left out and "Active Directory" means
+   Entra ID only.
+2. Is there an Azure subscription, or should onboarding offer to create
+   one (pay-as-you-go, billed only for resources used)?
+3. Approve the Azure roles and the `management.azure.com` host for the
+   pipeline app?
+
 ## Exceptions on the test tenant (2026-11-21)
 
 - **No FIDO2 keys** for the break-glass accounts this round (owner's

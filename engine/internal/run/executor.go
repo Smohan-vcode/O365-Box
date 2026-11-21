@@ -102,6 +102,9 @@ type outcome struct {
 // Run executes every node of the graph in dependency order.
 func (x *Executor) Run(ctx context.Context, mode Mode) (Summary, error) {
 	x.defaults()
+	if mode == ModeAudit {
+		x.Invoker = readOnly(x.Invoker) // plan and apply never reach a provider (audit.go)
+	}
 	start := x.Now()
 	x.emit(events.Event{Ev: events.RunStarted, Data: map[string]any{"mode": string(mode), "steps": len(x.Graph.Order)}})
 
@@ -299,6 +302,9 @@ func (x *Executor) step(ctx context.Context, mode Mode, n *plan.Node) outcome {
 		data["replaces"] = n.Replaces
 	}
 	x.emit(events.Event{Ev: events.StepStarted, Step: id, Data: data})
+	if mode == ModeAudit {
+		return x.auditStep(ctx, n) // test, verify, evidence only (audit.go)
+	}
 
 	if mode == ModeCheck {
 		var v VerifyResult

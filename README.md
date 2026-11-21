@@ -51,6 +51,16 @@ bin/box up --config <file> --yes
 `box gate <id> [--check|--confirm]` take the same flags. Exit codes: 0 ok,
 1 failure, 2 validation error, 3 waiting on a gate.
 
+Prepare for an audit on any Microsoft 365 tenant, reading only (SPEC §26):
+
+```bash
+bin/box audit --framework soc2 --period 2026-01-01..2026-11-21 --out <folder outside the repository>
+```
+
+Sign in as a person with Global Reader when the code is shown. The pack
+(`index.html`, `controls.csv`, `evidence/`, `gaps.md`, `manifest.sha256`)
+is checked with `box audit verify <folder>`.
+
 ## Develop
 
 ```bash

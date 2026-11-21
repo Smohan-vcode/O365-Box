@@ -1,0 +1,35 @@
+# Delegated scopes the audit sign-in requests (SPEC §26, SC-26, T16-01),
+# with the Microsoft Graph Command Line Tools client. Read-only only: a test
+# (engine/internal/audit) fails on any scope that could write, send or
+# manage, and `box audit` refuses to sign in with one.
+#
+# The person signing in holds Global Reader (plus Security Reader and a
+# Purview reader role for the Defender and Purview reads). The token is
+# held in memory only and dropped when the pack is written (R12). No app
+# registration, certificate or tenant write.
+client: microsoft-graph-command-line-tools
+delegated:
+  - User.Read.All                          # users, guests, last sign-in
+  - Group.Read.All
+  - Directory.Read.All
+  - Organization.Read.All                  # tenant, verified domains
+  - Domain.Read.All                        # password expiry per domain
+  - Policy.Read.All                        # Conditional Access, authorization, security defaults, device registration, auth methods policy
+  - RoleManagement.Read.Directory          # directory role assignments
+  - UserAuthenticationMethod.Read.All      # MFA registration details
+  - AuditLog.Read.All                      # directory audit, sign-ins, signInActivity
+  - Reports.Read.All                       # authentication methods registration report
+  - Application.Read.All                   # app registrations and their credential expiry (never the secret)
+  - DeviceManagementConfiguration.Read.All # compliance and configuration policies
+  - DeviceManagementManagedDevices.Read.All
+  - DeviceManagementApps.Read.All          # app protection policies
+  - DeviceManagementServiceConfig.Read.All # enrolment settings
+  - DeviceManagementRBAC.Read.All
+  - DeviceLocalCredential.ReadBasic.All    # LAPS backup dates only, never a password
+  - SharePointTenantSettings.Read.All      # tenant sharing settings
+  - Sites.Read.All
+  - SecurityEvents.Read.All                # secure score
+  - SecurityAlert.Read.All                 # alerts over the period
+  - IdentityRiskyUser.Read.All             # risky users (Entra ID P2 tenants)
+  - InformationProtectionPolicy.Read       # sensitivity labels
+  - RecordsManagement.Read.All             # retention labels

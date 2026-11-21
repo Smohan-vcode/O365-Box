@@ -130,7 +130,7 @@ engine/
   templates/              template build tooling
   capabilities.yaml       plan to capability map and fallbacks
 schema/                   JSON schema for box-config.yaml
-defaults/                 roles, structure, controls, stages, checklists, retention,
+defaults/                 choices.yaml (§24), roles, structure, controls, stages, checklists, retention,
                           policy index and texts
 defaults/jurisdictions/   rules per jurisdiction
 policy/                   policy catalogue (§23): requirements.yaml, settings/<area>.yaml,
@@ -175,6 +175,7 @@ run that step and its plan or verify only.
 | T11 Upgrades | Paid capabilities, each a replaceable step | P2 | S each | T5 |
 | T12 Product packaging | Second-company dry run in CI, installer guide | P2 | M | all P0 and P1 |
 | T14 Policy sets | Resolver, validation and coverage; capability check; setting resolution; apply per admin area in audit then enforce; sensitivity labels; data loss prevention; audit and alerts; Frameworks list; exceptions; evidence per requirement; standards rendered from requirements | P0 | L | T0, T1, T2, T3, S-02 |
+| T15 Directory, domains and Azure | Hybrid directory (Cloud Sync), domain control, Azure governance at no extra cost, each driven by choices (§24) | P1 | M | T13-09, T14-03 |
 
 Each provider step is usable headless before its TUI screen exists.
 
@@ -517,15 +518,16 @@ band throughout.
 | 1 | Start | Sign-in or sign-up, discovery confirmation, test or real | `tenant` |
 | 2 | Company | Legal and trading name, entity wording, registered address, registration and tax numbers, telephone, domains; place of registration and operating jurisdictions (§19); disclosures | `company`, `jurisdictions`, `disclosures`; Dictionary |
 | 3 | Addresses | Founder's address; shared mailboxes, aliases, lists, auto-replies, access groups; DMARC report address; sending subdomains; DNS provider and token | `mail`, `dns`; token to the keychain |
-| 4 | Security | Frameworks to report against; policy tier (core or enhanced); rollout stage, audit days and pilot group; exceptions with reason, reference and end date (§20, §23); break-glass account names; device rules if available | `policy`, `tenant.break_glass_accounts` |
-| 5 | Structure | Modules; sites, libraries, folders; groups; access grid (§7); legal pack upload | `modules`, `structure`, `groups`; Legal `Templates/Source` |
+| 4 | Security | Frameworks to report against; policy tier (core or enhanced); rollout stage, audit days and pilot group; the security choices (§24); exceptions with reason, reference and end date (§20, §23); break-glass account names | `policy`, `choices`, `tenant.break_glass_accounts` |
+| 5 | Structure | Modules; the structure choices (§24: directory, Azure, automation, data protection); sites, libraries, folders; groups; access grid (§7); legal pack upload | `modules`, `choices`, `structure`, `groups`; Legal `Templates/Source` |
 | 6 | People | Initial team with plan, roles and access groups; existing users for adoption; seat counts; how each person receives their first sign-in pass (§18.9) | `users` |
-| 7 | Review | Full plan as a tree with counts; licence use; gates ahead; estimated time; exceptions. Confirmation by typing the primary domain | — |
+| 7 | Review | Full plan as a tree with counts; licence use; the permissions the choices need, by bundle (§24.3); gates ahead; costs (none unless an option says so); estimated time; exceptions. Confirmation by typing the primary domain | — |
 | 8 | Build | Live run view, gates, final report | tenant |
 
 Modules: Core (always on), Records, People and roles, Policies, and
 Devices (when the plan includes Intune) are on by default; Legal documents
-(on when a pack is uploaded), Sales and Compliance are off by default. A
+(on when a pack is uploaded), Sales and Compliance are off by default;
+Hybrid directory and Azure are switched on by their choices (§24). A
 module that is off produces no steps.
 
 Step 8 runs in this order:
@@ -547,9 +549,9 @@ The run ends with a summary, next actions and a report in the Admin site.
 1. Add the primary and extra domains; write each verification record
    through the DNS adapter; verify.
 2. Create the pipeline app registration and service principal.
-3. Grant exactly `expected-state/app-permissions.yaml` by app role
-   assignment; assign the listed Entra roles; refuse anything under
-   `never`.
+3. Grant exactly the permission bundles the configuration needs (§24.3)
+   by app role assignment; assign their Entra roles; refuse anything under
+   `never`. The consent screen at sign-in lists the bundles and why.
 4. Add a GitHub federated credential for the company's copy of the
    repository and a local certificate whose private key stays in the OS
    keychain. Never create a client secret.
@@ -837,3 +839,61 @@ in this order:
 
 Development of this section is track T14 (`tasks/T14-01.md` to
 `tasks/T14-16.md`).
+
+## 24. Choices
+
+### 24.1 One window, every decision
+
+Every decision an owner makes is a **choice** in `defaults/choices.yaml`,
+asked in the onboarding window (§18.4, steps 3 to 5) in plain language.
+There is no decision made only in documents: a recommendation the
+engine's authors would make becomes the choice's recommended option.
+
+Each choice has a question, help text, options with their cost, a
+recommended option (or one recommended under a condition), and an
+optional `detect` that discovery fills in (for example an existing Azure
+subscription, or a directory synchronised from on-premises Active
+Directory). Choices that do not apply to the company (`when`) are not
+shown.
+
+### 24.2 Effects
+
+An option can switch modules on or off; select a setting variant (the
+same setting delivered a different way, mapped in
+`expected-state/setting-ids/*.json`); leave settings out while it holds
+(recorded like an exception, with the choice as its reference); require
+permission bundles; and add gates. The resolver (§23) applies the choices
+before the tier and exceptions. Changing a choice later from the home
+screen saves a new configuration version, then plans and applies the
+difference.
+
+The configuration stores the answers:
+
+```yaml
+choices:
+  directory.mode: cloud
+  azure.subscription: none
+  signin.device_code: allow
+```
+
+`box config validate` fails on an unknown choice or option, and on a choice
+whose `when` does not hold.
+
+### 24.3 Permission bundles
+
+`expected-state/app-permissions.yaml` groups the pipeline app's
+permissions into bundles: `base` (always), and one per area or choice
+(for example `devices`, `purview`, `powerplatform`, `azure`). Bootstrap
+grants `base` plus the bundles the configuration's modules and choices
+need, and nothing else; `box check identity` compares the app with that
+union. The Review screen lists the bundles with the settings that need
+them, so the owner approves exactly what the selection uses at the one
+Global Administrator sign-in. Adding a choice that needs a new bundle
+later asks for that sign-in again (gate).
+
+### 24.4 Costs
+
+The product applies only what the subscription includes (R2). An option
+that could lead to a charge says so in its `cost` (for example creating an
+Azure subscription: nothing is billed until resources are created), and
+the Review screen lists every such note before the build.

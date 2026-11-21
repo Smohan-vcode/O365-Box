@@ -1,0 +1,236 @@
+# Choices: every decision an owner makes in onboarding (SPEC §24).
+#
+# Each choice is asked in plain language in one window (the TUI), with the
+# recommended option preselected, discovery pre-filling what Microsoft
+# already knows (`detect`), and the cost of each option stated. The answer
+# is stored in the configuration document under `choices: {id: value}`
+# and can be changed later from the home screen (plan, then apply).
+#
+# Effects of an option:
+#   modules:     modules switched on or off
+#   variants:    setting id -> variant key in expected-state/setting-ids
+#   exceptions:  setting ids not applied while this option holds
+#   bundles:     permission bundles the pipeline app needs (expected-state/app-permissions.yaml)
+#   gates:       manual steps the option adds (SPEC §22)
+# `when` limits a choice to companies where it applies (a module or a detected fact).
+# `recommended_when` overrides `recommended` for a condition.
+# Engine data: no company values.
+choices:
+
+  # ---------- Structure step: what the company runs ----------
+  - id: directory.mode
+    step: structure
+    question: Where do your staff accounts live?
+    help: Microsoft 365 keeps a directory of your staff. Some companies also run their own Active Directory servers in an office.
+    detect: organization.onPremisesSyncEnabled
+    options:
+      - value: cloud
+        label: In Microsoft 365 only
+        detail: No servers to run. Windows PCs join Microsoft Entra and are managed by Intune.
+        recommended: true
+        cost: none
+      - value: hybrid
+        label: Also on our own Active Directory servers
+        detail: Adds Microsoft Entra Cloud Sync, which copies accounts and passwords from your servers. Hardening the servers themselves stays a checklist.
+        cost: none (needs an existing server for the sync agent)
+        effects: {modules: [hybrid], gates: [cloud-sync-agent]}
+
+  - id: azure.subscription
+    step: structure
+    question: Do you use Microsoft Azure?
+    help: Azure is Microsoft's cloud for servers and apps. It is separate from Microsoft 365 and billed only for what you run in it.
+    detect: azure.subscriptions
+    options:
+      - value: existing
+        label: Yes, secure our existing subscription
+        detail: Applies the free Azure safety settings (§C of SC-23).
+        when: detected
+        recommended: true
+        cost: none
+        effects: {modules: [azure], bundles: [azure]}
+      - value: create
+        label: Not yet, help me create one
+        detail: We show you how to create a pay-as-you-go subscription, then secure it. Nothing is billed until you create resources.
+        cost: none until resources are created
+        effects: {modules: [azure], bundles: [azure], gates: [azure-subscription]}
+      - value: none
+        label: No, we do not use Azure
+        detail: Azure settings are left out. You can add them later.
+        recommended_when: not detected
+        cost: none
+
+  - id: domain.registrar
+    step: addresses
+    question: Who registered your web address (domain)?
+    help: The company that sells your domain name controls it. If someone takes over that account, they can take over your email.
+    options:
+      - value: guided
+        label: Guide me through locking it down
+        detail: Registrar lock, two-step sign-in on the registrar account, and auto-renew. A short checklist, checked by us where the registrar allows.
+        recommended: true
+        cost: none
+        effects: {gates: [registrar-lockdown]}
+      - value: later
+        label: I will do this later
+        detail: Listed as an open item on the home screen.
+        cost: none
+
+  - id: automation.governance
+    step: structure
+    question: Govern Power Automate and Power Apps?
+    help: Staff can build automations that move company data. Governance blocks risky connectors and AI features.
+    options:
+      - value: yes
+        label: Yes
+        detail: An administrator registers the setup app once in Power Platform (a two-minute step we guide).
+        recommended: true
+        cost: none
+        effects: {bundles: [powerplatform], gates: [powerplatform-registration]}
+      - value: later
+        label: Later
+        detail: The Power Platform settings are listed as not applied.
+        cost: none
+        effects: {exceptions: [PPL-001, PPL-002, PPL-003, PPL-004, PPL-005, PPL-006, PPL-007]}
+
+  - id: data.protection
+    step: structure
+    question: Label and protect sensitive documents and email?
+    help: Sensitivity labels and data loss prevention stop confidential files and personal data leaving the company. Included in Business Premium.
+    options:
+      - value: yes
+        label: Yes, start in audit mode
+        detail: Labels are published to a pilot group first; data loss prevention starts in test mode and reports before it blocks.
+        recommended: true
+        cost: none
+        effects: {bundles: [purview]}
+      - value: later
+        label: Later
+        cost: none
+        effects: {exceptions: [PVW-003, PVW-004, PVW-005, PVW-006, PVW-007, PVW-008, PVW-010, PVW-011, PVW-012, PVW-013, PVW-014, PVW-015, PVW-016, PVW-017, PVW-018, PVW-019, PVW-020]}
+
+  # ---------- Security step: how strict ----------
+  - id: signin.device_code
+    step: security
+    question: Allow sign-in with a code on another device?
+    help: Some tools, including this setup tool when run without a browser, sign in by showing a code you enter on your phone. Attackers also misuse this.
+    options:
+      - value: allow
+        label: Allow for now
+        detail: Recommended while you are setting up. Turn it off later from the home screen.
+        recommended: true
+        cost: none
+        effects: {exceptions: [ENT-012]}
+      - value: block
+        label: Block
+        detail: Strongest. This setup tool must then be used from a computer with a browser.
+        cost: none
+
+  - id: forms.external_responses
+    step: security
+    question: Can people outside the company fill in your Microsoft Forms?
+    help: Public forms (for example an NDA request or a demo request on your website) need this on.
+    options:
+      - value: on
+        label: Yes
+        detail: Needed for public forms.
+        recommended_when: module sales
+        cost: none
+        effects: {exceptions: [ADM-005]}
+      - value: off
+        label: No
+        recommended: true
+        cost: none
+
+  - id: ai.copilot
+    step: security
+    question: Copilot and AI features
+    help: Decide what your AI policy allows. You can change this any time.
+    options:
+      - value: off
+        label: Off until our AI policy approves them
+        recommended: true
+        cost: none
+        effects: {variants: {ADM-010: off}}
+      - value: chat
+        label: Copilot Chat on, web search off
+        cost: none
+        effects: {variants: {ADM-010: chat-no-web}}
+
+  - id: devices.windows_store
+    step: security
+    question: Microsoft Store on company Windows PCs
+    help: The old "company store" no longer exists. Apps can be installed for staff by Intune instead.
+    when: module devices
+    options:
+      - value: intune
+        label: Store app off; we install apps through Intune
+        recommended: true
+        cost: none
+        effects: {variants: {WIN-058: intune}}
+      - value: open
+        label: Leave the Store on
+        cost: none
+        effects: {exceptions: [WIN-058]}
+
+  - id: devices.android_personal_passcode
+    step: security
+    question: Passcode on staff's own Android phones
+    help: Android lets companies require a passcode strength on personal phones, not an exact length.
+    when: module devices
+    options:
+      - value: medium
+        label: Medium (at least 4 digits, no simple patterns)
+        recommended: true
+        cost: none
+        effects: {variants: {MOB-005: medium}}
+      - value: high
+        label: High (at least 8 characters)
+        cost: none
+        effects: {variants: {MOB-005: high}}
+
+  - id: mail.safe_attachments
+    step: security
+    question: Suspicious email attachments
+    help: Attachments are opened in a safe place before delivery.
+    options:
+      - value: block
+        label: Hold the email until the attachment is checked
+        recommended: true
+        cost: none
+        effects: {variants: {DEF-013: block}}
+      - value: dynamic
+        label: Deliver the text now and the attachment once checked
+        detail: Applies only to people outside the standard protection presets.
+        cost: none
+        effects: {variants: {DEF-013: dynamic}}
+
+  - id: session.idle_timeout
+    step: security
+    question: Sign people out of web apps when idle?
+    options:
+      - value: one_hour
+        label: After 1 hour, on every device
+        recommended: true
+        cost: none
+        effects: {variants: {ADM-003: one-hour}}
+      - value: unmanaged_only
+        label: Only limit sign-in time on personal devices
+        detail: Uses the 12-hour sign-in frequency on unmanaged devices instead.
+        cost: none
+        effects: {exceptions: [ADM-003]}
+
+  - id: storage.default_location
+    step: security
+    question: Save files to company storage by default?
+    help: Desktop and Documents folders are kept in OneDrive, so files are backed up and covered by company policies.
+    when: module devices
+    options:
+      - value: onedrive
+        label: Yes
+        recommended: true
+        cost: none
+        effects: {variants: {OFC-011: kfm}}
+      - value: leave
+        label: No, leave it to each person
+        cost: none
+        effects: {exceptions: [OFC-011]}

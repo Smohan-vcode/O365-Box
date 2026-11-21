@@ -1045,15 +1045,39 @@ granted.
 - The optional `hybrid` module as a configuration module (SPEC §18.4) with
   a gate for installing the Cloud Sync agent.
 
-### Open questions for the owner
+### Questions become choices (SC-24)
 
-1. Does the company run, or plan to run, on-premises Active Directory?
-   If not, the `hybrid` module is left out and "Active Directory" means
-   Entra ID only.
-2. Is there an Azure subscription, or should onboarding offer to create
-   one (pay-as-you-go, billed only for resources used)?
-3. Approve the Azure roles and the `management.azure.com` host for the
-   pipeline app?
+The open questions are asked of every owner in onboarding, not decided
+once here: `directory.mode` (cloud or hybrid, detected from the tenant),
+`azure.subscription` (existing, create, none; detected), and
+`domain.registrar`. The Azure roles and host are the `azure` permission
+bundle, approved by the owner at the bootstrap sign-in when they choose
+Azure. Status: approved as product design (owner, 2026-11-21); built in
+track T15.
+
+## SC-24  Choices in one window; permission bundles (approved 2026-11-21)
+
+Owner direction: the product asks every owner the decisions made so far
+for the test tenant, with options and a recommendation, so anyone can set
+up the whole company system with full policies in one window.
+
+- New SPEC §24 and `defaults/choices.yaml`: every decision is a choice with
+  plain-language help, options, costs, a recommendation and discovery
+  detection. SC-22's decisions become the recommended options (for
+  example device-code sign-in allowed while setting up; Store app off with
+  apps from Intune).
+- Permissions become bundles granted by what the configuration selects
+  (§24.3). SC-21's list becomes the bundles `devices`, `purview`,
+  `powerplatform`, `teams` and the rest; the owner approves them on the
+  Review screen and at the bootstrap sign-in instead of one change record
+  per company.
+- SC-23's questions are choices (`directory.mode`, `azure.subscription`,
+  `domain.registrar`), with the hybrid directory and Azure as modules.
+- New tasks: T0-07 (permission bundles), T13-09 (choices engine), T13-10
+  (choices screens), T15-01 to T15-04 (directory, domain control, Azure).
+
+On the test tenant, SC-21 still needs the owner's approval of the bundles
+before they are granted; nothing is granted by this change.
 
 ## Exceptions on the test tenant (2026-11-21)
 

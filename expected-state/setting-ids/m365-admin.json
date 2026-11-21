@@ -119,7 +119,7 @@
       "note": "S-02 not done; TCM support for this resource type not confirmed"
     },
     "verified": "not verified: GET /beta/admin/forms returned 403 (app lacks OrgSettings-Forms.Read.All)",
-    "notes": "Beta API (preview). CONFLICT to check: gate G-04 has the owner create public NDA and demo-request forms (flows/forms/); isExternalSendFormEnabled false stops forms being answered by people outside the organisation. Decide whether G-04's forms need an exception or a different mechanism."
+    "notes": "Not applied on the test tenant for now (owner, 2026-11-21, SC-22): the public NDA and demo request forms (gate G-04) need external responses. A company that uses those forms keeps this as a dated exception. Beta API (preview). CONFLICT to check: gate G-04 has the owner create public NDA and demo-request forms (flows/forms/); isExternalSendFormEnabled false stops forms being answered by people outside the organisation. Decide whether G-04's forms need an exception or a different mechanism."
   },
   "ADM-006": {
     "status": "gate",

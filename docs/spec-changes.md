@@ -959,6 +959,10 @@ the owner tests `box` end to end, because `box` signs in with a device
 code. It is a dated exception in the test tenant's configuration
 (reference SC-22-ENT-012, ends 2027-03-31), not a catalogue change.
 
+ADM-005 (external responses in Microsoft Forms off) is likewise not
+applied for now: the public NDA and demo request forms (gate G-04) need
+external responses. Dated exception SC-22-ADM-005, ends 2027-03-31.
+
 ## Exceptions on the test tenant (2026-11-21)
 
 - **No FIDO2 keys** for the break-glass accounts this round (owner's

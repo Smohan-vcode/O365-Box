@@ -823,7 +823,7 @@
       "note": "S-02 not done; TCM support for this resource type not confirmed"
     },
     "verified": "not created yet; GET /v1.0/identity/conditionalAccess/policies returned 200, so the collection and the conditions schema are readable with the granted permissions",
-    "notes": "Policy name CA12 is proposed. authenticationFlows is a flags string, not an array. The box CLI's own owner sign-in uses device code (auth.SignInDeviceCode): blocking device code for all users would break `box` sign-in for the owner. Decide: exclude {group:role-owner} or move the CLI to another flow before enforce. mode staged: payload_audit is the report-only form (state enabledForReportingButNotEnforced) with the same scope; the identity provider also keeps blocking policies report-only until gate G-02 passes (SPEC 20.2). Whether the enforce step goes first to rollout.pilot_group or straight to all users is an orchestrator decision not settled here.",
+    "notes": "Decided by the owner (2026-11-21, SC-22): not applied while the box CLI signs in with a device code (owner's end-to-end testing). Recorded as a dated policy exception in the company's configuration; revisit when browser sign-in (T0-04) replaces device code for the owner, or exclude {group:role-owner}. Policy name CA12 is proposed. authenticationFlows is a flags string, not an array. The box CLI's own owner sign-in uses device code (auth.SignInDeviceCode): blocking device code for all users would break `box` sign-in for the owner. Decide: exclude {group:role-owner} or move the CLI to another flow before enforce. mode staged: payload_audit is the report-only form (state enabledForReportingButNotEnforced) with the same scope; the identity provider also keeps blocking policies report-only until gate G-02 passes (SPEC 20.2). Whether the enforce step goes first to rollout.pilot_group or straight to all users is an orchestrator decision not settled here.",
     "payload_audit": {
       "displayName": "CA12 Block device code and authentication transfer",
       "state": "enabledForReportingButNotEnforced",
@@ -1795,11 +1795,11 @@
     "notes": "The configuration has no separate administrator accounts beyond break-glass; if a daily user holds an admin role (founder before G-05) the check fails by design. Removing a licence is allowed (User.ReadWrite.All) but never assigns a paid licence."
   },
   "ENT-045": {
-    "status": "unresolved",
+    "status": "gate",
     "provider": "identity",
     "step": "policy.entra",
-    "method": "graph",
-    "apply": "",
+    "method": "portal",
+    "apply": "gate: a person confirms the alert path; automated with a Purview alert policy once Security & Compliance PowerShell works app-only (SC-21)",
     "payload": {},
     "read": "GET /auditLogs/signIns?$filter=userId eq '{user:break-glass-1}' or userId eq '{user:break-glass-2}'",
     "check": "",
@@ -1812,7 +1812,7 @@
       "note": "S-02 not done; TCM support for this resource type not confirmed"
     },
     "verified": "read-only GET /v1.0/auditLogs/signIns returned 200 (sign-in log readable); Connect-IPPSSession has no -AccessToken parameter in the installed module, so Purview alert policies could not be inspected app-only",
-    "notes": "No free, app-only API creates a 'mail on sign-in' alert. Available: (a) Azure Monitor log alert on SigninLogs (needs an Azure subscription and Log Analytics: paid, host blocked); (b) Purview alert policy New-ProtectionAlert on Entra 'UserLoggedIn' activity for the two accounts (Security & Compliance PowerShell, app-only connection unproven, licence rules for custom alerts unconfirmed); (c) a scheduled Box job polling /auditLogs/signIns and raising an Events item that the existing alerts path mails (Mail.Send is forbidden, so the mail must come from an existing flow/list). Decision needed."
+    "notes": "Decided by the owner (2026-11-21, SC-22): gate for now (linked to G-02). No free app-only API raises a mail alert on sign-in; the planned automation is a Purview alert policy (New-ProtectionAlert on UserLoggedIn for the break-glass accounts) after SC-21."
   },
   "ENT-046": {
     "status": "resolved",

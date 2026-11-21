@@ -524,8 +524,8 @@ settings:
   - CFG-08
 - id: WIN-058
   platform: windows
-  name: 'Microsoft Store: private store only and automatic app updates'
-  value: 'on'
+  name: 'Microsoft Store: Store app off, apps deployed by Intune, automatic app updates'
+  value: Store app off; apps deployed by Intune; automatic app updates on
   tier: core
   mode: enforce
   capability: intune_p1

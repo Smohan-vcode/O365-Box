@@ -599,14 +599,30 @@
     "notes": "Device-scope settings. The Windows non-deprecated Update Channel definition id really begins 'pdates~policy~...' in Microsoft's catalogue (verified); the deprecated twin is device_vendor_msft_policy_config_office16v2~policy~l_microsoftofficemachine~l_updates_l_updatebranch. macOS partial: Microsoft AutoUpdate has no 'Monthly Enterprise' channel; nearest values listed for a decision (findings). Cloud update in the Microsoft 365 Apps admin centre is an alternative with no supported write API (config.office.com host blocked)."
   },
   "OFC-011": {
-    "status": "unresolved",
+    "status": "resolved",
     "provider": "intune",
     "step": "policy.m365-apps",
     "method": "graph-beta",
-    "apply": null,
-    "payload": null,
-    "read": null,
-    "check": null,
+    "apply": "POST /beta/deviceManagement/configurationPolicies (Windows: 'Box - Windows - OneDrive known folders'; macOS: 'Box - macOS - Office default save')",
+    "payload": {
+      "windows": {
+        "settingDefinitionId": "device_vendor_msft_policy_config_onedrivengscv2.updates~policy~onedrivengsc_kfmoptinnowizard",
+        "choice": "device_vendor_msft_policy_config_onedrivengscv2.updates~policy~onedrivengsc_kfmoptinnowizard_1",
+        "children": {
+          "device_vendor_msft_policy_config_onedrivengscv2.updates~policy~onedrivengsc_kfmoptinnowizard_kfmoptinnowizard_textbox": "{tenant:id}",
+          "device_vendor_msft_policy_config_onedrivengscv2.updates~policy~onedrivengsc_kfmoptinnowizard_kfmoptinnowizard_desktop_checkbox": "_true",
+          "device_vendor_msft_policy_config_onedrivengscv2.updates~policy~onedrivengsc_kfmoptinnowizard_kfmoptinnowizard_documents_checkbox": "_true",
+          "device_vendor_msft_policy_config_onedrivengscv2.updates~policy~onedrivengsc_kfmoptinnowizard_kfmoptinnowizard_pictures_checkbox": "_true",
+          "device_vendor_msft_policy_config_onedrivengscv2.updates~policy~onedrivengsc_kfmoptinnowizard_kfmoptinnowizard_dropdown": "show notification"
+        }
+      },
+      "macos": {
+        "settingDefinitionId": "com.apple.managedclient.preferences_defaultstolocalopensave",
+        "choice": "com.apple.managedclient.preferences_defaultstolocalopensave_false"
+      }
+    },
+    "read": "GET /beta/deviceManagement/configurationPolicies?$expand=settings",
+    "check": "Windows known folder move enabled for the tenant with Desktop, Documents and Pictures; macOS defaultstolocalopensave == false",
     "permissions": [
       "graph:DeviceManagementConfiguration.ReadWrite.All"
     ],
@@ -615,8 +631,8 @@
       "resource": null,
       "note": "S-02 not done; Intune settings catalogue coverage in Tenant Configuration Management unconfirmed. Monitor with box drift."
     },
-    "verified": "Searched the settings catalogue (GET /beta/deviceManagement/configurationSettings?$filter=contains(id,...)) for save-location policies: found only office16v2 l_onlinestoragefilter ('Hide file locations when opening or saving files') on Windows and com.apple.managedclient.preferences_defaultstolocalopensave on macOS.",
-    "notes": "Windows has no settings catalogue policy that makes company storage (OneDrive/SharePoint) the default save location; it is the product default for signed-in users. Available: (a) macOS DefaultsToLocalOpenSave = false (_false) which makes cloud the default; (b) Windows: OneDrive Known Folder Move (onedrivengscv2 KFMSilentOptIn with {tenant:id}) so local Documents/Desktop are company storage; (c) l_onlinestoragefilter to hide non-company cloud locations. Decision needed: accept (a)+(b) as delivering the value, or reword.",
+    "verified": "definition ids read on the test tenant (Windows .updates variant with its child settings; macOS defaultstolocalopensave with options _false/_true); child option ids follow the ADMX convention and are confirmed on first apply",
+    "notes": "Decided by the owner (2026-11-21, SC-22): company storage through OneDrive Known Folder Move on Windows (Desktop, Documents, Pictures silently redirected) and cloud as the default on macOS.",
     "available": [
       "com.apple.managedclient.preferences_defaultstolocalopensave",
       "device_vendor_msft_policy_config_onedrivengscv2~policy~onedrivengsc_kfmoptinnowizard (KFM silent opt-in; id family seen in catalogue)",

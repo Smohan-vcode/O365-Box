@@ -151,7 +151,7 @@
     "notes": "Intune has no relative 'current minus one' value; osMinimumVersion is a fixed version string. The value must come from configuration and move with each major release (propose devices.ios.minimum_version and devices.android.minimum_version); decision on who maintains it."
   },
   "MOB-005": {
-    "status": "unresolved",
+    "status": "resolved",
     "provider": "intune",
     "step": "policy.intune-mobile",
     "method": "graph-beta",
@@ -176,10 +176,13 @@
         "passwordRequired": true,
         "passwordRequiredType": "numericComplex",
         "passwordMinimumLength": 6
+      },
+      "androidPersonalWorkProfile": {
+        "requiredPasswordComplexity": "medium"
       }
     },
     "read": "GET /beta/deviceManagement/deviceCompliancePolicies/{id}",
-    "check": "iOS passcodeRequired && passcodeMinimumLength == 6 && passcodeBlockSimple; Android fully managed passwordRequiredType == numericComplex && passwordMinimumLength == 6",
+    "check": "iOS passcodeRequired && passcodeMinimumLength == 6 && passcodeBlockSimple; Android fully managed passwordRequiredType == numericComplex && passwordMinimumLength == 6; personal Android work profile: requiredPasswordComplexity == medium",
     "permissions": [
       "graph:DeviceManagementConfiguration.ReadWrite.All"
     ],
@@ -189,7 +192,7 @@
       "note": "S-02 not done; Microsoft365DSC equivalents: IntuneDeviceCompliancePolicyiOS, IntuneDeviceCompliancePolicyAndroidWorkProfile, IntuneDeviceCompliancePolicyAndroidDeviceOwner"
     },
     "verified": "properties present on microsoft.graph.iosCompliancePolicy / androidWorkProfileCompliancePolicy / androidDeviceOwnerCompliancePolicy in the test tenant's beta $metadata; GET /beta/deviceManagement/deviceCompliancePolicies returned 200 (none yet)",
-    "notes": "iOS and Android fully managed (device owner) deliver the value exactly. Android personally owned work profile on Android 12 and later ignores passwordRequiredType/passwordMinimumLength for the device lock and offers only requiredPasswordComplexity: medium (PIN of 4+ with no repeating or ordered sequences) or high (8+). No setting gives '6 digits, simple blocked' for the device lock there. Available: medium complexity (nearer, shorter), high complexity (stricter), or the work-profile passcode (workProfileRequirePassword, workProfilePasswordRequiredType numericComplex, workProfilePasswordMinimumLength 6), which is exact but protects only the work profile. Decision needed."
+    "notes": "Decided by the owner (2026-11-21, SC-22): exactly 6 digits with simple values blocked on iOS and fully managed Android; on personally owned Android 12+ the device lock uses complexity 'medium' (4+ digits, no repeating or ordered sequences), the only level the platform allows below 8 digits. iOS and Android fully managed (device owner) deliver the value exactly. Android personally owned work profile on Android 12 and later ignores passwordRequiredType/passwordMinimumLength for the device lock and offers only requiredPasswordComplexity: medium (PIN of 4+ with no repeating or ordered sequences) or high (8+). No setting gives '6 digits, simple blocked' for the device lock there. Available: medium complexity (nearer, shorter), high complexity (stricter), or the work-profile passcode (workProfileRequirePassword, workProfilePasswordRequiredType numericComplex, workProfilePasswordMinimumLength 6), which is exact but protects only the work profile. Decision needed."
   },
   "MOB-006": {
     "status": "resolved",
@@ -697,7 +700,7 @@
     "notes": "All app protection settings live in one iOS and one Android policy; the payload shows only this setting's properties. Needs DeviceManagementApps.ReadWrite.All, which is not in app-permissions.yaml. 'Jailbroken/rooted devices' conditional launch maps to deviceComplianceRequired in Graph."
   },
   "MOB-022": {
-    "status": "unresolved",
+    "status": "resolved",
     "provider": "intune",
     "step": "policy.intune-mobile",
     "method": "graph-beta",
@@ -715,7 +718,7 @@
       }
     },
     "read": "GET /beta/deviceAppManagement/iosManagedAppProtections/{id} ; GET /beta/deviceAppManagement/androidManagedAppProtections/{id}",
-    "check": "minimumWarningOsVersion and minimumRequiredOsVersion == configured values; app version properties not set",
+    "check": "minimumWarningOsVersion == {config:devices.<platform>.minimum_version} and minimumRequiredOsVersion == previous; no app version fields set",
     "permissions": [
       "graph:DeviceManagementApps.ReadWrite.All"
     ],
@@ -725,7 +728,7 @@
       "note": "S-02 not done; Microsoft365DSC equivalents: IntuneAppProtectionPolicyiOS, IntuneAppProtectionPolicyAndroid"
     },
     "verified": "not verified on the tenant: GET /beta/deviceAppManagement/iosManagedAppProtections returned 403 (needs DeviceManagementApps.Read.All / ReadWrite.All, not granted). Properties and enum values confirmed in the test tenant's beta $metadata (iosManagedAppProtection, androidManagedAppProtection, managedAppProtection).",
-    "notes": "Operating system part is exact (minimumWarningOsVersion warn, minimumRequiredOsVersion block, per platform) but only with fixed version strings maintained in configuration. App version part has no relative form: minimumWarningAppVersion / minimumRequiredAppVersion are one fixed version string applied to every app in the policy, so 'current minus one' per app cannot be expressed. Available: OS warn/block with configured versions, and either no app version check or per-app policies with fixed versions. Decision needed. Needs DeviceManagementApps.ReadWrite.All (not granted)."
+    "notes": "Decided by the owner (2026-11-21, SC-22): operating system only: warn below the configured minimum (minimumWarningOsVersion), block below the one before (minimumRequiredOsVersion); no app version check, because one fixed version string would apply to every app. Versions come from configuration keys proposed in SC-21. Needs DeviceManagementApps.ReadWrite.All (SC-21). Operating system part is exact (minimumWarningOsVersion warn, minimumRequiredOsVersion block, per platform) but only with fixed version strings maintained in configuration. App version part has no relative form: minimumWarningAppVersion / minimumRequiredAppVersion are one fixed version string applied to every app in the policy, so 'current minus one' per app cannot be expressed. Available: OS warn/block with configured versions, and either no app version check or per-app policies with fixed versions. Decision needed. Needs DeviceManagementApps.ReadWrite.All (not granted)."
   },
   "MOB-023": {
     "status": "resolved",

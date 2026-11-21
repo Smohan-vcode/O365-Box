@@ -43,7 +43,7 @@ settings:
 - id: MOB-005
   platform: ios android
   name: 'Compliance: passcode'
-  value: required; 6 digits; simple values blocked
+  value: "required; 6 digits, simple values blocked (personally owned Android: medium complexity)"
   tier: core
   mode: enforce
   capability: intune_p1
@@ -199,8 +199,8 @@ settings:
   - DEV-10
 - id: MOB-022
   platform: ios android
-  name: 'App protection: minimum operating system and app version'
-  value: warn below current minus one; block below minus two
+  name: 'App protection: minimum operating system version'
+  value: "operating system only: warn below the configured version; block below the one before"
   tier: core
   mode: enforce
   capability: intune_p1

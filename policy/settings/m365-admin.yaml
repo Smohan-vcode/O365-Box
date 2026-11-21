@@ -24,7 +24,7 @@ settings:
 - id: ADM-003
   platform: all
   name: Idle session timeout for web apps
-  value: 1 hour on unmanaged devices
+  value: 1 hour, all devices
   tier: core
   mode: enforce
   capability: free
@@ -88,7 +88,7 @@ settings:
 - id: ADM-010
   platform: all
   name: Copilot chat and web grounding
-  value: as approved in the AI policy
+  value: off until the AI policy approves it
   tier: core
   mode: enforce
   capability: free

@@ -46,22 +46,22 @@
     "notes": "No Graph API. MSCommerce PowerShell can set it per product but needs an interactive administrator sign-in, so it cannot run app-only in the pipeline; the gate guide may offer it as an alternative to clicking. New products appear disabled-by-default only for some product types: re-check each quarter."
   },
   "ADM-003": {
-    "status": "unresolved",
+    "status": "resolved",
     "provider": "identity",
     "step": "policy.m365-admin",
     "method": "graph",
-    "apply": "",
+    "apply": "POST /policies/activityBasedTimeoutPolicies (PATCH by id when it exists)",
     "payload": {
+      "displayName": "Box idle session timeout",
+      "isOrganizationDefault": true,
       "definition": [
         "{\"ActivityBasedTimeoutPolicy\":{\"Version\":1,\"ApplicationPolicies\":[{\"ApplicationId\":\"default\",\"WebSessionIdleTimeout\":\"01:00:00\"}]}}"
-      ],
-      "displayName": "Idle session timeout",
-      "isOrganizationDefault": true
+      ]
     },
     "read": "GET /policies/activityBasedTimeoutPolicies",
-    "check": "",
+    "check": "an organisation-default policy with WebSessionIdleTimeout 01:00:00",
     "permissions": [
-      "graph:Policy.ReadWrite.ApplicationConfiguration (not granted: proposed)"
+      "graph:Policy.ReadWrite.ApplicationConfiguration (SC-21)"
     ],
     "roles": [],
     "tcm": {
@@ -69,7 +69,7 @@
       "note": "S-02 not done; TCM support for this resource type not confirmed"
     },
     "verified": "read-only GET /v1.0/policies/activityBasedTimeoutPolicies returned 200 (no policy)",
-    "notes": "Available: the organisation-wide activityBasedTimeoutPolicy (what the admin centre's idle session timeout writes), 1 hour for Microsoft 365 web apps. It is tenant-wide; whether it can be limited to unmanaged devices is not a property of the policy, so the stated value 'on unmanaged devices' is not delivered exactly. Options: accept tenant-wide 1 hour, or rely on ENT-008 (12-hour sign-in frequency on unmanaged devices) plus SharePoint's Set-SPOBrowserIdleSignOut. Decision needed."
+    "notes": "Decided by the owner (2026-11-21, SC-22): 1 hour for every device: the policy cannot be limited to unmanaged devices. Needs Policy.ReadWrite.ApplicationConfiguration (SC-21)."
   },
   "ADM-004": {
     "status": "resolved",
@@ -229,14 +229,14 @@
     "notes": "No API. Standard release is the default for new tenants, so the gate normally confirms only."
   },
   "ADM-010": {
-    "status": "unresolved",
+    "status": "gate",
     "provider": "identity",
     "step": "policy.m365-admin",
     "method": "portal",
-    "apply": "",
+    "apply": "gate: in the Microsoft 365 admin centre (Copilot settings) and Microsoft 365 Apps Cloud Policy ('Allow web search in Copilot'), set off; no app-only API",
     "payload": {},
     "read": "",
-    "check": "",
+    "check": "a person confirms both settings are off; re-confirmed when the AI policy changes",
     "permissions": [],
     "roles": [],
     "tcm": {
@@ -244,13 +244,13 @@
       "note": "S-02 not done; TCM support for this resource type not confirmed"
     },
     "verified": "not verified: the Cloud Policy service host is blocked here and has no app-only Graph API",
-    "notes": "The value 'as approved in the AI policy' states no value to apply, so it cannot be resolved until the AI policy names it (for example web grounding off). Available: Copilot web search is a Cloud Policy setting ('Allow web search in Copilot') in the Microsoft 365 Apps admin centre (no app-only API); the Copilot app pinning and access settings are admin-centre portal settings. Most likely end state is a gate once the value is stated."
+    "notes": "Decided by the owner (2026-11-21, SC-22): off until the AI policy names what is allowed. Cloud Policy has no write API, so this is a gate."
   },
   "ADM-011": {
-    "status": "unresolved",
-    "provider": "identity",
+    "status": "not-applicable",
+    "provider": "",
     "step": "policy.m365-admin",
-    "method": "graph",
+    "method": "",
     "apply": "",
     "payload": {
       "itemInsights": {
@@ -272,14 +272,14 @@
       "note": "S-02 not done; TCM support for this resource type not confirmed"
     },
     "verified": "read-only GET /v1.0/admin/people/itemInsights returned 200 (isEnabledInOrganization true); Get-DefaultTenantMyAnalyticsFeatureConfig app-only returned the tenant defaults (dashboard, add-in, digest email enabled)",
-    "notes": "The value names no features ('Viva and analytics features not in use'), so there is nothing exact to resolve. Available: Graph /admin/people/itemInsights (item insights, v1.0), Set-DefaultTenantMyAnalyticsFeatureConfig (Viva Insights personal features, Exchange module), Viva module feature access policies (Add-VivaModuleFeaturePolicy; app-only support unconfirmed), and admin-centre-only settings (Viva Glint, Viva Learning, usage analytics). Decision needed on the feature list."
+    "notes": "Decided by the owner (2026-11-21, SC-22): not applicable: no Viva or analytics feature is named, and none is configured by the engine. Revisit if the company starts using Viva."
   },
   "ADM-012": {
-    "status": "unresolved",
+    "status": "gate",
     "provider": "identity",
     "step": "policy.m365-admin",
-    "method": "rest",
-    "apply": "",
+    "method": "portal",
+    "apply": "gate: a Global Administrator with elevated Azure access sets Subscriptions > Manage policies: leaving and entering the directory not allowed",
     "payload": {
       "properties": {
         "blockSubscriptionsLeavingTenant": true,
@@ -288,7 +288,7 @@
       }
     },
     "read": "GET https://management.azure.com/providers/Microsoft.Subscription/policies/default?api-version=2021-01-01-privatepreview",
-    "check": "",
+    "check": "a person confirms both subscription policies; 'users can create subscriptions' is controlled by billing roles and is noted, not enforced",
     "permissions": [],
     "roles": [],
     "tcm": {
@@ -296,7 +296,7 @@
       "note": "S-02 not done; TCM support for this resource type not confirmed"
     },
     "verified": "not verified: management.azure.com is blocked from this environment and the pipeline has no Azure role",
-    "notes": "Available: Azure subscription policies (leaving/entering the directory) through the Azure Resource Manager API or the Azure portal (Subscriptions > Manage policies), which needs a Global Administrator with elevated Azure access; the API version is private preview. 'Users can create subscriptions' has no tenant-wide switch: it is controlled by billing-account roles (Microsoft Customer Agreement) or is not restrictable for pay-as-you-go sign-ups. The second half could become a gate; the first half cannot be delivered as stated. Decision needed."
+    "notes": "Decided by the owner (2026-11-21, SC-22): gate. The Azure subscription policy API is private preview and its host is blocked; who can create subscriptions has no tenant switch."
   },
   "ADM-013": {
     "status": "not-applied",

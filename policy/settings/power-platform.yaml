@@ -25,7 +25,7 @@ settings:
 - id: PPL-003
   platform: all
   name: 'Tenant data policy: all other connectors, including web request and custom connectors'
-  value: blocked
+  value: blocked, except connectors Microsoft does not allow to be blocked, which are kept as non-business
   tier: core
   mode: enforce
   capability: power_platform
@@ -54,7 +54,7 @@ settings:
 - id: PPL-006
   platform: all
   name: AI features in the automation tools
-  value: 'off'
+  value: Copilot off; generative AI off per environment; AI Builder limited by credits
   tier: core
   mode: enforce
   capability: power_platform

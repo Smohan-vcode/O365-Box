@@ -4,7 +4,7 @@
     "provider": "intune",
     "step": "policy.defender",
     "method": "portal",
-    "apply": "Gate (SPEC \u00a722): Defender portal > Settings > Endpoints > Advanced features: 'Automated Investigation' on; Settings > Endpoints > Device groups: every group (and 'Ungrouped devices') remediation level 'Full - remediate threats automatically'.",
+    "apply": "Gate (SPEC §22): Defender portal > Settings > Endpoints > Advanced features: 'Automated Investigation' on; Settings > Endpoints > Device groups: every group (and 'Ungrouped devices') remediation level 'Full - remediate threats automatically'.",
     "payload": {
       "guide": "Defender portal > Settings > Endpoints > Advanced features: 'Automated Investigation' on; Settings > Endpoints > Device groups: every group (and 'Ungrouped devices') remediation level 'Full - remediate threats automatically'."
     },
@@ -26,7 +26,7 @@
     "provider": "intune",
     "step": "policy.defender",
     "method": "portal",
-    "apply": "Gate (SPEC \u00a722): Defender portal > Settings > Endpoints > Advanced features > Tamper protection: On.",
+    "apply": "Gate (SPEC §22): Defender portal > Settings > Endpoints > Advanced features > Tamper protection: On.",
     "payload": {
       "guide": "Defender portal > Settings > Endpoints > Advanced features > Tamper protection: On."
     },
@@ -48,7 +48,7 @@
     "provider": "intune",
     "step": "policy.defender",
     "method": "portal",
-    "apply": "Gate (SPEC \u00a722): Defender portal > Settings > Endpoints > Web content filtering > Add policy: block Adult content, High bandwidth (abuse-related categories), Legal liability and Security-risk categories chosen in the setting; scope all device groups. Needs network protection in block mode on devices (WIN/MAC-029).",
+    "apply": "Gate (SPEC §22): Defender portal > Settings > Endpoints > Web content filtering > Add policy: block Adult content, High bandwidth (abuse-related categories), Legal liability and Security-risk categories chosen in the setting; scope all device groups. Needs network protection in block mode on devices (WIN/MAC-029).",
     "payload": {
       "guide": "Defender portal > Settings > Endpoints > Web content filtering > Add policy: block Adult content, High bandwidth (abuse-related categories), Legal liability and Security-risk categories chosen in the setting; scope all device groups. Needs network protection in block mode on devices (WIN/MAC-029)."
     },
@@ -73,7 +73,7 @@
     "provider": "intune",
     "step": "policy.defender",
     "method": "portal",
-    "apply": "Gate (SPEC \u00a722): Defender portal > Settings > Endpoints > Advanced features: 'Custom network indicators' On.",
+    "apply": "Gate (SPEC §22): Defender portal > Settings > Endpoints > Advanced features: 'Custom network indicators' On.",
     "payload": {
       "guide": "Defender portal > Settings > Endpoints > Advanced features: 'Custom network indicators' On."
     },
@@ -95,7 +95,7 @@
     "provider": "intune",
     "step": "policy.defender",
     "method": "portal",
-    "apply": "Gate (SPEC \u00a722): Defender portal > Settings > Device discovery > Discovery setup: mode 'Standard discovery'.",
+    "apply": "Gate (SPEC §22): Defender portal > Settings > Device discovery > Discovery setup: mode 'Standard discovery'.",
     "payload": {
       "guide": "Defender portal > Settings > Device discovery > Discovery setup: mode 'Standard discovery'."
     },
@@ -117,7 +117,7 @@
     "provider": "intune",
     "step": "policy.defender",
     "method": "portal",
-    "apply": "Gate (SPEC \u00a722): Defender portal > Settings > Endpoints > Email notifications > Vulnerabilities: add a rule sending to {mailbox:alerts} for new vulnerabilities, exploits and weekly exposure.",
+    "apply": "Gate (SPEC §22): Defender portal > Settings > Endpoints > Email notifications > Vulnerabilities: add a rule sending to {mailbox:alerts} for new vulnerabilities, exploits and weekly exposure.",
     "payload": {
       "guide": "Defender portal > Settings > Endpoints > Email notifications > Vulnerabilities: add a rule sending to {mailbox:alerts} for new vulnerabilities, exploits and weekly exposure."
     },
@@ -139,7 +139,7 @@
     "provider": "intune",
     "step": "policy.defender",
     "method": "portal",
-    "apply": "Gate (SPEC \u00a722): Defender portal > Settings > Endpoints > Email notifications > Alerts: rule for severity Medium and High (and Low/Informational off) to {mailbox:alerts}, all device groups.",
+    "apply": "Gate (SPEC §22): Defender portal > Settings > Endpoints > Email notifications > Alerts: rule for severity Medium and High (and Low/Informational off) to {mailbox:alerts}, all device groups.",
     "payload": {
       "guide": "Defender portal > Settings > Endpoints > Email notifications > Alerts: rule for severity Medium and High (and Low/Informational off) to {mailbox:alerts}, all device groups."
     },
@@ -161,7 +161,7 @@
     "provider": "intune",
     "step": "policy.defender",
     "method": "portal",
-    "apply": "Gate (SPEC \u00a722): Defender portal > Settings > Microsoft Defender XDR > Preview features: off; Settings > Endpoints > Advanced features > Preview features: off.",
+    "apply": "Gate (SPEC §22): Defender portal > Settings > Microsoft Defender XDR > Preview features: off; Settings > Endpoints > Advanced features > Preview features: off.",
     "payload": {
       "guide": "Defender portal > Settings > Microsoft Defender XDR > Preview features: off; Settings > Endpoints > Advanced features > Preview features: off."
     },
@@ -217,7 +217,7 @@
       "note": "S-02 not done; Microsoft365DSC equivalent: EXOEOPProtectionPolicyRule, EXOATPProtectionPolicyRule"
     },
     "verified": "Connect-ExchangeOnline -AccessToken (app-only) on the test tenant; Get-Command shows the cmdlet and every parameter used here (EXO only exposes cmdlets the app's RBAC allows); the Get-* read returned the default object; no preset rules exist yet (count 0)",
-    "notes": "The preset's rules and policies do not exist until the preset is turned on once in the Defender portal (Get-EOPProtectionPolicyRule and Get-ATPProtectionPolicyRule returned no rules on the test tenant), so the first turn-on is a gate; after it, the cmdlets below set recipients and state. Preset policies themselves cannot be edited, only their rules. SentToMemberOf needs mail-enabled groups; if the access groups are plain security groups, the pipeline must pass SentTo with the members instead. SPEC \u00a723 asks every setting to exclude grp-break-glass where the product allows; for mail protection that weakens protection on the most sensitive accounts, so ExceptIfSentToMemberOf is left out: decision for the reviewer."
+    "notes": "The preset's rules and policies do not exist until the preset is turned on once in the Defender portal (Get-EOPProtectionPolicyRule and Get-ATPProtectionPolicyRule returned no rules on the test tenant), so the first turn-on is a gate; after it, the cmdlets below set recipients and state. Preset policies themselves cannot be edited, only their rules. SentToMemberOf needs mail-enabled groups; if the access groups are plain security groups, the pipeline must pass SentTo with the members instead. SPEC §23 asks every setting to exclude grp-break-glass where the product allows; for mail protection that weakens protection on the most sensitive accounts, so ExceptIfSentToMemberOf is left out: decision for the reviewer."
   },
   "DEF-010": {
     "status": "gate",
@@ -268,7 +268,7 @@
       "note": "S-02 not done; Microsoft365DSC equivalent: EXOEOPProtectionPolicyRule, EXOATPProtectionPolicyRule"
     },
     "verified": "Connect-ExchangeOnline -AccessToken (app-only) on the test tenant; Get-Command shows the cmdlet and every parameter used here (EXO only exposes cmdlets the app's RBAC allows); the Get-* read returned the default object; no preset rules exist yet (count 0)",
-    "notes": "Strict takes precedence over Standard for the same recipient. The preset's rules and policies do not exist until the preset is turned on once in the Defender portal (Get-EOPProtectionPolicyRule and Get-ATPProtectionPolicyRule returned no rules on the test tenant), so the first turn-on is a gate; after it, the cmdlets below set recipients and state. Preset policies themselves cannot be edited, only their rules. SentToMemberOf needs mail-enabled groups; if the access groups are plain security groups, the pipeline must pass SentTo with the members instead. SPEC \u00a723 asks every setting to exclude grp-break-glass where the product allows; for mail protection that weakens protection on the most sensitive accounts, so ExceptIfSentToMemberOf is left out: decision for the reviewer."
+    "notes": "Strict takes precedence over Standard for the same recipient. The preset's rules and policies do not exist until the preset is turned on once in the Defender portal (Get-EOPProtectionPolicyRule and Get-ATPProtectionPolicyRule returned no rules on the test tenant), so the first turn-on is a gate; after it, the cmdlets below set recipients and state. Preset policies themselves cannot be edited, only their rules. SentToMemberOf needs mail-enabled groups; if the access groups are plain security groups, the pipeline must pass SentTo with the members instead. SPEC §23 asks every setting to exclude grp-break-glass where the product allows; for mail protection that weakens protection on the most sensitive accounts, so ExceptIfSentToMemberOf is left out: decision for the reviewer."
   },
   "DEF-011": {
     "status": "gate",
@@ -333,27 +333,17 @@
     "notes": "Preset policies honour DMARC by default; the default policy covers anyone outside the presets."
   },
   "DEF-013": {
-    "status": "unresolved",
+    "status": "resolved",
     "provider": "exchange",
     "step": "policy.defender",
     "method": "cmdlet",
-    "apply": "Set-SafeAttachmentPolicy (custom policy) -Action DynamicDelivery, or the preset's fixed Action Block",
+    "apply": "covered by the Standard preset security policy (DEF-009): its Safe Attachments policy fixes Action Block",
     "payload": {
-      "options": [
-        {
-          "source": "Standard/Strict preset (DEF-009/010)",
-          "Action": "Block"
-        },
-        {
-          "source": "custom policy via New-SafeAttachmentPolicy / New-SafeAttachmentRule",
-          "Action": "DynamicDelivery",
-          "Enable": true,
-          "QuarantineTag": "AdminOnlyAccessPolicy"
-        }
-      ]
+      "preset": "Standard",
+      "Action": "Block"
     },
-    "read": "Get-SafeAttachmentPolicy",
-    "check": "Action == 'Block' or 'DynamicDelivery' on the policy that applies to each recipient",
+    "read": "Get-SafeAttachmentPolicy | Where-Object RecommendedPolicyType -eq 'Standard'",
+    "check": "Action == Block and Enable == true; preset rule enabled (Get-ATPProtectionPolicyRule -Identity 'Standard Preset Security Policy').State == Enabled",
     "permissions": [
       "exchange:Exchange.ManageAsApp"
     ],
@@ -364,8 +354,8 @@
       "resource": null,
       "note": "S-02 not done; Microsoft365DSC equivalent: EXOSafeAttachmentPolicy, EXOSafeAttachmentRule"
     },
-    "verified": "Connect-ExchangeOnline -AccessToken (app-only) on the test tenant; Get-Command shows the cmdlet and every parameter used here (EXO only exposes cmdlets the app's RBAC allows); the Get-* read returned the default object; Set-SafeAttachmentPolicy -Action and -Enable present",
-    "notes": "Unresolved: Safe Attachments 'Action' is one value: Block, DynamicDelivery or Allow. 'With dynamic delivery' and 'block' cannot both hold. The Standard and Strict presets fix Action = Block and take precedence over custom policies, so Dynamic Delivery is only possible for recipients outside the presets. Available: Block via presets (malicious attachments blocked, delivery waits for the scan) or Dynamic Delivery via a custom policy for recipients excluded from the presets. Decision needed."
+    "verified": "cmdlets and parameters visible in the app-only Exchange session (T14-03 devices-defender)",
+    "notes": "Decided by the owner (2026-11-21, SC-22): Safe Attachments blocks malicious attachments (preset Action Block); Dynamic Delivery is not used. Depends on the presets' first turn-on (gate, DEF-009)."
   },
   "DEF-014": {
     "status": "resolved",
@@ -603,24 +593,16 @@
     "notes": "Uses the built-in Report button in Outlook (on by default when user reporting is on). The reporting mailbox should also be a SecOps mailbox in the advanced delivery policy (New-SecOpsOverridePolicy / New-ExoSecOpsOverrideRule) so filtering does not touch reports; that cmdlet was not checked. Currently no rule exists on the test tenant."
   },
   "DEF-021": {
-    "status": "unresolved",
+    "status": "resolved",
     "provider": "exchange",
     "step": "policy.defender",
     "method": "cmdlet",
-    "apply": "No tenant setting. Read-only check of Get-TenantAllowBlockListItems; the pipeline creates any entry it adds with New-TenantAllowBlockListItems -ExpirationDate (now + 30 days)",
+    "apply": "New-TenantAllowBlockListItems -ListType <Sender|Url|FileHash> -Entries <value> -ExpirationDate <today+30d> for every entry the pipeline adds; no tenant-wide setting exists",
     "payload": {
-      "check_lists": [
-        "Sender",
-        "Url",
-        "FileHash",
-        "IP"
-      ],
-      "New-TenantAllowBlockListItems": {
-        "ExpirationDate": "{date:now+30d}"
-      }
+      "ExpirationDate": "{date:+30d}"
     },
-    "read": "Get-TenantAllowBlockListItems -ListType Sender|Url|FileHash|IP",
-    "check": "at start every list is empty; afterwards no entry has NoExpiration or ExpirationDate more than 30 days after its creation",
+    "read": "Get-TenantAllowBlockListItems -ListType Sender; -ListType Url; -ListType FileHash",
+    "check": "every entry has ExpirationDate within 30 days of its creation; entries without one are reported as drift",
     "permissions": [
       "exchange:Exchange.ManageAsApp"
     ],
@@ -632,7 +614,7 @@
       "note": "S-02 not done; Microsoft365DSC equivalent: EXOTenantAllowBlockListItems"
     },
     "verified": "Connect-ExchangeOnline -AccessToken (app-only) on the test tenant; Get-Command shows the cmdlet and every parameter used here (EXO only exposes cmdlets the app's RBAC allows); the Get-* read returned the default object",
-    "notes": "Unresolved: expiry is per entry (ExpirationDate, or RemoveAfter 45 days after last use for allow entries); no tenant setting limits entries to 30 days, and administrators can add entries in the portal with no expiry. Available: per-entry ExpirationDate on entries the pipeline creates, plus a drift check that reports entries breaking the rule. 'Empty at start' is a read check (all lists returned no Sender entries on the test tenant). Decision needed: accept 'report and remove' as the control."
+    "notes": "Decided by the owner (2026-11-21, SC-22): expiry is set on each entry the pipeline adds, and entries added elsewhere without a 30-day expiry are reported by box drift."
   },
   "DEF-022": {
     "status": "not-applied",
@@ -650,7 +632,7 @@
       "note": ""
     },
     "verified": "not verified: addon tier",
-    "notes": "Add-on: capability defender_o365_p2 (Defender for Office 365 Plan 2, attack simulation training). Never applied (SPEC \u00a720.3)."
+    "notes": "Add-on: capability defender_o365_p2 (Defender for Office 365 Plan 2, attack simulation training). Never applied (SPEC §20.3)."
   },
   "DEF-023": {
     "status": "not-applied",
@@ -668,6 +650,6 @@
       "note": ""
     },
     "verified": "not verified: addon tier",
-    "notes": "Add-on: capability defender_suite (Defender for Cloud Apps discovery and Conditional Access App Control session control). Never applied (SPEC \u00a720.3)."
+    "notes": "Add-on: capability defender_suite (Defender for Cloud Apps discovery and Conditional Access App Control session control). Never applied (SPEC §20.3)."
   }
 }

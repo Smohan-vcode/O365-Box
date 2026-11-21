@@ -117,8 +117,8 @@ settings:
   - EML-03
 - id: DEF-013
   platform: all
-  name: 'Mail: Safe Attachments for mail, with dynamic delivery'
-  value: block
+  name: 'Mail: Safe Attachments for mail'
+  value: block (Standard preset)
   tier: core
   mode: enforce
   capability: defender_o365_p1
@@ -194,7 +194,7 @@ settings:
 - id: DEF-021
   platform: all
   name: 'Mail: tenant allow and block list'
-  value: empty at start; entries expire in 30 days
+  value: empty at start; entries the pipeline adds expire in 30 days; others without that expiry are reported
   tier: core
   mode: enforce
   capability: exchange

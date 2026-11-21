@@ -932,6 +932,33 @@ the device-join group (ENT-039), the managed-plan user group (ENT-004,
 ENT-005), allow lists for EWS, sharing domains, Teams federation and
 approved apps, and the per-country DLP information types.
 
+## SC-22  Decisions on the unresolved settings (approved 2026-11-21)
+
+The owner accepted the recommendations for the 13 settings T14-03 could not
+resolve as written. The catalogue values now state what is delivered, and
+`expected-state/setting-ids/*.json` maps each one.
+
+| Setting | Decision |
+| --- | --- |
+| WIN-058 | Store app off; apps deployed by Intune; automatic app updates on (the private store is retired) |
+| MOB-005 | 6 digits, simple values blocked; personally owned Android: medium complexity |
+| MOB-022 | operating system version only; no app version check |
+| DEF-013 | Safe Attachments Block through the Standard preset; no Dynamic Delivery |
+| DEF-021 | expiry set on entries the pipeline adds; others reported as drift |
+| ENT-045 | gate until a Purview alert policy can be created app-only (SC-21) |
+| ADM-003 | idle session timeout 1 hour on all devices |
+| ADM-010 | Copilot and web grounding off until the AI policy approves (gate) |
+| ADM-011 | not applicable |
+| ADM-012 | gate in the Azure portal; subscription creation noted, not enforced |
+| OFC-011 | OneDrive Known Folder Move on Windows; cloud default on macOS |
+| PPL-003 | blockable connectors blocked, unblockable ones non-business (gate until SC-21) |
+| PPL-006 | Copilot off, generative AI off per environment (gate until SC-21) |
+
+ENT-012 (block device code flow) is not applied on the test tenant while
+the owner tests `box` end to end, because `box` signs in with a device
+code. It is a dated exception in the test tenant's configuration
+(reference SC-22-ENT-012, ends 2027-03-31), not a catalogue change.
+
 ## Exceptions on the test tenant (2026-11-21)
 
 - **No FIDO2 keys** for the break-glass accounts this round (owner's

@@ -96,7 +96,7 @@ settings:
 - id: OFC-011
   platform: windows macos
   name: Default save location
-  value: company storage
+  value: company storage (OneDrive Known Folder Move on Windows; cloud default on macOS)
   tier: core
   mode: enforce
   capability: m365_apps

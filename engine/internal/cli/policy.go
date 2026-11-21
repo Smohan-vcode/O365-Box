@@ -221,8 +221,8 @@ func newPolicyMappingsCmd(g *globals) *cobra.Command {
 				counts[m.Status]++
 			}
 			res := report.Result{Command: "policy mappings", OK: len(issues) == 0, Issues: issues,
-				Summary: fmt.Sprintf("%d mapping(s): %d resolved, %d gate, %d unresolved, %d not applied", len(maps),
-					counts["resolved"], counts["gate"], counts["unresolved"], counts["not-applied"])}
+				Summary: fmt.Sprintf("%d mapping(s): %d resolved, %d gate, %d unresolved, %d not applied, %d not applicable", len(maps),
+					counts["resolved"], counts["gate"], counts["unresolved"], counts["not-applied"], counts["not-applicable"])}
 			if err := res.Write(cmd.OutOrStdout(), g.asJSON); err != nil {
 				return err
 			}

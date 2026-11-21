@@ -13,9 +13,9 @@ settings:
       monitor_by: gate check
     - setting: ADM-003
       centre: m365-admin
-      status: unresolved
-      apply_by: 'unresolved: decision needed'
-      monitor_by: none
+      status: resolved
+      apply_by: identity step policy.m365-admin (graph)
+      monitor_by: box drift (policy.m365-admin verify)
     - setting: ADM-004
       centre: m365-admin
       status: resolved
@@ -48,19 +48,19 @@ settings:
       monitor_by: gate check
     - setting: ADM-010
       centre: m365-admin
-      status: unresolved
-      apply_by: 'unresolved: decision needed'
-      monitor_by: none
+      status: gate
+      apply_by: gate (a person, guided)
+      monitor_by: gate check
     - setting: ADM-011
       centre: m365-admin
-      status: unresolved
-      apply_by: 'unresolved: decision needed'
+      status: not-applicable
+      apply_by: not applicable (owner decision)
       monitor_by: none
     - setting: ADM-012
       centre: m365-admin
-      status: unresolved
-      apply_by: 'unresolved: decision needed'
-      monitor_by: none
+      status: gate
+      apply_by: gate (a person, guided)
+      monitor_by: gate check
     - setting: ADM-013
       centre: m365-admin
       status: not-applied
@@ -133,9 +133,9 @@ settings:
       monitor_by: box drift (policy.defender verify)
     - setting: DEF-013
       centre: defender
-      status: unresolved
-      apply_by: 'unresolved: decision needed'
-      monitor_by: none
+      status: resolved
+      apply_by: exchange step policy.defender (cmdlet)
+      monitor_by: box drift (policy.defender verify)
     - setting: DEF-014
       centre: defender
       status: resolved
@@ -173,9 +173,9 @@ settings:
       monitor_by: box drift (policy.defender verify)
     - setting: DEF-021
       centre: defender
-      status: unresolved
-      apply_by: 'unresolved: decision needed'
-      monitor_by: none
+      status: resolved
+      apply_by: exchange step policy.defender (cmdlet)
+      monitor_by: box drift (policy.defender verify)
     - setting: DEF-022
       centre: defender
       status: not-applied
@@ -408,9 +408,9 @@ settings:
       monitor_by: box drift (policy.entra verify)
     - setting: ENT-045
       centre: entra
-      status: unresolved
-      apply_by: 'unresolved: decision needed'
-      monitor_by: none
+      status: gate
+      apply_by: gate (a person, guided)
+      monitor_by: gate check
     - setting: ENT-046
       centre: entra
       status: resolved
@@ -698,9 +698,9 @@ settings:
       monitor_by: box drift (policy.intune-mobile verify)
     - setting: MOB-005
       centre: intune-mobile
-      status: unresolved
-      apply_by: 'unresolved: decision needed'
-      monitor_by: none
+      status: resolved
+      apply_by: intune step policy.intune-mobile (graph-beta)
+      monitor_by: box drift (policy.intune-mobile verify)
     - setting: MOB-006
       centre: intune-mobile
       status: resolved
@@ -783,9 +783,9 @@ settings:
       monitor_by: box drift (policy.intune-mobile verify)
     - setting: MOB-022
       centre: intune-mobile
-      status: unresolved
-      apply_by: 'unresolved: decision needed'
-      monitor_by: none
+      status: resolved
+      apply_by: intune step policy.intune-mobile (graph-beta)
+      monitor_by: box drift (policy.intune-mobile verify)
     - setting: MOB-023
       centre: intune-mobile
       status: resolved
@@ -853,9 +853,9 @@ settings:
       monitor_by: box drift (policy.m365-apps verify)
     - setting: OFC-011
       centre: m365-apps
-      status: unresolved
-      apply_by: 'unresolved: decision needed'
-      monitor_by: none
+      status: resolved
+      apply_by: intune step policy.m365-apps (graph-beta)
+      monitor_by: box drift (policy.m365-apps verify)
     - setting: OFC-012
       centre: m365-apps
       status: resolved
@@ -878,9 +878,9 @@ settings:
       monitor_by: gate check
     - setting: PPL-003
       centre: power-platform
-      status: unresolved
-      apply_by: 'unresolved: decision needed'
-      monitor_by: none
+      status: gate
+      apply_by: gate (a person, guided)
+      monitor_by: gate check
     - setting: PPL-004
       centre: power-platform
       status: gate
@@ -893,9 +893,9 @@ settings:
       monitor_by: gate check
     - setting: PPL-006
       centre: power-platform
-      status: unresolved
-      apply_by: 'unresolved: decision needed'
-      monitor_by: none
+      status: gate
+      apply_by: gate (a person, guided)
+      monitor_by: gate check
     - setting: PPL-007
       centre: power-platform
       status: gate
@@ -1503,9 +1503,9 @@ settings:
       monitor_by: box drift (policy.intune-windows verify); configuration monitor microsoft.intune.appControlForBusinessPolicy after SC-20
     - setting: WIN-058
       centre: intune-windows
-      status: unresolved
-      apply_by: 'unresolved: decision needed'
-      monitor_by: none
+      status: resolved
+      apply_by: intune step policy.intune-windows (graph-beta)
+      monitor_by: box drift (policy.intune-windows verify); configuration monitor microsoft.intune.settingCatalogCustomPolicyWindows10 after SC-20
     - setting: WIN-059
       centre: intune-windows
       status: resolved

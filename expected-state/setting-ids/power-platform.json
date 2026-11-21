@@ -128,7 +128,7 @@
     }
   },
   "PPL-003": {
-    "status": "unresolved",
+    "status": "gate",
     "provider": "powerplatform",
     "step": "policy.power-platform",
     "method": "rest",
@@ -199,7 +199,7 @@
       "note": "S-02 not done; Tenant Configuration Management has no Power Platform resources known. Monitor with box drift once the API is reachable."
     },
     "verified": "not verified: host blocked (api.bap.microsoft.com, api.powerplatform.com and api.flow.microsoft.com are unreachable from this container), and the pipeline app is not registered as a Power Platform management application",
-    "notes": "The product cannot block every other connector: Microsoft marks a set of connectors as unblockable (for example Excel Online (Business), Microsoft Teams-related and other first-party connectors); they can only be Business or Non-business. Available: default group for new connectors = Blocked; every blockable connector Blocked, including HTTP, HTTP with Microsoft Entra ID and all custom connectors (URL pattern '*'); unblockable connectors in Non-business, which stops them being combined with the business connectors in one flow. Decision needed: accept this as the setting's meaning. Also needs the management-app registration (human step) and an unblocked host.",
+    "notes": "Decided by the owner (2026-11-21, SC-22): accepted meaning: default group for new connectors Blocked; every blockable connector Blocked, including HTTP, HTTP with Entra ID and all custom connectors; connectors Microsoft does not allow to be blocked kept as Non-business. A gate, like PPL-001/002/004/005/007, until the pipeline app is registered as a Power Platform management app (SC-21); the payload holds the API call to use then.",
     "gate": {
       "guide": "Same policy as PPL-002: set 'Default group' to Blocked, block every connector that allows it, set custom connector pattern '*' to Block, leave unblockable connectors in Non-business.",
       "expected": "default group Blocked; no blockable connector outside Business except in Blocked",
@@ -287,7 +287,7 @@
     }
   },
   "PPL-006": {
-    "status": "unresolved",
+    "status": "gate",
     "provider": "powerplatform",
     "step": "policy.power-platform",
     "method": "rest",
@@ -312,7 +312,7 @@
       "note": "S-02 not done; Tenant Configuration Management has no Power Platform resources known. Monitor with box drift once the API is reachable."
     },
     "verified": "not verified: host blocked (api.bap.microsoft.com, api.powerplatform.com and api.flow.microsoft.com are unreachable from this container), and the pipeline app is not registered as a Power Platform management application",
-    "notes": "No single tenant switch turns off every AI feature in Power Apps, Power Automate and AI Builder. Available: tenant setting powerPlatform.intelligence.disableCopilot (Copilot in Power Apps); per-environment 'Move data across regions' / generative AI features off (environment settings, Dataverse environments only); AI Builder has no tenant off switch (it is limited by credits, which the base plan does not include). Decision needed: accept the switches above as 'off', or reword. Property names are from the BAP tenant settings schema and could not be read here (host blocked)."
+    "notes": "Decided by the owner (2026-11-21, SC-22): accepted meaning: Copilot in Power Platform off (tenant setting disableCopilot) and AI generative features off per environment; AI Builder is limited by credits, which the base plan does not include. A gate until the management-app registration (SC-21)."
   },
   "PPL-007": {
     "status": "gate",

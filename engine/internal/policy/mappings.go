@@ -33,7 +33,7 @@ type Mapping struct {
 }
 
 // Mapping statuses.
-var mappingStatuses = map[string]bool{"resolved": true, "gate": true, "unresolved": true, "not-applied": true}
+var mappingStatuses = map[string]bool{"resolved": true, "gate": true, "unresolved": true, "not-applied": true, "not-applicable": true}
 
 // KnownProviders are the providers a mapping may name.
 var KnownProviders = map[string]bool{"identity": true, "exchange": true, "sharepoint": true, "teams": true,
@@ -96,7 +96,7 @@ func (c *Catalogue) CheckMappings(maps map[string]Mapping, file map[string]strin
 			continue
 		}
 		if !mappingStatuses[m.Status] {
-			add(f, id, fmt.Sprintf("status %q is not resolved, gate, unresolved or not-applied", m.Status))
+			add(f, id, fmt.Sprintf("status %q is not resolved, gate, unresolved, not-applied or not-applicable", m.Status))
 		}
 		if m.Status == "not-applied" {
 			if st := c.Setting(id); st != nil && st.Tier != "addon" {
@@ -115,8 +115,8 @@ func (c *Catalogue) CheckMappings(maps map[string]Mapping, file map[string]strin
 				add(f, id, "a staged setting needs payload_audit (its audit or report-only form)")
 			}
 		}
-		if (m.Status == "gate" || m.Status == "unresolved") && strings.TrimSpace(m.Notes) == "" {
-			add(f, id, "a gate or unresolved setting needs notes saying why")
+		if (m.Status == "gate" || m.Status == "unresolved" || m.Status == "not-applicable") && strings.TrimSpace(m.Notes) == "" {
+			add(f, id, "a gate, unresolved or not-applicable setting needs notes saying why")
 		}
 	}
 	report.Sort(issues)
@@ -153,6 +153,8 @@ func (c *Catalogue) CoverageMap(maps map[string]Mapping) ([]byte, error) {
 			r.ApplyBy, r.MonitorBy = "gate (a person, guided)", "gate check"
 		case "unresolved":
 			r.ApplyBy, r.MonitorBy = "unresolved: decision needed", "none"
+		case "not-applicable":
+			r.ApplyBy, r.MonitorBy = "not applicable (owner decision)", "none"
 		default:
 			r.ApplyBy, r.MonitorBy = "not applied (add-on)", "none"
 		}

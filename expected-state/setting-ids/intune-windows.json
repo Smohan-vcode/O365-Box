@@ -3183,7 +3183,7 @@
     }
   },
   "WIN-058": {
-    "status": "unresolved",
+    "status": "resolved",
     "provider": "intune",
     "step": "policy.intune-windows",
     "method": "graph-beta",
@@ -3202,10 +3202,14 @@
           "settingDefinitionId": "device_vendor_msft_policy_config_admx_windowsstore_removewindowsstore_2",
           "optionId": "device_vendor_msft_policy_config_admx_windowsstore_removewindowsstore_2_1"
         }
+      },
+      "store_app": {
+        "settingDefinitionId": "device_vendor_msft_policy_config_admx_windowsstore_removewindowsstore_2",
+        "choice": "device_vendor_msft_policy_config_admx_windowsstore_removewindowsstore_2_1"
       }
     },
-    "read": "GET /beta/deviceManagement/configurationPolicies/{policy:win-store}/settings",
-    "check": "decision needed",
+    "read": "GET /beta/deviceManagement/configurationPolicies?$filter=name eq 'Box - Windows - Microsoft Store'&$expand=settings",
+    "check": "removewindowsstore_2 == _1 and AllowAppStoreAutoUpdate == 1",
     "permissions": [
       "graph:DeviceManagementConfiguration.ReadWrite.All"
     ],
@@ -3214,8 +3218,8 @@
       "resource": "microsoft.intune.settingCatalogCustomPolicyWindows10",
       "note": "S-02 is not done; resource type is the Microsoft365DSC/UTCM name expected to cover this object, not verified"
     },
-    "verified": "settings-catalogue definition GET /beta/deviceManagement/configurationSettings/<id> returned 200 on the test tenant (2026-11-21); option ids copied from the definition (all three definitions)",
-    "notes": "Automatic app updates resolve exactly (AllowAppStoreAutoUpdate 1). \"Private store only\" cannot be delivered as stated: the private store belonged to Microsoft Store for Business, which is retired, so RequirePrivateStoreOnly now leaves users an empty store. Nearest options: (a) RequirePrivateStoreOnly 1 (store browsing effectively blocked), or (b) \"Turn off the Store application\" while required apps are deployed by Intune from the new Microsoft Store integration (winget source), which keeps working when the Store app is off. Decide which, or reword the requirement."
+    "verified": "definition device_vendor_msft_policy_config_admx_windowsstore_removewindowsstore_2 (options _0 Disabled, _1 Enabled) read on the test tenant; automatic updates as recorded earlier",
+    "notes": "Decided by the owner (2026-11-21, SC-22): turn off the Store application; required apps are deployed by Intune from the Microsoft Store integration, which keeps working with the Store app off; automatic app updates on. The retired private store is not used."
   },
   "WIN-059": {
     "status": "resolved",

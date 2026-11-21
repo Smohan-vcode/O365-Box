@@ -75,7 +75,7 @@ CI runs `box backlog check`.
 | T12-02 | Installer guide | P2 | S | T12-01 |  | TODO |
 | T14-01 | Resolver, validation and coverage | P0 | S | T0-01 |  | DONE |
 | T14-02 | Capability check against tenant licences | P0 | S | T14-01, T0-04 |  | TODO |
-| T14-03 | Setting resolution | P0 | L | T14-02, S-02 | yes | TODO |
+| T14-03 | Setting resolution | P0 | L | T14-02, S-02 | yes | BLOCKED |
 | T14-04 | Apply engine with audit and enforce modes | P0 | M | T14-03 |  | TODO |
 | T14-05 | Apply: Windows devices and Office apps | P0 | M | T14-04, T1-04 |  | TODO |
 | T14-06 | Apply: macOS devices | P0 | M | T14-04, T1-04 | yes | TODO |

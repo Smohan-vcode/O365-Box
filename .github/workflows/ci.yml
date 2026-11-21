@@ -52,3 +52,5 @@ jobs:
           ./bin/box check-connectors
           ./bin/box backlog check
           ./bin/box runbook --check
+          ./bin/box policy validate
+          ./bin/box policy mappings --check

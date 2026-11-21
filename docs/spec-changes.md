@@ -892,6 +892,46 @@ monitored by `box drift`; `expected-state/baseline-coverage.yaml` records
 the monitor resource type per setting where one is known, so adoption is a
 data change.
 
+## SC-21  Permissions, roles and gates to apply the policy settings (proposed, not granted)
+
+T14-03 mapped all 333 settings (expected-state/setting-ids/*.json):
+283 resolved to an exact API, 27 gates, 13 unresolved, 10 add-on settings
+not applied. Applying them (T14-04 to T14-12) needs the following, none of
+which is granted. Each line names how many settings depend on it.
+
+| Need | Kind | Settings |
+| --- | --- | --- |
+| `DeviceManagementApps.ReadWrite.All` | Graph application permission | 16 (app protection: MOB-001, MOB-011 to MOB-025) |
+| `DeviceManagementServiceConfig.ReadWrite.All` | Graph application permission | 7 (enrolment restrictions, Apple and Android enrolment, Autopilot, Defender connector; also the G-07 check) |
+| `DeviceManagementScripts.ReadWrite.All` | Graph application permission | 3 (macOS scripts MAC-018, MAC-019, MAC-022) |
+| `Policy.ReadWrite.DeviceConfiguration` | Graph application permission | 5 (device registration policy ENT-039 to ENT-042; LAPS switch for WIN-036) |
+| `Directory.ReadWrite.All` | Graph application permission, broad | 4 (directory setting templates: ENT-026, ENT-027, ENT-034, TMS-014) |
+| `Domain.ReadWrite.All` | Graph application permission | 2 (password expiry ENT-028, ADM-004; already "never" on the test tenant) |
+| `Policy.ReadWrite.SecurityDefaults` | Graph application permission | 1 (ENT-018); also needed by the existing `identity.security-defaults` fallback step |
+| `OrgSettings-AppsAndServices.ReadWrite.All`, `OrgSettings-Forms.ReadWrite.All`, `PeopleSettings.ReadWrite.All`, `Policy.ReadWrite.ApplicationConfiguration` | Graph application permissions | 1 each (ADM-001, ADM-005, ADM-011, ADM-003) |
+| `Application.ReadWrite.All` | Graph application permission, high privilege | 1 (ADM-007); a gate with an automated read-only check is the alternative |
+| Compliance Administrator | Entra role for the pipeline app | 24 (sensitivity labels, label policy, DLP, alert policies) |
+| Security Administrator | Entra role for the pipeline app | 1 (DEF-019 alert policy) |
+| Teams app-only connection | the pipeline certificate, and the Teams admin hosts allowed | 13 (TMS-001 to TMS-013) |
+| Power Platform management-app registration | one-time `pac admin application register`, by a person with Power Platform Administrator | 7 (PPL-001 to PPL-007), and the admin API hosts allowed |
+| ExchangeOnlineManagement newer than 3.6.0 | module pin in expected-state/modules.yaml | Security & Compliance PowerShell with a token (all Purview settings) |
+| DNS provider token | network secret | 1 (EXO-017, with T2-03) |
+
+Proposed new gates (SPEC §22), each a portal-only switch with no API:
+Defender for Endpoint to Intune connection (WIN-010, WIN-032, WIN-033);
+Apple Business Manager token; managed Google Play binding; macOS Defender
+onboarding package; first turn-on of the preset security policies
+(DEF-009, DEF-010).
+
+Proposed configuration keys (values only the company can supply):
+`devices.windows.minimum_os_version`, `devices.windows.feature_update_version`,
+`devices.macos.minimum_version`, `devices.ios.minimum_version`,
+`devices.android.minimum_version`, `devices.browser.extension_allowlist`,
+`devices.browser.company_password_manager`, allowed countries (ENT-014),
+the device-join group (ENT-039), the managed-plan user group (ENT-004,
+ENT-005), allow lists for EWS, sharing domains, Teams federation and
+approved apps, and the per-country DLP information types.
+
 ## Exceptions on the test tenant (2026-11-21)
 
 - **No FIDO2 keys** for the break-glass accounts this round (owner's

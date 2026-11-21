@@ -1,0 +1,54 @@
+# The nine areas an owner reviews and approves (SPEC §25.2). Every step in
+# engine/providers/*/steps.yaml belongs to exactly one area.
+#
+# steps: a step id, or a prefix ending in "." or "-" that covers every step
+# starting with it. The longest match wins, so a single id can sit in a
+# different area from its prefix (policy.sharepoint.intune is a device
+# setting). A step that matches nothing is listed under "other".
+# behind: the Microsoft admin centres an area covers, for the Show details view.
+areas:
+  - id: sign-in
+    title: Sign-in and accounts
+    plain: Who can get in, two-step sign-in, emergency accounts and licences.
+    behind: [Entra, Microsoft 365 admin centre]
+    steps: [identity., policy.entra, policy.m365-admin, policy.capabilities]
+  - id: email
+    title: Email
+    plain: Spam, phishing, impersonation, forwarding, shared mailboxes and your domain's mail records.
+    behind: [Exchange, Defender]
+    steps: [exchange., policy.exchange, policy.exchange., policy.defender, policy.defender.]
+  - id: files
+    title: Files and sharing
+    plain: Who can share what, with whom and for how long, and the company's sites and lists.
+    behind: [SharePoint, OneDrive]
+    steps: [sharepoint., policy.sharepoint, policy.onedrive, policy.onedrive.]
+  - id: meetings
+    title: Meetings and chat
+    plain: Guests, the meeting lobby, recordings and chat with people outside the company.
+    behind: [Teams]
+    steps: [teams., policy.teams, policy.teams.]
+  - id: devices
+    title: Computers and phones
+    plain: Encryption, updates, antivirus and what happens to a lost laptop or phone.
+    behind: [Intune, Defender for Endpoint]
+    steps: [intune., policy.intune-, policy.sharepoint.intune]
+  - id: sensitive-info
+    title: Sensitive information
+    plain: Labels, leak prevention and the audit trail of who did what.
+    behind: [Purview]
+    steps: [purview., policy.purview, policy.purview.]
+  - id: apps
+    title: Apps and automation
+    plain: Office apps, AI features and the company's automated flows.
+    behind: [Microsoft 365 apps, Power Platform]
+    steps: [powerplatform., policy.m365-apps, policy.powerplatform, policy.powerplatform.]
+  - id: web-address
+    title: Your web address
+    plain: The lock on your domain name and its DNS records.
+    behind: [Registrar, DNS]
+    steps: [dns., policy.dns]
+  - id: cloud
+    title: Cloud
+    plain: The free safety settings of your Azure subscription.
+    behind: [Azure]
+    steps: [azure., policy.azure, policy.azure.]

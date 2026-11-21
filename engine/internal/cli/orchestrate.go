@@ -17,6 +17,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/Smohan-vcode/O365-Box/engine/internal/approval"
 	"github.com/Smohan-vcode/O365-Box/engine/internal/bootstrap"
 	"github.com/Smohan-vcode/O365-Box/engine/internal/config"
 	"github.com/Smohan-vcode/O365-Box/engine/internal/events"
@@ -40,6 +41,7 @@ type runFlags struct {
 	modulePath   string
 	timeout      time.Duration
 	dictionary   string
+	proposal     bool
 }
 
 func (f *runFlags) bind(cmd *cobra.Command, withOnly bool) {
@@ -76,6 +78,9 @@ type session struct {
 	defaults   map[string]any
 	dictionary map[string]string
 	policyIn   map[string]any
+	dir        string // the tenant's proposal and approvals
+	areas      *approval.Areas
+	approvals  *approval.File
 }
 
 func (g *globals) open(f *runFlags, out io.Writer, exact bool) (*session, error) {
@@ -130,6 +135,15 @@ func (g *globals) open(f *runFlags, out io.Writer, exact bool) (*session, error)
 		}
 	}
 	if s.state, err = state.Open(sp); err != nil {
+		return nil, err
+	}
+	if s.dir, err = approval.Dir(doc.Config.Tenant.TenantID, f.statePath); err != nil {
+		return nil, err
+	}
+	if s.areas, err = approval.LoadAreas(filepath.Join(root, "defaults", "areas.yaml")); err != nil {
+		return nil, err
+	}
+	if s.approvals, err = approval.Open(filepath.Join(s.dir, approval.ApprovalsFile)); err != nil {
 		return nil, err
 	}
 	var sink events.Sink = &textSink{w: out}
@@ -420,7 +434,8 @@ func (s *session) input(step *plan.Step) any {
 
 func (s *session) executor(f *runFlags) *run.Executor {
 	return &run.Executor{Graph: s.graph, Catalog: s.catalog, Invoker: s.pool, Events: s.sink, State: s.state,
-		Input: s.input, Parallel: f.parallel, Retries: 2, Timeout: f.timeout, Interactive: !f.yes}
+		Input: s.input, Parallel: f.parallel, Retries: 2, Timeout: f.timeout, Interactive: !f.yes,
+		Approvals: s.approvals}
 }
 
 func signalContext() (context.Context, context.CancelFunc) {
@@ -439,17 +454,34 @@ func runMode(g *globals, f *runFlags, mode run.Mode, exact bool, cmd *cobra.Comm
 	}
 	ctx, cancel := signalContext()
 	defer cancel()
-	sum, err := s.executor(f).Run(ctx, mode)
+	x := s.executor(f)
+	var proposed []approval.Change
+	var pmu sync.Mutex
+	if mode == run.ModePlan && f.proposal {
+		x.Proposal = func(step *plan.Step, changes []run.Change) {
+			pmu.Lock()
+			defer pmu.Unlock()
+			for _, c := range changes {
+				proposed = append(proposed, approval.NewChange(s.areas, step, c))
+			}
+		}
+	}
+	sum, err := x.Run(ctx, mode)
 	if !g.asJSON {
 		printSummary(out, sum, len(s.graph.Order))
 	}
 	if err != nil && !errors.Is(err, context.Canceled) {
 		return err
 	}
+	if x.Proposal != nil && err == nil {
+		if perr := s.writeProposal(out, g.asJSON, x.RunID, proposed, len(sum.Failed) > 0); perr != nil {
+			return perr
+		}
+	}
 	switch {
 	case len(sum.Failed) > 0 || errors.Is(err, context.Canceled):
 		return exitError{ExitFailure}
-	case len(sum.Waiting) > 0:
+	case len(sum.Waiting) > 0 || len(sum.NeedsApproval) > 0:
 		return exitError{ExitGate}
 	case len(sum.Drifted) > 0:
 		return exitError{ExitFailure}
@@ -481,6 +513,12 @@ func printSummary(w io.Writer, s run.Summary, steps int) {
 	}
 	if len(s.Drifted) > 0 {
 		fmt.Fprintln(w, "  drifted: "+strings.Join(s.Drifted, ", "))
+	}
+	if len(s.NeedsApproval) > 0 {
+		fmt.Fprintln(w, "  needs approval: "+strings.Join(s.NeedsApproval, ", ")+" (run box plan --proposal, then box approve)")
+	}
+	if len(s.Excepted) > 0 {
+		fmt.Fprintln(w, "  not applied, owner exception: "+strings.Join(s.Excepted, ", "))
 	}
 }
 
@@ -521,6 +559,17 @@ func (t *textSink) Emit(e events.Event) {
 	case events.StepSkipped:
 		line = "- " + e.Step + ": " + e.Msg
 	case events.GateWaiting:
+		if e.Gate == run.ApprovalGate {
+			line = "⏸ " + e.Step + ": " + e.Msg
+			if ch, ok := e.Data["changes"].([]any); ok {
+				for _, c := range ch {
+					if m, ok := c.(map[string]any); ok {
+						line += fmt.Sprintf("\n      %v %v  [%.12v]", m["action"], m["target"], m["digest"])
+					}
+				}
+			}
+			break
+		}
 		line = fmt.Sprintf("⏸ %s waiting on %s %s: %v", e.Step, e.Gate, e.Msg, e.Data["guide"])
 	case events.GatePassed:
 		line = "✓ gate " + e.Gate + " passed"
@@ -537,15 +586,21 @@ func (t *textSink) Emit(e events.Event) {
 }
 
 func newRunCommands(g *globals) []*cobra.Command {
-	mk := func(use, short string, mode run.Mode, withOnly bool) *cobra.Command {
+	mkf := func(use, short string, mode run.Mode, withOnly bool) (*cobra.Command, *runFlags) {
 		f := &runFlags{}
 		c := &cobra.Command{Use: use, Short: short, Args: cobra.NoArgs,
 			RunE: func(cmd *cobra.Command, _ []string) error { return runMode(g, f, mode, false, cmd) }}
 		f.bind(c, withOnly)
+		return c, f
+	}
+	mk := func(use, short string, mode run.Mode, withOnly bool) *cobra.Command {
+		c, _ := mkf(use, short, mode, withOnly)
 		return c
 	}
+	planCmd, planFlags := mkf("plan", "Show what would change, changing nothing; --proposal writes it for the owner to approve", run.ModePlan, true)
+	planCmd.Flags().BoolVar(&planFlags.proposal, "proposal", false, "write the tenant's proposal (every change, by area) for box approve")
 	cmds := []*cobra.Command{
-		mk("plan", "Show what would change, changing nothing", run.ModePlan, true),
+		planCmd,
 		mk("up", "Build and harden the tenant: run every step in order, resuming where it stopped", run.ModeApply, true),
 		mk("drift", "Report where the tenant differs from the configuration, changing nothing", run.ModeDrift, true),
 	}
@@ -562,7 +617,7 @@ func newRunCommands(g *globals) []*cobra.Command {
 	cmds = append(cmds,
 		single("apply", "Run one step (its dependencies are assumed done)", run.ModeApply),
 		newCheckCmd(g),
-		newStatusCmd(g), newGateCmd(g))
+		newStatusCmd(g), newGateCmd(g), newApproveCmd(g))
 	return cmds
 }
 

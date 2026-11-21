@@ -12,7 +12,15 @@ import (
 func box(t *testing.T, args ...string) (int, string) {
 	t.Helper()
 	var out, errOut bytes.Buffer
-	code := Run(args, &out, &errOut)
+	code := RunIn(args, strings.NewReader(""), &out, &errOut)
+	return code, out.String() + errOut.String()
+}
+
+// boxIn runs box with in as what the user types.
+func boxIn(t *testing.T, in string, args ...string) (int, string) {
+	t.Helper()
+	var out, errOut bytes.Buffer
+	code := RunIn(args, strings.NewReader(in), &out, &errOut)
 	return code, out.String() + errOut.String()
 }
 

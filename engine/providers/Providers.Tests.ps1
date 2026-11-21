@@ -444,6 +444,17 @@ Describe 'exchange policy steps: comparison helpers (T14-04)' {
       'ann@other.example' | Should -Not -Match $p
     }
   }
+  It 'splits own-address patterns to at most 128 characters' {
+    InModuleScope Box.exchange {
+      $ps = @(Get-BoxOwnAddressPatterns 'Ann' 'Sample' @('mail.example', 'other.example'))
+      $ps.Count | Should -Be 2
+      'ann.sample7@other.example' | Should -Match $ps[1]
+      $long = @(Get-BoxOwnAddressPatterns ('A' * 30) ('B' * 30) @('mail.example'))
+      $long.Count | Should -Be 4
+      @($long | Where-Object { $_.Length -gt 128 }).Count | Should -Be 0
+      ('b' * 30 + '_' + 'a' * 30 + '@mail.example') | Should -Match $long[3]
+    }
+  }
   It 'has a handler for every resolved setting of its policy steps' {
     $root = Join-Path $PSScriptRoot '..' '..'
     $maps = @{}

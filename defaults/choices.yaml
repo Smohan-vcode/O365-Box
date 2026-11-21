@@ -191,6 +191,23 @@ choices:
         cost: none
         effects: {exceptions: [ENT-026]}
 
+  - id: data.personal_mail_domains
+    step: security
+    question: Watch for company files sent to personal email accounts?
+    help: Staff sometimes send work files to their own personal email, where the company cannot protect them. We can ask for a reason when someone mails an attachment to a free personal email service, and warn you when someone mails their own personal address. This needs a list of those services.
+    options:
+      - value: common
+        label: Yes, for the common free email services
+        detail: Gmail, Outlook.com, Hotmail, Live, Yahoo, iCloud, Proton and AOL. You can change the list later from the home screen.
+        recommended: true
+        cost: none
+        effects: {values: {policy.consumer_mail_domains: "gmail.com, outlook.com, hotmail.com, live.com, yahoo.com, icloud.com, proton.me, aol.com"}}
+      - value: none
+        label: No, do not watch mail to personal accounts
+        detail: Attachments can be mailed to personal accounts without a reason being asked.
+        cost: none
+        effects: {exceptions: [PVW-017, PVW-018]}
+
   - id: signin.managed_plan_users
     step: security
     question: Who must use a managed computer or a protected app for company data?

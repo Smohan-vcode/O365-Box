@@ -41,7 +41,7 @@ settings:
   - DAT-01
 - id: PVW-005
   platform: all
-  name: 'Label: Confidential, with sub-labels Sales, Legal, People'
+  name: 'Label: Confidential'
   value: header marking; external sharing subject to data loss prevention
   tier: core
   mode: enforce
@@ -136,7 +136,7 @@ settings:
 - id: PVW-015
   platform: all
   name: DLP-06 Sharing outside from the legal, finance, people and corporate sites
-  value: block; alert
+  value: 'mail only: attachments sent outside by the members of those sites are blocked; alert (sharing files from the sites follows SPO-002)'
   tier: core
   mode: staged
   capability: purview_dlp_core
@@ -145,7 +145,7 @@ settings:
 - id: PVW-016
   platform: all
   name: DLP-07 Sharing outside from the sales site
-  value: block with justified override; weekly report to owner
+  value: 'mail only: attachments sent outside by the members of the sales site need a justification; weekly report to owner (sharing files from the site follows SPO-002)'
   tier: core
   mode: staged
   capability: purview_dlp_core

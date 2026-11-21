@@ -82,6 +82,19 @@ function Get-BoxOwnAddressPattern([string] $Given, [string] $Family, [string[]] 
   return "^($g|$f|$g[._-]?$f|$f[._-]?$g)[._-]?[0-9]*@($d)$"
 }
 
+# The same as a list of patterns of at most 128 characters each (the limit
+# of AnyOfRecipientAddressMatchesPatterns): one per domain, and one per name
+# form when a domain's pattern is still too long.
+function Get-BoxOwnAddressPatterns([string] $Given, [string] $Family, [string[]] $Domains) {
+  $g = [regex]::Escape($Given.ToLowerInvariant()); $f = [regex]::Escape($Family.ToLowerInvariant())
+  return @(foreach ($dom in $Domains) {
+      $p = Get-BoxOwnAddressPattern $Given $Family @($dom)
+      if ($p.Length -le 128) { $p; continue }
+      $d = [regex]::Escape($dom.ToLowerInvariant())
+      foreach ($n in $g, $f, "$g[._-]?$f", "$f[._-]?$g") { "^$n[._-]?[0-9]*@$d$" }
+    })
+}
+
 # ---------- results ----------
 
 function New-BoxNote([string] $Id, [string] $Text) { return @{ note = "${Id}: $Text" } }
@@ -94,7 +107,7 @@ function Invoke-BoxPolicy($In, [hashtable] $Handlers, [switch] $Apply) {
   if ($In.policy_error) { throw "policy settings could not be resolved: $($In.policy_error)" }
   Connect-BoxExchange $In
   $settings = @($In.policy.settings | Where-Object { $_ } | Sort-Object { [string]$_.id })
-  $script:PolicyCtx = @{ in = $In; ids = @($settings | ForEach-Object { [string]$_.id }); labels = $null; skippedLabels = @() }
+  $script:PolicyCtx = @{ in = $In; ids = @($settings | ForEach-Object { [string]$_.id }); labels = $null }
   $changes = @(); $notes = @(); $errors = @()
   foreach ($s in $settings) {
     $h = $Handlers[[string]$s.id]
@@ -374,9 +387,6 @@ $script:LabelTooltips = @{
   'Public' = 'Approved for anyone, inside or outside the company.'
   'Internal' = 'For people in the company. The default for new documents and mail.'
   'Confidential' = 'For named teams; sharing outside the company needs a reason.'
-  'Confidential-Sales' = 'Confidential to the sales team.'
-  'Confidential-Legal' = 'Confidential to the legal team.'
-  'Confidential-People' = 'Confidential to people (HR) matters.'
   'Restricted' = 'Encrypted: only people in the company can open it, and mail cannot be forwarded.'
 }
 
@@ -515,7 +525,7 @@ function Sync-BoxLabelPolicy($In, [hashtable] $Want, [bool] $Apply, [switch] $Se
   } elseif (-not $p) {
     if ($Apply) {
       $loc = Get-BoxLabelPolicyLocation $In $Want
-      $labels = @($Want.Labels | Where-Object { [string]$_ -notin $script:PolicyCtx.skippedLabels } | ForEach-Object { Get-BoxLabelId ([string]$_) } | Where-Object { $_ })
+      $labels = @($Want.Labels | ForEach-Object { Get-BoxLabelId ([string]$_) } | Where-Object { $_ })
       Invoke-SC 'New-LabelPolicy' (@{ Name = $name; Labels = $labels; ExchangeLocation = $loc } + $setParams) | Out-Null
     }
     return New-BoxChange create "label policy '$name'" "published to $(if ([string]$Want.ExchangeLocation -eq 'All') { 'all users' } else { 'the pilot group' })"
@@ -528,7 +538,6 @@ function Sync-BoxLabelPolicy($In, [hashtable] $Want, [bool] $Apply, [switch] $Se
     $changes += New-BoxChange update "label policy '$name' settings" ($diff -join '; ')
   }
   if ($SettingsOnly) { return $changes }
-  $Want.Labels = @($Want.Labels | Where-Object { [string]$_ -notin $script:PolicyCtx.skippedLabels })
   $haveLabels = @($p.Labels | ForEach-Object { [string]$_ })
   $byName = @{}; foreach ($l in (Get-BoxLabels).Values) { $byName[[string]$l.Name] = $l }
   $missing = @($Want.Labels | Where-Object { $l = $byName[[string]$_]; -not $l -or -not (@($haveLabels) | Where-Object { $_ -in @([string]$l.Name, [string]$l.Guid, [string]$l.ImmutableId) }) })
@@ -571,6 +580,19 @@ function Get-BoxSiteUrls($In, [object[]] $Names) {
   return @($Names | ForEach-Object { ([string]$_) -replace '^\{site:(.+)\}$', '$1' } | Where-Object { $_ -in $have } | ForEach-Object { "$($In.tenant.sharepoint)/sites/$_" })
 }
 
+# The users in the groups that structure.sites makes owner or member of the
+# sites named {site_members:<url>} (DLP-06 and DLP-07 cover mail from the
+# sites' members, SC-30). The access groups are security groups, which a DLP
+# rule cannot take as senders, so they are expanded on every apply.
+function Get-BoxSiteMembers($In, [object[]] $Names) {
+  $urls = @($Names | ForEach-Object { ([string]$_) -replace '^\{site_members:(.+)\}$', '$1' })
+  $groups = @(foreach ($site in @($In.config.structure.sites | Where-Object { $_ -and [string]$_.url -in $urls })) {
+      $acc = ConvertTo-BoxHash $site.access
+      foreach ($g in $acc.Keys) { if ([string]$acc[$g] -in 'owner', 'member') { [string]$g } }
+    })
+  return @($groups | Sort-Object -Unique | ForEach-Object { Get-BoxGroupUpns $_ } | Where-Object { $_ } | Sort-Object -Unique)
+}
+
 # Replaces placeholders in a DLP rule payload; returns $null for a rule
 # that has nothing to match (for example no types for the jurisdictions).
 function Resolve-BoxDlpRule($In, [hashtable] $Rule, [bool] $Apply) {
@@ -579,27 +601,31 @@ function Resolve-BoxDlpRule($In, [hashtable] $Rule, [bool] $Apply) {
   foreach ($k in 'GenerateAlert', 'GenerateIncidentReport') {
     if ($r[$k]) { $r[$k] = @(@($r[$k]) | ForEach-Object { ([string]$_) -replace '^\{mailbox:(.+)\}$', ('$1@' + (Get-Domain $In)) }) }
   }
+  if (@($r.From | Where-Object { ([string]$_) -like '{site_members:*}' }).Count) {
+    $r.From = @(Get-BoxSiteMembers $In @($r.From))
+    if ($r.From.Count -eq 0) { $script:PolicyCtx.skipReason = 'the sites have no members in the configuration''s access groups'; return $null }
+  }
   if ($r.NotifyPolicyTipCustomText -eq '<engine text>') { $r.NotifyPolicyTipCustomText = 'This looks like financial account data. Check the recipients before you share it outside the company.' }
   if ($r.ContainsKey('NotifyAllowOverride') -and $null -eq $r.NotifyAllowOverride) { $r.Remove('NotifyAllowOverride') }
   # S&C: an override needs NotifyUser; per-user blocking needs an override,
   # so a rule without one blocks everyone outside.
   if ($r.NotifyAllowOverride -and -not $r.NotifyUser) { $r.NotifyUser = @('LastModifier', 'Owner') }
   if ($r.BlockAccessScope -eq 'PerUser' -and -not $r.NotifyAllowOverride) { $r.BlockAccessScope = 'All' }
-  # Every rule needs a content condition; a site-scoped rule matches every file.
-  # Every rule needs a content condition. For a site-scoped rule meant to
-  # match every file there is none on SharePoint: DocumentNameMatchesPatterns
-  # is Exchange-only and DocumentSizeOver starts at 10 KB (tested). Such a
-  # rule is left out until a condition is decided.
+  # Every rule needs a content condition. None matches every file on
+  # SharePoint (DocumentNameMatchesPatterns is Exchange-only; DocumentSizeOver
+  # starts at 10 KB, tested on SharePoint and Exchange), so site rules are
+  # mail-only (SC-30) and "has an attachment" is an attachment name matching
+  # the pattern '.'.
   $conditions = 'ContentContainsSensitiveInformation', 'RecipientDomainIs', 'From', 'AnyOfRecipientAddressMatchesPatterns', 'DocumentSizeOver', 'DocumentNameMatchesPatterns'
   if (-not @($conditions | Where-Object { $r.ContainsKey($_) }).Count) {
-    $script:PolicyCtx.skipReason = 'a SharePoint DLP rule needs a content condition and none matches every file (DocumentNameMatchesPatterns is Exchange-only; DocumentSizeOver starts at 10 KB): decision needed'
+    $script:PolicyCtx.skipReason = 'the rule has no content condition'
     return $null
   }
   $c = $r.ContentContainsSensitiveInformation
   if ($c) {
     foreach ($grp in @($c.groups)) {
       if ($grp.labels) {
-        $grp.labels = @($grp.labels | Where-Object { (([string]$_.name) -replace '^\{label:(.+)\}$', '$1') -notin $script:PolicyCtx.skippedLabels } | ForEach-Object { $n = ([string]$_.name) -replace '^\{label:(.+)\}$', '$1'; $id = Get-BoxLabelId $n; if (-not $id) { if ($Apply) { throw "label $n does not exist yet" }; $id = "(label $n, created by this step)" }; @{ name = $id; type = 'Sensitivity' } })
+        $grp.labels = @($grp.labels | ForEach-Object { $n = ([string]$_.name) -replace '^\{label:(.+)\}$', '$1'; $id = Get-BoxLabelId $n; if (-not $id) { if ($Apply) { throw "label $n does not exist yet" }; $id = "(label $n, created by this step)" }; @{ name = $id; type = 'Sensitivity' } })
       }
       if ($grp.sensitivetypes) {
         $grp.sensitivetypes = @(foreach ($t in @($grp.sensitivetypes)) {
@@ -697,6 +723,16 @@ function Sync-BoxDlpPolicy($In, $s, [bool] $Apply, [object[]] $Rules) {
         $out += New-BoxChange update "DLP policy '$name'" "add $k $($add -join ', ')"
       }
     }
+    # A location the payload does not name is removed (DLP-06 and DLP-07
+    # became mail-only, SC-30).
+    foreach ($k in 'SharePointLocation', 'OneDriveLocation') {
+      if ($pol.ContainsKey($k)) { continue }
+      $have = @(@($p.$k) | Where-Object { $_ } | ForEach-Object { $x = $_; if ($x.Name) { [string]$x.Name } else { [string]$x } })
+      if ($have.Count) {
+        if ($Apply) { Invoke-SC 'Set-DlpCompliancePolicy' @{ Identity = $p.Guid.ToString(); "Remove$k" = $have } | Out-Null }
+        $out += New-BoxChange update "DLP policy '$name'" "remove $k $($have -join ', ')"
+      }
+    }
   }
   $haveRules = @{}
   if ($p) { foreach ($x in @(Invoke-SC 'Get-DlpComplianceRule' @{ Policy = $p.Guid.ToString() })) { $haveRules[[string]$x.Name] = $x } }
@@ -721,18 +757,24 @@ function Sync-BoxDlpPolicy($In, $s, [bool] $Apply, [object[]] $Rules) {
   return $out
 }
 
+# policy.consumer_mail_domains: a list in the configuration, or the
+# comma-separated list the choice data.personal_mail_domains supplies.
+function Get-BoxConsumerDomains($In) {
+  return @(@($In.config.policy.consumer_mail_domains) | ForEach-Object { ([string]$_) -split ',' } | ForEach-Object { $_.Trim().ToLowerInvariant() } | Where-Object { $_ } | Sort-Object -Unique)
+}
+
 function Sync-BoxConsumerDlp($In, $s, [bool] $Apply) {
-  $doms = @($In.config.policy.consumer_mail_domains | Where-Object { $_ })
+  $doms = @(Get-BoxConsumerDomains $In)
   if ($doms.Count -eq 0) { return New-BoxNote $s.id 'skipped: policy.consumer_mail_domains is empty' }
   if ($s.id -eq 'PVW-018') {
     $users = @($In.config.users | Where-Object { $_.given_name -and $_.family_name })
     $dom = Get-Domain $In
     $rules = @(foreach ($u in $users) {
-        @{ Name = "DLP-09 $($u.id)"; From = @("$($u.primary)@$dom"); AnyOfRecipientAddressMatchesPatterns = @(Get-BoxOwnAddressPattern ([string]$u.given_name) ([string]$u.family_name) $doms)
+        @{ Name = "DLP-09 $($u.id)"; From = @("$($u.primary)@$dom"); AnyOfRecipientAddressMatchesPatterns = @(Get-BoxOwnAddressPatterns ([string]$u.given_name) ([string]$u.family_name) $doms)
           BlockAccess = $true; NotifyAllowOverride = 'WithJustification'; GenerateAlert = @('{mailbox:alerts}'); GenerateIncidentReport = @('{mailbox:security}') }
       })
   } else {
-    $rules = @(@{ Name = 'DLP-08 justify'; RecipientDomainIs = $doms; DocumentSizeOver = 1; BlockAccess = $true; NotifyUser = @('LastModifier'); NotifyAllowOverride = 'WithJustification'; GenerateIncidentReport = @('{mailbox:security}'); IncidentReportContent = 'All' })
+    $rules = @(@{ Name = 'DLP-08 justify'; RecipientDomainIs = $doms; DocumentNameMatchesPatterns = @('.'); BlockAccess = $true; NotifyUser = @('LastModifier'); NotifyAllowOverride = 'WithJustification'; GenerateIncidentReport = @('{mailbox:security}'); IncidentReportContent = 'All' })
   }
   return Sync-BoxDlpPolicy $In $s $Apply $rules
 }
@@ -768,21 +810,9 @@ $script:PurviewHandlers = @{
   }
   'PVW-003' = { param($In, $s, $Apply) Connect-BoxCompliance $In; Sync-BoxLabel $In (Get-Part $s 'New-Label') $Apply }
   'PVW-004' = { param($In, $s, $Apply) Connect-BoxCompliance $In; Sync-BoxLabel $In (Get-Part $s 'New-Label') $Apply }
-  'PVW-005' = { param($In, $s, $Apply)
-    Connect-BoxCompliance $In
-    Sync-BoxLabel $In (Get-Part $s 'New-Label(parent)') $Apply
-    $parent = (Get-BoxLabels)[[string](Get-Part $s 'New-Label(parent)').Name]
-    $subs = @((ConvertTo-BoxHash $s.payload).'New-Label(sub-labels)')
-    if ($parent -and -not $parent.IsLabelGroup) {
-      # The tenant uses the modern label scheme: sub-labels sit only under a
-      # label group, which carries no marking and cannot label sites. The
-      # setting's Confidential label with a header and site protection
-      # cannot also be the sub-labels' parent; decision recorded in the report.
-      foreach ($sub in $subs) { $script:PolicyCtx.skippedLabels += [string]$sub.Name }
-      return New-BoxNote $s.id "not applied: sub-labels $(($subs | ForEach-Object { $_.Name }) -join ', ') need a label group parent in the modern label scheme; Confidential is a label with markings (decision needed)"
-    }
-    foreach ($sub in $subs) { Sync-BoxLabel $In $sub $Apply }
-  }
+  # Four labels, no sub-labels (SC-30): in the modern label scheme sub-labels
+  # sit only under a label group, which carries no marking and cannot label sites.
+  'PVW-005' = { param($In, $s, $Apply) Connect-BoxCompliance $In; Sync-BoxLabel $In (Get-Part $s 'New-Label') $Apply }
   'PVW-006' = { param($In, $s, $Apply) Connect-BoxCompliance $In; Sync-BoxLabel $In (Get-Part $s 'New-Label') $Apply }
   'PVW-007' = { param($In, $s, $Apply) Connect-BoxCompliance $In; Sync-BoxLabelPolicy $In (Get-Part $s 'New-LabelPolicy') $Apply }
   'PVW-008' = { param($In, $s, $Apply)

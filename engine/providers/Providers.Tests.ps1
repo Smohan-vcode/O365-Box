@@ -396,7 +396,6 @@ Describe 'intune policy helpers (T14-05)' {
   }
 }
 
-<<<<<<< HEAD
 Describe 'exchange policy steps: comparison helpers (T14-04)' {
   BeforeAll { Import-Module (Join-Path $PSScriptRoot 'exchange' 'Box.exchange.psm1') -Force }
   It 'ignores case, order and Identity when comparing' {
@@ -462,7 +461,9 @@ Describe 'exchange policy steps: comparison helpers (T14-04)' {
       $missing | Should -BeNullOrEmpty
 
     }
-=======
+  }
+}
+
 Describe 'sharepoint.control-tasks (T10-02)' {
   BeforeAll {
     Import-Module (Join-Path $PSScriptRoot 'sharepoint' 'Box.sharepoint.psm1') -Force
@@ -515,6 +516,5 @@ Describe 'sharepoint.control-tasks (T10-02)' {
     $f = [pscustomobject]@{ InternalName = 'frequency'; SchemaXml = '<Field Type="Choice" Name="frequency"><CHOICES><CHOICE>weekly</CHOICE><CHOICE>monthly</CHOICE></CHOICES></Field>' }
     Get-MissingChoices $f @('daily', 'weekly', 'monthly', 'semiannually') | Should -Be @('daily', 'semiannually')
     @(Get-MissingChoices ([pscustomobject]@{ SchemaXml = '' }) @('daily')).Count | Should -Be 0
->>>>>>> worktree-agent-aea5cc0f005aa626e
   }
 }

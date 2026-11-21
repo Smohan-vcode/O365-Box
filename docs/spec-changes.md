@@ -1162,3 +1162,53 @@ with everything else on the recommendation:
 After the build the home screen shows one status per area (protected,
 watching in audit, needs you), the audit report, and an **Enforce** button
 per area when its audit period is clean.
+
+## SC-26  Audit pack: a read-only entry point (proposed)
+
+Owner idea (2026-11-21): a simple feature that extracts everything an IT
+audit (SOC 2, ISO 27001, NIST CSF, Cyber Essentials, HIPAA, …) asks for,
+organised for the auditor, without writing anything: just reading.
+
+**Entry point.** The first screen offers two paths: "Set up and protect my
+company" (the onboarding) and **"Prepare for an audit"**. The audit path,
+and `box audit --framework soc2 --period 2026-01-01..2026-12-31 --out <dir>`,
+works on any Microsoft 365 tenant, including one the box never built.
+
+**Read only, by construction.**
+- Sign-in is delegated, as a person holding **Global Reader** (plus Security
+  Reader and Compliance Reader for the Purview and Defender reads), with
+  read-only scopes. No app registration, no certificate, no break-glass
+  accounts, no tenant writes. The worker protocol runs only `test`, `verify`
+  and `evidence`; `plan` and `apply` are refused in audit mode.
+- Nothing about the company is stored in the repository. The pack is
+  written to the folder the person chooses.
+
+**What it reads.**
+1. Every catalogue setting's live value, through the mapping's `read` and
+   `check` (the same verify code the build uses), as pass, fail or not
+   applicable, with the raw value and the time read.
+2. Inventories: users and admins with MFA registration and last sign-in,
+   role assignments, guests, Conditional Access policies, authentication
+   methods, devices and compliance, sharing settings and external sharing
+   links, mailbox forwarding, DLP, labels, retention, the audit log status,
+   alert policies, licences.
+3. Activity over the audit period where the tenant keeps it: admin changes
+   (directory audit), sign-in risk, alerts.
+
+**How it is organised.** For the chosen framework: control → requirements
+(policy/requirements.yaml) → settings and inventories → evidence files.
+- `index.html` and `controls.csv`: one row per control with status
+  (met, partly met, not met, procedure: needs a document), the evidence
+  file names, and the gap in plain words.
+- `evidence/<control>/…json|csv`: the raw reads, each stamped with the
+  tenant id, the time and the query used, plus a hash list of the files
+  (`manifest.sha256`) so the auditor can check nothing changed afterwards.
+- `gaps.md`: what is not met, ordered by risk, each with "fix with Company in
+  a Box" (the proposal it would create), which links to the onboarding.
+- Procedural requirements (policies, reviews, training) are listed as
+  "document needed", with the template from the legal pack where one exists.
+
+**Tasks (new track T16 Audit pack):** T16-01 read-only sign-in and audit
+mode in the executor; T16-02 inventories; T16-03 control mapping and
+status; T16-04 pack writer (HTML, CSV, evidence, manifest); T16-05 the
+"Prepare for an audit" path in the TUI.

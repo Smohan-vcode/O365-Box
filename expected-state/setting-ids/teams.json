@@ -1,0 +1,421 @@
+{
+  "TMS-001": {
+    "status": "resolved",
+    "provider": "teams",
+    "step": "policy.teams",
+    "method": "cmdlet",
+    "apply": "Set-CsTenantFederationConfiguration -Identity Global -AllowTeamsConsumer $false -AllowTeamsConsumerInbound $false",
+    "payload": {
+      "Set-CsTenantFederationConfiguration": {
+        "Identity": "Global",
+        "AllowTeamsConsumer": false,
+        "AllowTeamsConsumerInbound": false
+      }
+    },
+    "read": "Get-CsTenantFederationConfiguration",
+    "check": "AllowTeamsConsumer == false; AllowTeamsConsumerInbound == false",
+    "permissions": [
+      "teams:app-only Connect-MicrosoftTeams (certificate, or -AccessTokens with Graph and Teams admin API tokens)"
+    ],
+    "roles": [
+      "Teams Administrator"
+    ],
+    "tcm": {
+      "resource": "microsoft.teams.federationconfiguration",
+      "note": "S-02 not done; candidate resource name, unconfirmed"
+    },
+    "verified": "not verified on tenant: host blocked (Teams admin API hosts unreachable from this container). Cmdlet and parameters verified offline with Get-Command in MicrosoftTeams 6.7.0.",
+    "notes": "Matches baseline external_access.consumer_teams: off. The Global external access policy (Set-CsExternalAccessPolicy -EnableTeamsConsumerAccess $false) is the per-user companion; the tenant switch is sufficient."
+  },
+  "TMS-002": {
+    "status": "resolved",
+    "provider": "teams",
+    "step": "policy.teams",
+    "method": "cmdlet",
+    "apply": "core: Set-CsTenantFederationConfiguration -Identity Global -AllowFederatedUsers $true -AllowedDomains (New-CsEdgeAllowAllKnownDomains); enhanced: -AllowedDomainsAsAList {config:teams_federation_allow_list}",
+    "payload": {
+      "core": {
+        "Set-CsTenantFederationConfiguration": {
+          "Identity": "Global",
+          "AllowFederatedUsers": true,
+          "AllowedDomains": "AllowAllKnownDomains",
+          "BlockedDomains": []
+        }
+      },
+      "enhanced": {
+        "Set-CsTenantFederationConfiguration": {
+          "Identity": "Global",
+          "AllowFederatedUsers": true,
+          "AllowedDomainsAsAList": "{config:teams_federation_allow_list}"
+        }
+      }
+    },
+    "read": "Get-CsTenantFederationConfiguration | Select-Object AllowFederatedUsers, AllowedDomains, BlockedDomains",
+    "check": "AllowFederatedUsers == true; core: AllowedDomains is AllowAllKnownDomains; enhanced: AllowedDomains lists exactly the configured domains",
+    "permissions": [
+      "teams:app-only Connect-MicrosoftTeams (certificate, or -AccessTokens with Graph and Teams admin API tokens)"
+    ],
+    "roles": [
+      "Teams Administrator"
+    ],
+    "tcm": {
+      "resource": "microsoft.teams.federationconfiguration",
+      "note": "S-02 not done; candidate resource name, unconfirmed"
+    },
+    "verified": "not verified on tenant: host blocked (Teams admin API hosts unreachable from this container). Cmdlet and parameters verified offline with Get-Command in MicrosoftTeams 6.7.0.",
+    "notes": "One setting with two tier values; the enhanced allow list has no home in the configuration schema yet. AllowPublicUsers (Skype consumer) should be false and is covered by TMS-001's intent."
+  },
+  "TMS-003": {
+    "status": "resolved",
+    "provider": "teams",
+    "step": "policy.teams",
+    "method": "cmdlet",
+    "apply": "Set-CsTeamsClientConfiguration -Identity Global -AllowGuestUser $false",
+    "payload": {
+      "Set-CsTeamsClientConfiguration": {
+        "Identity": "Global",
+        "AllowGuestUser": false
+      }
+    },
+    "read": "Get-CsTeamsClientConfiguration -Identity Global",
+    "check": "AllowGuestUser == false",
+    "permissions": [
+      "teams:app-only Connect-MicrosoftTeams (certificate, or -AccessTokens with Graph and Teams admin API tokens)"
+    ],
+    "roles": [
+      "Teams Administrator"
+    ],
+    "tcm": {
+      "resource": "microsoft.teams.clientconfiguration",
+      "note": "S-02 not done; candidate resource name, unconfirmed"
+    },
+    "verified": "not verified on tenant: host blocked (Teams admin API hosts unreachable from this container). Cmdlet and parameters verified offline with Get-Command in MicrosoftTeams 6.7.0.",
+    "notes": "Matches baseline guest_access: off. Entra guest invitation settings are in the entra area."
+  },
+  "TMS-004": {
+    "status": "resolved",
+    "provider": "teams",
+    "step": "policy.teams",
+    "method": "cmdlet",
+    "apply": "Set-CsTeamsMeetingPolicy -Identity Global -AutoAdmittedUsers EveryoneInCompanyExcludingGuests -AllowPSTNUsersToBypassLobby $false",
+    "payload": {
+      "Set-CsTeamsMeetingPolicy": {
+        "Identity": "Global",
+        "AutoAdmittedUsers": "EveryoneInCompanyExcludingGuests",
+        "AllowPSTNUsersToBypassLobby": false
+      }
+    },
+    "read": "Get-CsTeamsMeetingPolicy -Identity Global",
+    "check": "AutoAdmittedUsers == EveryoneInCompanyExcludingGuests; AllowPSTNUsersToBypassLobby == false",
+    "permissions": [
+      "teams:app-only Connect-MicrosoftTeams (certificate, or -AccessTokens with Graph and Teams admin API tokens)"
+    ],
+    "roles": [
+      "Teams Administrator"
+    ],
+    "tcm": {
+      "resource": "microsoft.teams.meetingpolicy",
+      "note": "S-02 not done; candidate resource name, unconfirmed"
+    },
+    "verified": "not verified on tenant: host blocked (Teams admin API hosts unreachable from this container). Cmdlet and parameters verified offline with Get-Command in MicrosoftTeams 6.7.0.",
+    "notes": "Every other meeting policy assigned to users must carry the same values; the step reads all policies (Get-CsTeamsMeetingPolicy) and reports custom ones."
+  },
+  "TMS-005": {
+    "status": "resolved",
+    "provider": "teams",
+    "step": "policy.teams",
+    "method": "cmdlet",
+    "apply": "Set-CsTeamsMeetingPolicy -Identity Global -AllowAnonymousUsersToStartMeeting $false",
+    "payload": {
+      "Set-CsTeamsMeetingPolicy": {
+        "Identity": "Global",
+        "AllowAnonymousUsersToStartMeeting": false
+      }
+    },
+    "read": "Get-CsTeamsMeetingPolicy -Identity Global",
+    "check": "AllowAnonymousUsersToStartMeeting == false",
+    "permissions": [
+      "teams:app-only Connect-MicrosoftTeams (certificate, or -AccessTokens with Graph and Teams admin API tokens)"
+    ],
+    "roles": [
+      "Teams Administrator"
+    ],
+    "tcm": {
+      "resource": "microsoft.teams.meetingpolicy",
+      "note": "S-02 not done; candidate resource name, unconfirmed"
+    },
+    "verified": "not verified on tenant: host blocked (Teams admin API hosts unreachable from this container). Cmdlet and parameters verified offline with Get-Command in MicrosoftTeams 6.7.0.",
+    "notes": "Anonymous join stays on (baseline meetings.anonymous_join: on); they wait in the lobby (TMS-004)."
+  },
+  "TMS-006": {
+    "status": "resolved",
+    "provider": "teams",
+    "step": "policy.teams",
+    "method": "cmdlet",
+    "apply": "Set-CsTeamsMeetingPolicy -Identity Global -DesignatedPresenterRoleMode OrganizerOnlyUserOverride",
+    "payload": {
+      "Set-CsTeamsMeetingPolicy": {
+        "Identity": "Global",
+        "DesignatedPresenterRoleMode": "OrganizerOnlyUserOverride"
+      }
+    },
+    "read": "Get-CsTeamsMeetingPolicy -Identity Global",
+    "check": "DesignatedPresenterRoleMode == OrganizerOnlyUserOverride",
+    "permissions": [
+      "teams:app-only Connect-MicrosoftTeams (certificate, or -AccessTokens with Graph and Teams admin API tokens)"
+    ],
+    "roles": [
+      "Teams Administrator"
+    ],
+    "tcm": {
+      "resource": "microsoft.teams.meetingpolicy",
+      "note": "S-02 not done; candidate resource name, unconfirmed"
+    },
+    "verified": "not verified on tenant: host blocked (Teams admin API hosts unreachable from this container). Cmdlet and parameters verified offline with Get-Command in MicrosoftTeams 6.7.0.",
+    "notes": "OrganizerOnlyUserOverride is the default 'Only organizers and co-organizers' with the organiser able to change it per meeting; the product has no value that forbids the override."
+  },
+  "TMS-007": {
+    "status": "resolved",
+    "provider": "teams",
+    "step": "policy.teams",
+    "method": "cmdlet",
+    "apply": "Set-CsTeamsMeetingPolicy -Identity Global -AllowExternalParticipantGiveRequestControl $false",
+    "payload": {
+      "Set-CsTeamsMeetingPolicy": {
+        "Identity": "Global",
+        "AllowExternalParticipantGiveRequestControl": false
+      }
+    },
+    "read": "Get-CsTeamsMeetingPolicy -Identity Global",
+    "check": "AllowExternalParticipantGiveRequestControl == false",
+    "permissions": [
+      "teams:app-only Connect-MicrosoftTeams (certificate, or -AccessTokens with Graph and Teams admin API tokens)"
+    ],
+    "roles": [
+      "Teams Administrator"
+    ],
+    "tcm": {
+      "resource": "microsoft.teams.meetingpolicy",
+      "note": "S-02 not done; candidate resource name, unconfirmed"
+    },
+    "verified": "not verified on tenant: host blocked (Teams admin API hosts unreachable from this container). Cmdlet and parameters verified offline with Get-Command in MicrosoftTeams 6.7.0.",
+    "notes": ""
+  },
+  "TMS-008": {
+    "status": "resolved",
+    "provider": "teams",
+    "step": "policy.teams",
+    "method": "cmdlet",
+    "apply": "Set-CsTeamsMeetingPolicy -Identity Global -AllowCloudRecording $true -AllowTranscription $true -NewMeetingRecordingExpirationDays 365",
+    "payload": {
+      "Set-CsTeamsMeetingPolicy": {
+        "Identity": "Global",
+        "AllowCloudRecording": true,
+        "AllowTranscription": true,
+        "NewMeetingRecordingExpirationDays": 365
+      }
+    },
+    "read": "Get-CsTeamsMeetingPolicy -Identity Global",
+    "check": "AllowCloudRecording == true; AllowTranscription == true; NewMeetingRecordingExpirationDays == 365",
+    "permissions": [
+      "teams:app-only Connect-MicrosoftTeams (certificate, or -AccessTokens with Graph and Teams admin API tokens)"
+    ],
+    "roles": [
+      "Teams Administrator"
+    ],
+    "tcm": {
+      "resource": "microsoft.teams.meetingpolicy",
+      "note": "S-02 not done; candidate resource name, unconfirmed"
+    },
+    "verified": "not verified on tenant: host blocked (Teams admin API hosts unreachable from this container). Cmdlet and parameters verified offline with Get-Command in MicrosoftTeams 6.7.0.",
+    "notes": "Matches baseline meetings. Expiry applies to recordings created after the change."
+  },
+  "TMS-009": {
+    "status": "resolved",
+    "provider": "teams",
+    "step": "policy.teams",
+    "method": "cmdlet",
+    "apply": "Set-CsTeamsMessagingPolicy -Identity Global -AllowSecurityEndUserReporting $true; Exchange: Set-ReportSubmissionPolicy -Identity DefaultReportSubmissionPolicy -ReportChatMessageEnabled $true",
+    "payload": {
+      "Set-CsTeamsMessagingPolicy": {
+        "Identity": "Global",
+        "AllowSecurityEndUserReporting": true
+      },
+      "Set-ReportSubmissionPolicy(exchange)": {
+        "Identity": "DefaultReportSubmissionPolicy",
+        "ReportChatMessageEnabled": true
+      }
+    },
+    "read": "Get-CsTeamsMessagingPolicy -Identity Global; Get-ReportSubmissionPolicy",
+    "check": "AllowSecurityEndUserReporting == true; ReportChatMessageEnabled == true",
+    "permissions": [
+      "teams:app-only Connect-MicrosoftTeams (certificate, or -AccessTokens with Graph and Teams admin API tokens)",
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [
+      "Teams Administrator",
+      "Exchange Administrator"
+    ],
+    "tcm": {
+      "resource": "microsoft.teams.messagingpolicy",
+      "note": "S-02 not done; candidate resource name, unconfirmed"
+    },
+    "verified": "not verified on tenant: host blocked (Teams admin API hosts unreachable from this container). Cmdlet and parameters verified offline with Get-Command in MicrosoftTeams 6.7.0. Exchange half verified: Set-ReportSubmissionPolicy -ReportChatMessageEnabled exists and Get-ReportSubmissionPolicy reads true on the test tenant.",
+    "notes": "Both switches are needed for the report button in Teams. Reports go where the user-reported settings send them (ReportChatMessageToCustomizedAddressEnabled / ReportChatMessageAddresses, currently Microsoft only)."
+  },
+  "TMS-010": {
+    "status": "resolved",
+    "provider": "teams",
+    "step": "policy.teams",
+    "method": "cmdlet",
+    "apply": "Set-CsTeamsClientConfiguration -Identity Global -AllowDropBox $false -AllowBox $false -AllowGoogleDrive $false -AllowShareFile $false -AllowEgnyte $false",
+    "payload": {
+      "Set-CsTeamsClientConfiguration": {
+        "Identity": "Global",
+        "AllowDropBox": false,
+        "AllowBox": false,
+        "AllowGoogleDrive": false,
+        "AllowShareFile": false,
+        "AllowEgnyte": false
+      }
+    },
+    "read": "Get-CsTeamsClientConfiguration -Identity Global",
+    "check": "AllowDropBox, AllowBox, AllowGoogleDrive, AllowShareFile, AllowEgnyte all == false",
+    "permissions": [
+      "teams:app-only Connect-MicrosoftTeams (certificate, or -AccessTokens with Graph and Teams admin API tokens)"
+    ],
+    "roles": [
+      "Teams Administrator"
+    ],
+    "tcm": {
+      "resource": "microsoft.teams.clientconfiguration",
+      "note": "S-02 not done; candidate resource name, unconfirmed"
+    },
+    "verified": "not verified on tenant: host blocked (Teams admin API hosts unreachable from this container). Cmdlet and parameters verified offline with Get-Command in MicrosoftTeams 6.7.0.",
+    "notes": ""
+  },
+  "TMS-011": {
+    "status": "resolved",
+    "provider": "teams",
+    "step": "policy.teams",
+    "method": "cmdlet",
+    "apply": "Set-CsTeamsClientConfiguration -Identity Global -AllowEmailIntoChannel $false",
+    "payload": {
+      "Set-CsTeamsClientConfiguration": {
+        "Identity": "Global",
+        "AllowEmailIntoChannel": false
+      }
+    },
+    "read": "Get-CsTeamsClientConfiguration -Identity Global",
+    "check": "AllowEmailIntoChannel == false",
+    "permissions": [
+      "teams:app-only Connect-MicrosoftTeams (certificate, or -AccessTokens with Graph and Teams admin API tokens)"
+    ],
+    "roles": [
+      "Teams Administrator"
+    ],
+    "tcm": {
+      "resource": "microsoft.teams.clientconfiguration",
+      "note": "S-02 not done; candidate resource name, unconfirmed"
+    },
+    "verified": "not verified on tenant: host blocked (Teams admin API hosts unreachable from this container). Cmdlet and parameters verified offline with Get-Command in MicrosoftTeams 6.7.0.",
+    "notes": ""
+  },
+  "TMS-012": {
+    "status": "resolved",
+    "provider": "teams",
+    "step": "policy.teams",
+    "method": "cmdlet",
+    "apply": "Set-CsTeamsAppPermissionPolicy -Identity Global -GlobalCatalogAppsType AllowedAppList -GlobalCatalogApps @() -PrivateCatalogAppsType AllowedAppList -PrivateCatalogApps @(); Set-CsTeamsAppSetupPolicy -Identity Global -AllowSideLoading $false; Set-CsTeamsSettingsCustomApp -isSideloadedAppsInteractionEnabled $false; approved apps: add to the allow lists (or Update-M365TeamsApp -Id <app> -AppAssignmentType Everyone on tenants under app-centric management)",
+    "payload": {
+      "Set-CsTeamsAppPermissionPolicy": {
+        "Identity": "Global",
+        "GlobalCatalogAppsType": "AllowedAppList",
+        "GlobalCatalogApps": "{config:teams_approved_apps}",
+        "PrivateCatalogAppsType": "AllowedAppList",
+        "PrivateCatalogApps": "{config:teams_approved_custom_apps}"
+      },
+      "Set-CsTeamsAppSetupPolicy": {
+        "Identity": "Global",
+        "AllowSideLoading": false
+      },
+      "Set-CsTeamsSettingsCustomApp": {
+        "isSideloadedAppsInteractionEnabled": false
+      }
+    },
+    "read": "Get-CsTeamsAppPermissionPolicy -Identity Global; Get-CsTeamsAppSetupPolicy -Identity Global; Get-CsTeamsSettingsCustomApp; Get-M365TeamsApp",
+    "check": "GlobalCatalogAppsType == AllowedAppList and PrivateCatalogAppsType == AllowedAppList with only approved app ids; AllowSideLoading == false; isSideloadedAppsInteractionEnabled == false",
+    "permissions": [
+      "teams:app-only Connect-MicrosoftTeams (certificate, or -AccessTokens with Graph and Teams admin API tokens)"
+    ],
+    "roles": [
+      "Teams Administrator"
+    ],
+    "tcm": {
+      "resource": "microsoft.teams.apppermissionpolicy",
+      "note": "S-02 not done; candidate resource name, unconfirmed"
+    },
+    "verified": "not verified on tenant: host blocked (Teams admin API hosts unreachable from this container). Cmdlet and parameters verified offline with Get-Command in MicrosoftTeams 6.7.0.",
+    "notes": "Tenants moved to app-centric management ignore app permission policies; there each app's availability is set with Update-M365TeamsApp, and the org-wide 'third-party apps' toggle has no documented cmdlet. If the test tenant is app-centric, the org-wide toggle becomes a gate (Teams admin centre > Manage apps > Org-wide app settings) checked by Get-M365TeamsApp showing no third-party app available to everyone. The approved lists have no home in the configuration schema yet. Baseline apps: third_party blocked, custom blocked."
+  },
+  "TMS-013": {
+    "status": "resolved",
+    "provider": "teams",
+    "step": "policy.teams",
+    "method": "cmdlet",
+    "apply": "Set-CsTeamsChannelsPolicy -Identity Global -AllowChannelSharingToExternalUser $false -AllowUserToParticipateInExternalSharedChannel $false",
+    "payload": {
+      "Set-CsTeamsChannelsPolicy": {
+        "Identity": "Global",
+        "AllowChannelSharingToExternalUser": false,
+        "AllowUserToParticipateInExternalSharedChannel": false
+      }
+    },
+    "read": "Get-CsTeamsChannelsPolicy -Identity Global",
+    "check": "AllowChannelSharingToExternalUser == false; AllowUserToParticipateInExternalSharedChannel == false",
+    "permissions": [
+      "teams:app-only Connect-MicrosoftTeams (certificate, or -AccessTokens with Graph and Teams admin API tokens)"
+    ],
+    "roles": [
+      "Teams Administrator"
+    ],
+    "tcm": {
+      "resource": "microsoft.teams.channelspolicy",
+      "note": "S-02 not done; candidate resource name, unconfirmed"
+    },
+    "verified": "not verified on tenant: host blocked (Teams admin API hosts unreachable from this container). Cmdlet and parameters verified offline with Get-Command in MicrosoftTeams 6.7.0.",
+    "notes": "Entra cross-tenant access B2B direct connect stays at its default (blocked); that is the entra area."
+  },
+  "TMS-014": {
+    "status": "resolved",
+    "provider": "identity",
+    "step": "policy.teams",
+    "method": "graph",
+    "apply": "Group.Unified directory setting: POST /v1.0/groupSettings (from template 62375ab9-6b52-47ed-826b-58e47e0e304b) or PATCH /v1.0/groupSettings/{id} with EnableGroupCreation false and GroupCreationAllowedGroupId {group:grp-admins}",
+    "payload": {
+      "templateId": "62375ab9-6b52-47ed-826b-58e47e0e304b",
+      "values": [
+        {
+          "name": "EnableGroupCreation",
+          "value": "false"
+        },
+        {
+          "name": "GroupCreationAllowedGroupId",
+          "value": "{group:grp-admins}"
+        }
+      ]
+    },
+    "read": "GET /v1.0/groupSettings",
+    "check": "the Group.Unified setting exists with EnableGroupCreation == 'false' and GroupCreationAllowedGroupId == {group:grp-admins}",
+    "permissions": [
+      "graph:Directory.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": "microsoft.entra.groupsetting (candidate)",
+      "note": "S-02 not done; candidate resource name, unconfirmed"
+    },
+    "verified": "GET /v1.0/groupSettings read OK app-only: only the consent policy setting exists, so group (and team) creation is open today. Template id is Microsoft's fixed Group.Unified template.",
+    "notes": "Teams has no own switch: a team is a Microsoft 365 group. Same setting as ENT-034 (entra area); one step should own it. Writing groupSettings app-only needs Directory.ReadWrite.All, which is not in expected-state/app-permissions.yaml (proposed, not granted). Administrators in Entra roles can still create groups."
+  }
+}

@@ -1,0 +1,700 @@
+{
+  "OFC-001": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.m365-apps",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceManagement/configurationPolicies (settings catalogue, platforms windows10, technologies mdm) assigned to {group:all-users}",
+    "payload": {
+      "policy": "Office: macro and content security (Windows)",
+      "settings": [
+        {
+          "settingDefinitionId": "user_vendor_msft_policy_config_word16v2~policy~l_microsoftofficeword~l_wordoptions~l_security~l_trustcenter_l_blockmacroexecutionfrominternet",
+          "choice": "user_vendor_msft_policy_config_word16v2~policy~l_microsoftofficeword~l_wordoptions~l_security~l_trustcenter_l_blockmacroexecutionfrominternet_1"
+        },
+        {
+          "settingDefinitionId": "user_vendor_msft_policy_config_excel16v2~policy~l_microsoftofficeexcel~l_exceloptions~l_security~l_trustcenter_l_blockmacroexecutionfrominternet",
+          "choice": "user_vendor_msft_policy_config_excel16v2~policy~l_microsoftofficeexcel~l_exceloptions~l_security~l_trustcenter_l_blockmacroexecutionfrominternet_1"
+        },
+        {
+          "settingDefinitionId": "user_vendor_msft_policy_config_ppt16v2~policy~l_microsoftofficepowerpoint~l_powerpointoptions~l_security~l_trustcenter_l_blockmacroexecutionfrominternet",
+          "choice": "user_vendor_msft_policy_config_ppt16v2~policy~l_microsoftofficepowerpoint~l_powerpointoptions~l_security~l_trustcenter_l_blockmacroexecutionfrominternet_1"
+        },
+        {
+          "settingDefinitionId": "user_vendor_msft_policy_config_access16v2~policy~l_microsoftofficeaccess~l_applicationsettings~l_security~l_trustcenter_l_blockmacroexecutionfrominternet",
+          "choice": "user_vendor_msft_policy_config_access16v2~policy~l_microsoftofficeaccess~l_applicationsettings~l_security~l_trustcenter_l_blockmacroexecutionfrominternet_1"
+        },
+        {
+          "settingDefinitionId": "user_vendor_msft_policy_config_visio16v2~policy~l_microsoftvisio~l_visiooptions~l_security~l_trustcenter_l_blockmacroexecutionfrominternet",
+          "choice": "user_vendor_msft_policy_config_visio16v2~policy~l_microsoftvisio~l_visiooptions~l_security~l_trustcenter_l_blockmacroexecutionfrominternet_1"
+        },
+        {
+          "settingDefinitionId": "user_vendor_msft_policy_config_pub16v3~policy~l_microsoftofficepublisher~l_security~l_trustcenter_l_blockmacroexecutionfrominternet",
+          "choice": "user_vendor_msft_policy_config_pub16v3~policy~l_microsoftofficepublisher~l_security~l_trustcenter_l_blockmacroexecutionfrominternet_1"
+        },
+        {
+          "settingDefinitionId": "user_vendor_msft_policy_config_proj16v3~policy~l_proj~l_projectoptions~l_security~l_trustcenter_l_blockmacroexecutionfrominternet",
+          "choice": "user_vendor_msft_policy_config_proj16v3~policy~l_proj~l_projectoptions~l_security~l_trustcenter_l_blockmacroexecutionfrominternet_1"
+        }
+      ]
+    },
+    "read": "GET /beta/deviceManagement/configurationPolicies?$filter=name eq '<policy name>'&$expand=settings",
+    "check": "each blockmacroexecutionfrominternet setting present with value _1 (Enabled); policy assigned; device status succeeded",
+    "permissions": [
+      "graph:DeviceManagementConfiguration.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Intune settings catalogue coverage in Tenant Configuration Management unconfirmed. Monitor with box drift."
+    },
+    "verified": "every settingDefinitionId (7) exists and every chosen option id is one of its options: GET /beta/deviceManagement/configurationSettings/{id}, read-only, on the test tenant",
+    "notes": "Windows: Microsoft 365 Apps also block internet macros by default; the policy makes it non-overridable. macOS: Office for Mac has no 'block macros from the internet' policy; VBA on Mac is governed by OFC-002's macOS keys. Settings catalogue ids for Publisher and Project use the v3 ADMX."
+  },
+  "OFC-002": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.m365-apps",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceManagement/configurationPolicies (settings catalogue, platforms windows10, technologies mdm) assigned to {group:all-users}; macOS: POST /beta/deviceManagement/configurationPolicies (settings catalogue, platforms macOS, technologies mdm,appleRemoteManagement) assigned to {group:all-users}",
+    "payload": {
+      "windows": {
+        "policy": "Office: macro and content security (Windows)",
+        "settings": [
+          {
+            "settingDefinitionId": "user_vendor_msft_policy_config_word16v2~policy~l_microsoftofficeword~l_wordoptions~l_security~l_trustcenter_l_vbawarningspolicy",
+            "choice": "user_vendor_msft_policy_config_word16v2~policy~l_microsoftofficeword~l_wordoptions~l_security~l_trustcenter_l_vbawarningspolicy_1",
+            "children": [
+              {
+                "settingDefinitionId": "user_vendor_msft_policy_config_word16v2~policy~l_microsoftofficeword~l_wordoptions~l_security~l_trustcenter_l_vbawarningspolicy_l_empty19",
+                "choice": "user_vendor_msft_policy_config_word16v2~policy~l_microsoftofficeword~l_wordoptions~l_security~l_trustcenter_l_vbawarningspolicy_l_empty19_3"
+              }
+            ]
+          },
+          {
+            "settingDefinitionId": "user_vendor_msft_policy_config_excel16v2~policy~l_microsoftofficeexcel~l_exceloptions~l_security~l_trustcenter_l_vbawarningspolicy",
+            "choice": "user_vendor_msft_policy_config_excel16v2~policy~l_microsoftofficeexcel~l_exceloptions~l_security~l_trustcenter_l_vbawarningspolicy_1",
+            "children": [
+              {
+                "settingDefinitionId": "user_vendor_msft_policy_config_excel16v2~policy~l_microsoftofficeexcel~l_exceloptions~l_security~l_trustcenter_l_vbawarningspolicy_l_empty4",
+                "choice": "user_vendor_msft_policy_config_excel16v2~policy~l_microsoftofficeexcel~l_exceloptions~l_security~l_trustcenter_l_vbawarningspolicy_l_empty4_3"
+              }
+            ]
+          },
+          {
+            "settingDefinitionId": "user_vendor_msft_policy_config_ppt16v2~policy~l_microsoftofficepowerpoint~l_powerpointoptions~l_security~l_trustcenter_l_vbawarningspolicy",
+            "choice": "user_vendor_msft_policy_config_ppt16v2~policy~l_microsoftofficepowerpoint~l_powerpointoptions~l_security~l_trustcenter_l_vbawarningspolicy_1",
+            "children": [
+              {
+                "settingDefinitionId": "user_vendor_msft_policy_config_ppt16v2~policy~l_microsoftofficepowerpoint~l_powerpointoptions~l_security~l_trustcenter_l_vbawarningspolicy_l_empty3",
+                "choice": "user_vendor_msft_policy_config_ppt16v2~policy~l_microsoftofficepowerpoint~l_powerpointoptions~l_security~l_trustcenter_l_vbawarningspolicy_l_empty3_3"
+              }
+            ]
+          },
+          {
+            "settingDefinitionId": "user_vendor_msft_policy_config_access16v2~policy~l_microsoftofficeaccess~l_applicationsettings~l_security~l_trustcenter_l_vbawarningspolicy",
+            "choice": "user_vendor_msft_policy_config_access16v2~policy~l_microsoftofficeaccess~l_applicationsettings~l_security~l_trustcenter_l_vbawarningspolicy_1",
+            "children": [
+              {
+                "settingDefinitionId": "user_vendor_msft_policy_config_access16v2~policy~l_microsoftofficeaccess~l_applicationsettings~l_security~l_trustcenter_l_vbawarningspolicy_l_empty",
+                "choice": "user_vendor_msft_policy_config_access16v2~policy~l_microsoftofficeaccess~l_applicationsettings~l_security~l_trustcenter_l_vbawarningspolicy_l_empty_3"
+              }
+            ]
+          },
+          {
+            "settingDefinitionId": "user_vendor_msft_policy_config_visio16v2~policy~l_microsoftvisio~l_visiooptions~l_security~l_trustcenter_l_vbawarningspolicy",
+            "choice": "user_vendor_msft_policy_config_visio16v2~policy~l_microsoftvisio~l_visiooptions~l_security~l_trustcenter_l_vbawarningspolicy_1",
+            "children": [
+              {
+                "settingDefinitionId": "user_vendor_msft_policy_config_visio16v2~policy~l_microsoftvisio~l_visiooptions~l_security~l_trustcenter_l_vbawarningspolicy_l_empty",
+                "choice": "user_vendor_msft_policy_config_visio16v2~policy~l_microsoftvisio~l_visiooptions~l_security~l_trustcenter_l_vbawarningspolicy_l_empty_3"
+              }
+            ]
+          },
+          {
+            "settingDefinitionId": "user_vendor_msft_policy_config_pub16v2~policy~l_microsoftofficepublisher~l_security~l_trustcenter_l_vbawarningspolicy",
+            "choice": "user_vendor_msft_policy_config_pub16v2~policy~l_microsoftofficepublisher~l_security~l_trustcenter_l_vbawarningspolicy_1",
+            "children": [
+              {
+                "settingDefinitionId": "user_vendor_msft_policy_config_pub16v2~policy~l_microsoftofficepublisher~l_security~l_trustcenter_l_vbawarningspolicy_l_empty0",
+                "choice": "user_vendor_msft_policy_config_pub16v2~policy~l_microsoftofficepublisher~l_security~l_trustcenter_l_vbawarningspolicy_l_empty0_3"
+              }
+            ]
+          },
+          {
+            "settingDefinitionId": "user_vendor_msft_policy_config_proj16v2~policy~l_proj~l_projectoptions~l_security~l_trustcenter_l_vbawarningspolicy",
+            "choice": "user_vendor_msft_policy_config_proj16v2~policy~l_proj~l_projectoptions~l_security~l_trustcenter_l_vbawarningspolicy_1",
+            "children": [
+              {
+                "settingDefinitionId": "user_vendor_msft_policy_config_proj16v2~policy~l_proj~l_projectoptions~l_security~l_trustcenter_l_vbawarningspolicy_l_empty",
+                "choice": "user_vendor_msft_policy_config_proj16v2~policy~l_proj~l_projectoptions~l_security~l_trustcenter_l_vbawarningspolicy_l_empty_3"
+              }
+            ]
+          }
+        ]
+      },
+      "macos_nearest": {
+        "settings": [
+          {
+            "settingDefinitionId": "com.apple.managedclient.preferences_visualbasicmacroexecutionstate",
+            "choice": "com.apple.managedclient.preferences_visualbasicmacroexecutionstate_0"
+          }
+        ],
+        "status": "not equivalent, decision needed"
+      }
+    },
+    "read": "GET /beta/deviceManagement/configurationPolicies?$filter=name eq '<policy name>'&$expand=settings",
+    "check": "each vbawarningspolicy == _1 with child == _3 ('Disable all except digitally signed macros')",
+    "permissions": [
+      "graph:DeviceManagementConfiguration.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Intune settings catalogue coverage in Tenant Configuration Management unconfirmed. Monitor with box drift."
+    },
+    "verified": "every settingDefinitionId (15) exists and every chosen option id is one of its options: GET /beta/deviceManagement/configurationSettings/{id}, read-only, on the test tenant",
+    "notes": "Enhanced tier. Windows exact. macOS partial: VisualBasicMacroExecutionState offers only 'disabled with warning' (_0), 'disable all' (_1) and 'always allow' (_2); there is no 'signed macros only' value. Listed in findings for a decision (accept _0, accept _1, or except macOS). Outlook's own macro level (outlk16v2 l_securityleveloutlook_v2) is separate and not named by the setting."
+  },
+  "OFC-003": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.m365-apps",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceManagement/configurationPolicies (settings catalogue, platforms windows10, technologies mdm) assigned to {group:all-users}",
+    "payload": {
+      "policy": "Office: macro and content security (Windows)",
+      "settings": [
+        {
+          "settingDefinitionId": "user_vendor_msft_policy_config_word16v2~policy~l_microsoftofficeword~l_wordoptions~l_security~l_trustcenter~l_protectedview_l_donotopenfilesfromtheinternetzoneinprotectedview",
+          "choice": "user_vendor_msft_policy_config_word16v2~policy~l_microsoftofficeword~l_wordoptions~l_security~l_trustcenter~l_protectedview_l_donotopenfilesfromtheinternetzoneinprotectedview_0"
+        },
+        {
+          "settingDefinitionId": "user_vendor_msft_policy_config_word16v2~policy~l_microsoftofficeword~l_wordoptions~l_security~l_trustcenter~l_protectedview_l_donotopenfilesinunsafelocationsinprotectedview",
+          "choice": "user_vendor_msft_policy_config_word16v2~policy~l_microsoftofficeword~l_wordoptions~l_security~l_trustcenter~l_protectedview_l_donotopenfilesinunsafelocationsinprotectedview_0"
+        },
+        {
+          "settingDefinitionId": "user_vendor_msft_policy_config_word16v2~policy~l_microsoftofficeword~l_wordoptions~l_security~l_trustcenter~l_protectedview_l_turnoffprotectedviewforattachmentsopenedfromoutlook",
+          "choice": "user_vendor_msft_policy_config_word16v2~policy~l_microsoftofficeword~l_wordoptions~l_security~l_trustcenter~l_protectedview_l_turnoffprotectedviewforattachmentsopenedfromoutlook_0"
+        },
+        {
+          "settingDefinitionId": "user_vendor_msft_policy_config_excel16v2~policy~l_microsoftofficeexcel~l_exceloptions~l_security~l_trustcenter~l_protectedview_l_donotopenfilesfromtheinternetzoneinprotectedview",
+          "choice": "user_vendor_msft_policy_config_excel16v2~policy~l_microsoftofficeexcel~l_exceloptions~l_security~l_trustcenter~l_protectedview_l_donotopenfilesfromtheinternetzoneinprotectedview_0"
+        },
+        {
+          "settingDefinitionId": "user_vendor_msft_policy_config_excel16v2~policy~l_microsoftofficeexcel~l_exceloptions~l_security~l_trustcenter~l_protectedview_l_donotopenfilesinunsafelocationsinprotectedview",
+          "choice": "user_vendor_msft_policy_config_excel16v2~policy~l_microsoftofficeexcel~l_exceloptions~l_security~l_trustcenter~l_protectedview_l_donotopenfilesinunsafelocationsinprotectedview_0"
+        },
+        {
+          "settingDefinitionId": "user_vendor_msft_policy_config_excel16v2~policy~l_microsoftofficeexcel~l_exceloptions~l_security~l_trustcenter~l_protectedview_l_turnoffprotectedviewforattachmentsopenedfromoutlook",
+          "choice": "user_vendor_msft_policy_config_excel16v2~policy~l_microsoftofficeexcel~l_exceloptions~l_security~l_trustcenter~l_protectedview_l_turnoffprotectedviewforattachmentsopenedfromoutlook_0"
+        },
+        {
+          "settingDefinitionId": "user_vendor_msft_policy_config_ppt16v2~policy~l_microsoftofficepowerpoint~l_powerpointoptions~l_security~l_trustcenter~l_protectedview_l_donotopenfilesfromtheinternetzoneinprotectedview",
+          "choice": "user_vendor_msft_policy_config_ppt16v2~policy~l_microsoftofficepowerpoint~l_powerpointoptions~l_security~l_trustcenter~l_protectedview_l_donotopenfilesfromtheinternetzoneinprotectedview_0"
+        },
+        {
+          "settingDefinitionId": "user_vendor_msft_policy_config_ppt16v2~policy~l_microsoftofficepowerpoint~l_powerpointoptions~l_security~l_trustcenter~l_protectedview_l_donotopenfilesinunsafelocationsinprotectedview",
+          "choice": "user_vendor_msft_policy_config_ppt16v2~policy~l_microsoftofficepowerpoint~l_powerpointoptions~l_security~l_trustcenter~l_protectedview_l_donotopenfilesinunsafelocationsinprotectedview_0"
+        },
+        {
+          "settingDefinitionId": "user_vendor_msft_policy_config_ppt16v2~policy~l_microsoftofficepowerpoint~l_powerpointoptions~l_security~l_trustcenter~l_protectedview_l_turnoffprotectedviewforattachmentsopenedfromoutlook",
+          "choice": "user_vendor_msft_policy_config_ppt16v2~policy~l_microsoftofficepowerpoint~l_powerpointoptions~l_security~l_trustcenter~l_protectedview_l_turnoffprotectedviewforattachmentsopenedfromoutlook_0"
+        }
+      ]
+    },
+    "read": "GET /beta/deviceManagement/configurationPolicies?$filter=name eq '<policy name>'&$expand=settings",
+    "check": "for Word, Excel and PowerPoint: 'Do not open files from the Internet zone in Protected View', 'Do not open files in unsafe locations in Protected View' and 'Turn off Protected View for attachments opened from Outlook' each == _0 (Disabled), which keeps Protected View on",
+    "permissions": [
+      "graph:DeviceManagementConfiguration.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Intune settings catalogue coverage in Tenant Configuration Management unconfirmed. Monitor with box drift."
+    },
+    "verified": "every settingDefinitionId (9) exists and every chosen option id is one of its options: GET /beta/deviceManagement/configurationSettings/{id}, read-only, on the test tenant",
+    "notes": "The policies are phrased as turning Protected View off, so Disabled is the secure value. macOS: Office for Mac has no Protected View; not applicable on macOS."
+  },
+  "OFC-004": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.m365-apps",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceManagement/configurationPolicies (settings catalogue, platforms windows10, technologies mdm) assigned to {group:all-users}",
+    "payload": {
+      "policy": "Office: macro and content security (Windows)",
+      "settings": [
+        {
+          "settingDefinitionId": "user_vendor_msft_policy_config_excel16v3~policy~l_microsoftofficeexcel~l_exceloptions~l_security~l_trustcenter~l_externalcontent_l_disableddeserverlaunch",
+          "choice": "user_vendor_msft_policy_config_excel16v3~policy~l_microsoftofficeexcel~l_exceloptions~l_security~l_trustcenter~l_externalcontent_l_disableddeserverlaunch_1"
+        },
+        {
+          "settingDefinitionId": "user_vendor_msft_policy_config_excel16v3~policy~l_microsoftofficeexcel~l_exceloptions~l_security~l_trustcenter~l_externalcontent_l_disableddeserverlookup",
+          "choice": "user_vendor_msft_policy_config_excel16v3~policy~l_microsoftofficeexcel~l_exceloptions~l_security~l_trustcenter~l_externalcontent_l_disableddeserverlookup_1"
+        }
+      ]
+    },
+    "read": "GET /beta/deviceManagement/configurationPolicies?$filter=name eq '<policy name>'&$expand=settings",
+    "check": "disableddeserverlaunch == _1 and disableddeserverlookup == _1 (Enabled)",
+    "permissions": [
+      "graph:DeviceManagementConfiguration.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Intune settings catalogue coverage in Tenant Configuration Management unconfirmed. Monitor with box drift."
+    },
+    "verified": "every settingDefinitionId (2) exists and every chosen option id is one of its options: GET /beta/deviceManagement/configurationSettings/{id}, read-only, on the test tenant",
+    "notes": "DDE server launch and lookup are Excel features. Word's DDE is already off by default in current builds and has no settings catalogue entry. macOS: not applicable."
+  },
+  "OFC-005": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.m365-apps",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceManagement/configurationPolicies (settings catalogue, platforms windows10, technologies mdm) assigned to {group:all-users}",
+    "payload": {
+      "policy": "Office: macro and content security (Windows)",
+      "settings": [
+        {
+          "settingDefinitionId": "user_vendor_msft_policy_config_office16v2~policy~l_microsoftofficesystem~l_securitysettings_l_disableallactivex",
+          "choice": "user_vendor_msft_policy_config_office16v2~policy~l_microsoftofficesystem~l_securitysettings_l_disableallactivex_1"
+        }
+      ]
+    },
+    "read": "GET /beta/deviceManagement/configurationPolicies?$filter=name eq '<policy name>'&$expand=settings",
+    "check": "disableallactivex == _1 (Enabled: disable all ActiveX without notification)",
+    "permissions": [
+      "graph:DeviceManagementConfiguration.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Intune settings catalogue coverage in Tenant Configuration Management unconfirmed. Monitor with box drift."
+    },
+    "verified": "every settingDefinitionId (1) exists and every chosen option id is one of its options: GET /beta/deviceManagement/configurationSettings/{id}, read-only, on the test tenant",
+    "notes": "Office-wide (office16v2) setting. macOS: ActiveX does not exist on Mac; not applicable."
+  },
+  "OFC-006": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.m365-apps",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceManagement/configurationPolicies (settings catalogue, platforms windows10, technologies mdm) assigned to {group:all-users}",
+    "payload": {
+      "policy": "Office: macro and content security (Windows)",
+      "settings": [
+        {
+          "settingDefinitionId": "user_vendor_msft_policy_config_word16v2~policy~l_microsoftofficeword~l_wordoptions~l_security~l_trustcenter~l_trustedlocations_l_allowtrustedlocationsonthenetwork",
+          "choice": "user_vendor_msft_policy_config_word16v2~policy~l_microsoftofficeword~l_wordoptions~l_security~l_trustcenter~l_trustedlocations_l_allowtrustedlocationsonthenetwork_0"
+        },
+        {
+          "settingDefinitionId": "user_vendor_msft_policy_config_excel16v2~policy~l_microsoftofficeexcel~l_exceloptions~l_security~l_trustcenter~l_trustedlocations_l_allowtrustedlocationsonthenetwork",
+          "choice": "user_vendor_msft_policy_config_excel16v2~policy~l_microsoftofficeexcel~l_exceloptions~l_security~l_trustcenter~l_trustedlocations_l_allowtrustedlocationsonthenetwork_0"
+        },
+        {
+          "settingDefinitionId": "user_vendor_msft_policy_config_ppt16v2~policy~l_microsoftofficepowerpoint~l_powerpointoptions~l_security~l_trustcenter~l_trustedlocations_l_allowtrustedlocationsonthenetwork",
+          "choice": "user_vendor_msft_policy_config_ppt16v2~policy~l_microsoftofficepowerpoint~l_powerpointoptions~l_security~l_trustcenter~l_trustedlocations_l_allowtrustedlocationsonthenetwork_0"
+        }
+      ]
+    },
+    "read": "GET /beta/deviceManagement/configurationPolicies?$filter=name eq '<policy name>'&$expand=settings",
+    "check": "allowtrustedlocationsonthenetwork == _0 (Disabled) for Word, Excel and PowerPoint",
+    "permissions": [
+      "graph:DeviceManagementConfiguration.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Intune settings catalogue coverage in Tenant Configuration Management unconfirmed. Monitor with box drift."
+    },
+    "verified": "every settingDefinitionId (3) exists and every chosen option id is one of its options: GET /beta/deviceManagement/configurationSettings/{id}, read-only, on the test tenant",
+    "notes": "macOS: no trusted locations feature; not applicable."
+  },
+  "OFC-007": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.m365-apps",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceManagement/configurationPolicies (settings catalogue, platforms windows10, technologies mdm) assigned to {group:all-users}",
+    "payload": {
+      "policy": "Office: legacy file formats (Windows)",
+      "settings": [
+        {
+          "settingDefinitionId": "user_vendor_msft_policy_config_word16v2~policy~l_microsoftofficeword~l_wordoptions~l_security~l_trustcenter~l_fileblocksettings_l_word2andearlierbinarydocumentsandtemplates",
+          "choice": "user_vendor_msft_policy_config_word16v2~policy~l_microsoftofficeword~l_wordoptions~l_security~l_trustcenter~l_fileblocksettings_l_word2andearlierbinarydocumentsandtemplates_1",
+          "children": [
+            {
+              "settingDefinitionId": "user_vendor_msft_policy_config_word16v2~policy~l_microsoftofficeword~l_wordoptions~l_security~l_trustcenter~l_fileblocksettings_l_word2andearlierbinarydocumentsandtemplates_l_word2andearlierbinarydocumentsandtemplatesdropid",
+              "choice": "user_vendor_msft_policy_config_word16v2~policy~l_microsoftofficeword~l_wordoptions~l_security~l_trustcenter~l_fileblocksettings_l_word2andearlierbinarydocumentsandtemplates_l_word2andearlierbinarydocumentsandtemplatesdropid_2"
+            }
+          ]
+        },
+        {
+          "settingDefinitionId": "user_vendor_msft_policy_config_word16v2~policy~l_microsoftofficeword~l_wordoptions~l_security~l_trustcenter~l_fileblocksettings_l_word6pt0binarydocumentsandtemplates",
+          "choice": "user_vendor_msft_policy_config_word16v2~policy~l_microsoftofficeword~l_wordoptions~l_security~l_trustcenter~l_fileblocksettings_l_word6pt0binarydocumentsandtemplates_1",
+          "children": [
+            {
+              "settingDefinitionId": "user_vendor_msft_policy_config_word16v2~policy~l_microsoftofficeword~l_wordoptions~l_security~l_trustcenter~l_fileblocksettings_l_word6pt0binarydocumentsandtemplates_l_word6pt0binarydocumentsandtemplatesdropid",
+              "choice": "user_vendor_msft_policy_config_word16v2~policy~l_microsoftofficeword~l_wordoptions~l_security~l_trustcenter~l_fileblocksettings_l_word6pt0binarydocumentsandtemplates_l_word6pt0binarydocumentsandtemplatesdropid_2"
+            }
+          ]
+        },
+        {
+          "settingDefinitionId": "user_vendor_msft_policy_config_word16v2~policy~l_microsoftofficeword~l_wordoptions~l_security~l_trustcenter~l_fileblocksettings_l_word95binarydocumentsandtemplates",
+          "choice": "user_vendor_msft_policy_config_word16v2~policy~l_microsoftofficeword~l_wordoptions~l_security~l_trustcenter~l_fileblocksettings_l_word95binarydocumentsandtemplates_1",
+          "children": [
+            {
+              "settingDefinitionId": "user_vendor_msft_policy_config_word16v2~policy~l_microsoftofficeword~l_wordoptions~l_security~l_trustcenter~l_fileblocksettings_l_word95binarydocumentsandtemplates_l_word95binarydocumentsandtemplatesdropid",
+              "choice": "user_vendor_msft_policy_config_word16v2~policy~l_microsoftofficeword~l_wordoptions~l_security~l_trustcenter~l_fileblocksettings_l_word95binarydocumentsandtemplates_l_word95binarydocumentsandtemplatesdropid_2"
+            }
+          ]
+        },
+        {
+          "settingDefinitionId": "user_vendor_msft_policy_config_excel16v2~policy~l_microsoftofficeexcel~l_exceloptions~l_security~l_trustcenter~l_fileblocksettings_l_excel2worksheets",
+          "choice": "user_vendor_msft_policy_config_excel16v2~policy~l_microsoftofficeexcel~l_exceloptions~l_security~l_trustcenter~l_fileblocksettings_l_excel2worksheets_1",
+          "children": [
+            {
+              "settingDefinitionId": "user_vendor_msft_policy_config_excel16v2~policy~l_microsoftofficeexcel~l_exceloptions~l_security~l_trustcenter~l_fileblocksettings_l_excel2worksheets_l_excel2worksheetsdropid",
+              "choice": "user_vendor_msft_policy_config_excel16v2~policy~l_microsoftofficeexcel~l_exceloptions~l_security~l_trustcenter~l_fileblocksettings_l_excel2worksheets_l_excel2worksheetsdropid_2"
+            }
+          ]
+        },
+        {
+          "settingDefinitionId": "user_vendor_msft_policy_config_excel16v2~policy~l_microsoftofficeexcel~l_exceloptions~l_security~l_trustcenter~l_fileblocksettings_l_excel2macrosheetsandaddinfiles",
+          "choice": "user_vendor_msft_policy_config_excel16v2~policy~l_microsoftofficeexcel~l_exceloptions~l_security~l_trustcenter~l_fileblocksettings_l_excel2macrosheetsandaddinfiles_1",
+          "children": [
+            {
+              "settingDefinitionId": "user_vendor_msft_policy_config_excel16v2~policy~l_microsoftofficeexcel~l_exceloptions~l_security~l_trustcenter~l_fileblocksettings_l_excel2macrosheetsandaddinfiles_l_excel2macrosheetsandaddinfilesdropid",
+              "choice": "user_vendor_msft_policy_config_excel16v2~policy~l_microsoftofficeexcel~l_exceloptions~l_security~l_trustcenter~l_fileblocksettings_l_excel2macrosheetsandaddinfiles_l_excel2macrosheetsandaddinfilesdropid_2"
+            }
+          ]
+        },
+        {
+          "settingDefinitionId": "user_vendor_msft_policy_config_excel16v2~policy~l_microsoftofficeexcel~l_exceloptions~l_security~l_trustcenter~l_fileblocksettings_l_excel3worksheets",
+          "choice": "user_vendor_msft_policy_config_excel16v2~policy~l_microsoftofficeexcel~l_exceloptions~l_security~l_trustcenter~l_fileblocksettings_l_excel3worksheets_1",
+          "children": [
+            {
+              "settingDefinitionId": "user_vendor_msft_policy_config_excel16v2~policy~l_microsoftofficeexcel~l_exceloptions~l_security~l_trustcenter~l_fileblocksettings_l_excel3worksheets_l_excel3worksheetsdropid",
+              "choice": "user_vendor_msft_policy_config_excel16v2~policy~l_microsoftofficeexcel~l_exceloptions~l_security~l_trustcenter~l_fileblocksettings_l_excel3worksheets_l_excel3worksheetsdropid_2"
+            }
+          ]
+        },
+        {
+          "settingDefinitionId": "user_vendor_msft_policy_config_excel16v2~policy~l_microsoftofficeexcel~l_exceloptions~l_security~l_trustcenter~l_fileblocksettings_l_excel3macrosheetsandaddinfiles",
+          "choice": "user_vendor_msft_policy_config_excel16v2~policy~l_microsoftofficeexcel~l_exceloptions~l_security~l_trustcenter~l_fileblocksettings_l_excel3macrosheetsandaddinfiles_1",
+          "children": [
+            {
+              "settingDefinitionId": "user_vendor_msft_policy_config_excel16v2~policy~l_microsoftofficeexcel~l_exceloptions~l_security~l_trustcenter~l_fileblocksettings_l_excel3macrosheetsandaddinfiles_l_excel3macrosheetsandaddinfilesdropid",
+              "choice": "user_vendor_msft_policy_config_excel16v2~policy~l_microsoftofficeexcel~l_exceloptions~l_security~l_trustcenter~l_fileblocksettings_l_excel3macrosheetsandaddinfiles_l_excel3macrosheetsandaddinfilesdropid_2"
+            }
+          ]
+        },
+        {
+          "settingDefinitionId": "user_vendor_msft_policy_config_excel16v2~policy~l_microsoftofficeexcel~l_exceloptions~l_security~l_trustcenter~l_fileblocksettings_l_excel4worksheets",
+          "choice": "user_vendor_msft_policy_config_excel16v2~policy~l_microsoftofficeexcel~l_exceloptions~l_security~l_trustcenter~l_fileblocksettings_l_excel4worksheets_1",
+          "children": [
+            {
+              "settingDefinitionId": "user_vendor_msft_policy_config_excel16v2~policy~l_microsoftofficeexcel~l_exceloptions~l_security~l_trustcenter~l_fileblocksettings_l_excel4worksheets_l_excel4worksheetsdropid",
+              "choice": "user_vendor_msft_policy_config_excel16v2~policy~l_microsoftofficeexcel~l_exceloptions~l_security~l_trustcenter~l_fileblocksettings_l_excel4worksheets_l_excel4worksheetsdropid_2"
+            }
+          ]
+        },
+        {
+          "settingDefinitionId": "user_vendor_msft_policy_config_excel16v2~policy~l_microsoftofficeexcel~l_exceloptions~l_security~l_trustcenter~l_fileblocksettings_l_excel4workbooks",
+          "choice": "user_vendor_msft_policy_config_excel16v2~policy~l_microsoftofficeexcel~l_exceloptions~l_security~l_trustcenter~l_fileblocksettings_l_excel4workbooks_1",
+          "children": [
+            {
+              "settingDefinitionId": "user_vendor_msft_policy_config_excel16v2~policy~l_microsoftofficeexcel~l_exceloptions~l_security~l_trustcenter~l_fileblocksettings_l_excel4workbooks_l_excel4workbooksdropid",
+              "choice": "user_vendor_msft_policy_config_excel16v2~policy~l_microsoftofficeexcel~l_exceloptions~l_security~l_trustcenter~l_fileblocksettings_l_excel4workbooks_l_excel4workbooksdropid_2"
+            }
+          ]
+        },
+        {
+          "settingDefinitionId": "user_vendor_msft_policy_config_excel16v2~policy~l_microsoftofficeexcel~l_exceloptions~l_security~l_trustcenter~l_fileblocksettings_l_excel4macrosheetsandaddinfiles",
+          "choice": "user_vendor_msft_policy_config_excel16v2~policy~l_microsoftofficeexcel~l_exceloptions~l_security~l_trustcenter~l_fileblocksettings_l_excel4macrosheetsandaddinfiles_1",
+          "children": [
+            {
+              "settingDefinitionId": "user_vendor_msft_policy_config_excel16v2~policy~l_microsoftofficeexcel~l_exceloptions~l_security~l_trustcenter~l_fileblocksettings_l_excel4macrosheetsandaddinfiles_l_excel4macrosheetsandaddinfilesdropid",
+              "choice": "user_vendor_msft_policy_config_excel16v2~policy~l_microsoftofficeexcel~l_exceloptions~l_security~l_trustcenter~l_fileblocksettings_l_excel4macrosheetsandaddinfiles_l_excel4macrosheetsandaddinfilesdropid_2"
+            }
+          ]
+        },
+        {
+          "settingDefinitionId": "user_vendor_msft_policy_config_excel16v2~policy~l_microsoftofficeexcel~l_exceloptions~l_security~l_trustcenter~l_fileblocksettings_l_excel95workbooks",
+          "choice": "user_vendor_msft_policy_config_excel16v2~policy~l_microsoftofficeexcel~l_exceloptions~l_security~l_trustcenter~l_fileblocksettings_l_excel95workbooks_1",
+          "children": [
+            {
+              "settingDefinitionId": "user_vendor_msft_policy_config_excel16v2~policy~l_microsoftofficeexcel~l_exceloptions~l_security~l_trustcenter~l_fileblocksettings_l_excel95workbooks_l_excel95workbooksdropid",
+              "choice": "user_vendor_msft_policy_config_excel16v2~policy~l_microsoftofficeexcel~l_exceloptions~l_security~l_trustcenter~l_fileblocksettings_l_excel95workbooks_l_excel95workbooksdropid_2"
+            }
+          ]
+        },
+        {
+          "settingDefinitionId": "user_vendor_msft_policy_config_excel16v2~policy~l_microsoftofficeexcel~l_exceloptions~l_security~l_trustcenter~l_fileblocksettings_l_excel9597workbooksandtemplates",
+          "choice": "user_vendor_msft_policy_config_excel16v2~policy~l_microsoftofficeexcel~l_exceloptions~l_security~l_trustcenter~l_fileblocksettings_l_excel9597workbooksandtemplates_1",
+          "children": [
+            {
+              "settingDefinitionId": "user_vendor_msft_policy_config_excel16v2~policy~l_microsoftofficeexcel~l_exceloptions~l_security~l_trustcenter~l_fileblocksettings_l_excel9597workbooksandtemplates_l_excel9597workbooksandtemplatesdropid",
+              "choice": "user_vendor_msft_policy_config_excel16v2~policy~l_microsoftofficeexcel~l_exceloptions~l_security~l_trustcenter~l_fileblocksettings_l_excel9597workbooksandtemplates_l_excel9597workbooksandtemplatesdropid_2"
+            }
+          ]
+        },
+        {
+          "settingDefinitionId": "user_vendor_msft_policy_config_excel16v2~policy~l_microsoftofficeexcel~l_exceloptions~l_security~l_trustcenter~l_fileblocksettings_l_dbaseiiiandivfiles",
+          "choice": "user_vendor_msft_policy_config_excel16v2~policy~l_microsoftofficeexcel~l_exceloptions~l_security~l_trustcenter~l_fileblocksettings_l_dbaseiiiandivfiles_1",
+          "children": [
+            {
+              "settingDefinitionId": "user_vendor_msft_policy_config_excel16v2~policy~l_microsoftofficeexcel~l_exceloptions~l_security~l_trustcenter~l_fileblocksettings_l_dbaseiiiandivfiles_l_dbaseiiiandivfilesdropid",
+              "choice": "user_vendor_msft_policy_config_excel16v2~policy~l_microsoftofficeexcel~l_exceloptions~l_security~l_trustcenter~l_fileblocksettings_l_dbaseiiiandivfiles_l_dbaseiiiandivfilesdropid_2"
+            }
+          ]
+        },
+        {
+          "settingDefinitionId": "user_vendor_msft_policy_config_ppt16v2~policy~l_microsoftofficepowerpoint~l_powerpointoptions~l_security~l_trustcenter~l_fileblocksettings_l_powerpointbetafiles",
+          "choice": "user_vendor_msft_policy_config_ppt16v2~policy~l_microsoftofficepowerpoint~l_powerpointoptions~l_security~l_trustcenter~l_fileblocksettings_l_powerpointbetafiles_1",
+          "children": [
+            {
+              "settingDefinitionId": "user_vendor_msft_policy_config_ppt16v2~policy~l_microsoftofficepowerpoint~l_powerpointoptions~l_security~l_trustcenter~l_fileblocksettings_l_powerpointbetafiles_l_powerpointbetafilesdropid",
+              "choice": "user_vendor_msft_policy_config_ppt16v2~policy~l_microsoftofficepowerpoint~l_powerpointoptions~l_security~l_trustcenter~l_fileblocksettings_l_powerpointbetafiles_l_powerpointbetafilesdropid_2"
+            }
+          ]
+        }
+      ]
+    },
+    "read": "GET /beta/deviceManagement/configurationPolicies?$filter=name eq '<policy name>'&$expand=settings",
+    "check": "each listed file block setting == _1 with child == _2 ('Open/Save blocked, use open policy')",
+    "permissions": [
+      "graph:DeviceManagementConfiguration.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Intune settings catalogue coverage in Tenant Configuration Management unconfirmed. Monitor with box drift."
+    },
+    "verified": "every settingDefinitionId (28) exists and every chosen option id is one of its options: GET /beta/deviceManagement/configurationSettings/{id}, read-only, on the test tenant",
+    "notes": "Enhanced tier. 'Legacy' is taken as formats older than Office 97 (Word 2/6.0/95, Excel 2/3/4/95/95-97 and macro sheets, dBase III/IV, PowerPoint beta). Office 97-2003 binary formats (.doc/.xls/.ppt) are not included because they are still in common exchange; the owner can widen the list. macOS: no file block policy; not applicable."
+  },
+  "OFC-008": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.m365-apps",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceManagement/configurationPolicies (settings catalogue, platforms windows10, technologies mdm) assigned to {group:all-users}; macOS: POST /beta/deviceManagement/configurationPolicies (settings catalogue, platforms macOS, technologies mdm,appleRemoteManagement) assigned to {group:all-users}",
+    "payload": {
+      "windows": {
+        "settings": [
+          {
+            "settingDefinitionId": "user_vendor_msft_policy_config_outlk16v2~policy~l_microsoftofficeoutlook~l_security~l_automaticpicturedownloadsettings_l_blockexternalcontent",
+            "choice": "user_vendor_msft_policy_config_outlk16v2~policy~l_microsoftofficeoutlook~l_security~l_automaticpicturedownloadsettings_l_blockexternalcontent_0"
+          }
+        ]
+      },
+      "macos": {
+        "settings": [
+          {
+            "settingDefinitionId": "com.apple.managedclient.preferences_automaticallydownloadexternalcontent",
+            "choice": "com.apple.managedclient.preferences_automaticallydownloadexternalcontent_0"
+          }
+        ]
+      }
+    },
+    "read": "GET /beta/deviceManagement/configurationPolicies?$filter=name eq '<policy name>'&$expand=settings",
+    "check": "Windows: 'Display pictures and external content in HTML e-mail' == _0 (Disabled); macOS: automaticallydownloadexternalcontent == _0 (Never download images)",
+    "permissions": [
+      "graph:DeviceManagementConfiguration.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Intune settings catalogue coverage in Tenant Configuration Management unconfirmed. Monitor with box drift."
+    },
+    "verified": "every settingDefinitionId (2) exists and every chosen option id is one of its options: GET /beta/deviceManagement/configurationSettings/{id}, read-only, on the test tenant",
+    "notes": "Outlook blocks external content by default; the policy prevents users turning it on."
+  },
+  "OFC-009": {
+    "status": "resolved",
+    "provider": "exchange",
+    "step": "policy.m365-apps",
+    "method": "cmdlet",
+    "apply": "Get-ManagementRoleAssignment -RoleAssignee 'Default Role Assignment Policy' | Where-Object Role -in 'My Custom Apps','My Marketplace Apps','My ReadWriteMailbox Apps' | Remove-ManagementRoleAssignment -Confirm:$false (same as EXO-014)",
+    "payload": {
+      "remove_roles_from_default_role_assignment_policy": [
+        "My Custom Apps",
+        "My Marketplace Apps",
+        "My ReadWriteMailbox Apps"
+      ]
+    },
+    "read": "Get-RoleAssignmentPolicy | Select-Object Name, IsDefault, AssignedRoles",
+    "check": "no role assignment policy lists the three My*Apps roles",
+    "permissions": [
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [
+      "Exchange Administrator"
+    ],
+    "tcm": {
+      "resource": "microsoft.exchange.roleassignmentpolicy",
+      "note": "S-02 not done; candidate resource name, unconfirmed"
+    },
+    "verified": "Get-RoleAssignmentPolicy read OK on the test tenant (roles currently assigned).",
+    "notes": "Outlook add-ins are controlled by Exchange for every Outlook client (Windows, Mac, web), so this is an Exchange setting, not an Office policy. 'Unless approved': approved add-ins are deployed centrally in Microsoft 365 admin centre > Integrated apps; that deployment is a portal action (gate) checked by Get-App -OrganizationApp in Exchange. Same apply as EXO-014; one step should own it. The Office ADMX 'Block the Office Store' (office16v2 l_disableofficestore) covers Word/Excel/PowerPoint add-ins, not Outlook."
+  },
+  "OFC-010": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.m365-apps",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceManagement/configurationPolicies (settings catalogue, platforms windows10, technologies mdm) assigned to {group:all-devices}; macOS: POST /beta/deviceManagement/configurationPolicies (settings catalogue, platforms macOS, technologies mdm,appleRemoteManagement) assigned to {group:all-devices}",
+    "payload": {
+      "windows": {
+        "settings": [
+          {
+            "settingDefinitionId": "pdates~policy~l_microsoftofficemachine~l_updates_l_updatebranch",
+            "choice": "pdates~policy~l_microsoftofficemachine~l_updates_l_updatebranch_1",
+            "children": [
+              {
+                "settingDefinitionId": "pdates~policy~l_microsoftofficemachine~l_updates_l_updatebranch_l_updatebranchid",
+                "choice": "pdates~policy~l_microsoftofficemachine~l_updates_l_updatebranch_l_updatebranchid_monthlyenterprise"
+              }
+            ]
+          },
+          {
+            "settingDefinitionId": "device_vendor_msft_policy_config_office16v2~policy~l_microsoftofficemachine~l_updates_l_updatedeadline",
+            "choice": "device_vendor_msft_policy_config_office16v2~policy~l_microsoftofficemachine~l_updates_l_updatedeadline_1",
+            "children": [
+              {
+                "settingDefinitionId": "device_vendor_msft_policy_config_office16v2~policy~l_microsoftofficemachine~l_updates_l_updatedeadline_l_updatedeadlineid",
+                "value": "3"
+              }
+            ]
+          }
+        ]
+      },
+      "macos_nearest": {
+        "settings": [
+          {
+            "settingDefinitionId": "com.apple.managedclient.preferences_updatedeadline.daysbeforeforcedquit",
+            "value": 3
+          },
+          {
+            "settingDefinitionId": "com.apple.managedclient.preferences_channelname",
+            "choice": "decision needed: _0 Current, _2 Current (Deferred) or _4 Current (Monthly)"
+          }
+        ]
+      }
+    },
+    "read": "GET /beta/deviceManagement/configurationPolicies?$filter=name eq '<policy name>'&$expand=settings",
+    "check": "Windows: Update Channel == monthlyenterprise and Update Deadline == 3; macOS: daysbeforeforcedquit == 3",
+    "permissions": [
+      "graph:DeviceManagementConfiguration.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Intune settings catalogue coverage in Tenant Configuration Management unconfirmed. Monitor with box drift."
+    },
+    "verified": "every settingDefinitionId (6) exists and every chosen option id is one of its options: GET /beta/deviceManagement/configurationSettings/{id}, read-only, on the test tenant",
+    "notes": "Device-scope settings. The Windows non-deprecated Update Channel definition id really begins 'pdates~policy~...' in Microsoft's catalogue (verified); the deprecated twin is device_vendor_msft_policy_config_office16v2~policy~l_microsoftofficemachine~l_updates_l_updatebranch. macOS partial: Microsoft AutoUpdate has no 'Monthly Enterprise' channel; nearest values listed for a decision (findings). Cloud update in the Microsoft 365 Apps admin centre is an alternative with no supported write API (config.office.com host blocked)."
+  },
+  "OFC-011": {
+    "status": "unresolved",
+    "provider": "intune",
+    "step": "policy.m365-apps",
+    "method": "graph-beta",
+    "apply": null,
+    "payload": null,
+    "read": null,
+    "check": null,
+    "permissions": [
+      "graph:DeviceManagementConfiguration.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Intune settings catalogue coverage in Tenant Configuration Management unconfirmed. Monitor with box drift."
+    },
+    "verified": "Searched the settings catalogue (GET /beta/deviceManagement/configurationSettings?$filter=contains(id,...)) for save-location policies: found only office16v2 l_onlinestoragefilter ('Hide file locations when opening or saving files') on Windows and com.apple.managedclient.preferences_defaultstolocalopensave on macOS.",
+    "notes": "Windows has no settings catalogue policy that makes company storage (OneDrive/SharePoint) the default save location; it is the product default for signed-in users. Available: (a) macOS DefaultsToLocalOpenSave = false (_false) which makes cloud the default; (b) Windows: OneDrive Known Folder Move (onedrivengscv2 KFMSilentOptIn with {tenant:id}) so local Documents/Desktop are company storage; (c) l_onlinestoragefilter to hide non-company cloud locations. Decision needed: accept (a)+(b) as delivering the value, or reword.",
+    "available": [
+      "com.apple.managedclient.preferences_defaultstolocalopensave",
+      "device_vendor_msft_policy_config_onedrivengscv2~policy~onedrivengsc_kfmoptinnowizard (KFM silent opt-in; id family seen in catalogue)",
+      "user_vendor_msft_policy_config_office16v2~policy~l_microsoftofficesystem~l_miscellaneous437_l_onlinestoragefilter"
+    ]
+  },
+  "OFC-012": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.m365-apps",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceManagement/configurationPolicies (settings catalogue, platforms windows10, technologies mdm) assigned to {group:all-users}; macOS: POST /beta/deviceManagement/configurationPolicies (settings catalogue, platforms macOS, technologies mdm,appleRemoteManagement) assigned to {group:all-users}",
+    "payload": {
+      "windows": {
+        "settings": [
+          {
+            "settingDefinitionId": "user_vendor_msft_policy_config_office16v2.updates.3~policy~l_microsoftofficesystem~l_privacy~l_trustcenter_l_officeexperiencesanlayzingcontent",
+            "choice": "user_vendor_msft_policy_config_office16v2.updates.3~policy~l_microsoftofficesystem~l_privacy~l_trustcenter_l_officeexperiencesanlayzingcontent_{config:ai_policy.office_analyse ? 1 : 0}"
+          },
+          {
+            "settingDefinitionId": "user_vendor_msft_policy_config_office16v2.updates.3~policy~l_microsoftofficesystem~l_privacy~l_trustcenter_l_officeexperiencesdownloadingcontent",
+            "choice": "user_vendor_msft_policy_config_office16v2.updates.3~policy~l_microsoftofficesystem~l_privacy~l_trustcenter_l_officeexperiencesdownloadingcontent_{config:ai_policy.office_download ? 1 : 0}"
+          }
+        ]
+      },
+      "macos": {
+        "settings": [
+          {
+            "settingDefinitionId": "com.apple.managedclient.preferences_officeexperiencesanalyzingcontentpreference",
+            "choice": "com.apple.managedclient.preferences_officeexperiencesanalyzingcontentpreference_{config:ai_policy.office_analyse}"
+          },
+          {
+            "settingDefinitionId": "com.apple.managedclient.preferences_officeexperiencesdownloadingcontentpreference",
+            "choice": "com.apple.managedclient.preferences_officeexperiencesdownloadingcontentpreference_{config:ai_policy.office_download}"
+          }
+        ]
+      }
+    },
+    "read": "GET /beta/deviceManagement/configurationPolicies?$filter=name eq '<policy name>'&$expand=settings",
+    "check": "the four settings equal the values the AI policy approves",
+    "permissions": [
+      "graph:DeviceManagementConfiguration.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Intune settings catalogue coverage in Tenant Configuration Management unconfirmed. Monitor with box drift."
+    },
+    "verified": "every settingDefinitionId (4) exists and every chosen option id is one of its options: GET /beta/deviceManagement/configurationSettings/{id}, read-only, on the test tenant",
+    "notes": "Value 'as approved in the AI policy' is company data; the configuration has no field for it yet (needs a home, R11). Uses the office16v2.updates.3 (current) definitions; the office16v2 ones of the same name are deprecated."
+  },
+  "OFC-013": {
+    "status": "resolved",
+    "provider": "exchange",
+    "step": "policy.m365-apps",
+    "method": "cmdlet",
+    "apply": "Set-LabelPolicy -Identity 'Default label policy' -Settings @{mandatory='true'} (same label policy object as PVW-007, Security & Compliance PowerShell)",
+    "payload": {
+      "Set-LabelPolicy": {
+        "Identity": "Default label policy",
+        "Settings": {
+          "mandatory": "true"
+        }
+      }
+    },
+    "read": "Get-LabelPolicy -Identity 'Default label policy' | Select-Object Settings",
+    "check": "Settings contains [mandatory, true]",
+    "permissions": [
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [
+      "Compliance Administrator"
+    ],
+    "tcm": {
+      "resource": "microsoft.securityandcompliance.labelpolicy",
+      "note": "S-02 not done; candidate resource name, unconfirmed"
+    },
+    "verified": "not verified: Connect-IPPSSession app-only failed on the test tenant (see PVW-007); parameters checked against module 3.6.0 help only after a connection, which was not obtained.",
+    "notes": "Office (Windows, Mac, web, mobile) enforces mandatory labelling from the published label policy; there is no separate Office policy. One object with PVW-007, which is staged; OFC-013 is enforce: the label policy's scope moves from the pilot group to all users when rollout.stage is enforce."
+  }
+}

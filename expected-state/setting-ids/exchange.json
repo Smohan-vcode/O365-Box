@@ -1,0 +1,526 @@
+{
+  "EXO-001": {
+    "status": "resolved",
+    "provider": "exchange",
+    "step": "policy.exchange",
+    "method": "cmdlet",
+    "apply": "Set-TransportConfig -SmtpClientAuthenticationDisabled $true; exceptions: Set-CASMailbox -Identity <mailbox> -SmtpClientAuthenticationDisabled $false for each mailbox named in an exception record",
+    "payload": {
+      "Set-TransportConfig": {
+        "SmtpClientAuthenticationDisabled": true
+      },
+      "Set-CASMailbox(per exception)": {
+        "Identity": "{mailbox:<exception>}",
+        "SmtpClientAuthenticationDisabled": false
+      }
+    },
+    "read": "Get-TransportConfig; Get-CASMailbox -ResultSize Unlimited -Filter 'SmtpClientAuthenticationDisabled -eq $false'",
+    "check": "TransportConfig.SmtpClientAuthenticationDisabled == true; mailboxes with SmtpClientAuthenticationDisabled == false are exactly the excepted ones",
+    "permissions": [
+      "exchange:Exchange.ManageAsApp",
+      "graph:AuditLog.Read.All"
+    ],
+    "roles": [
+      "Exchange Administrator"
+    ],
+    "tcm": {
+      "resource": "microsoft.exchange.transportconfig",
+      "note": "S-02 not done; candidate resource name, unconfirmed"
+    },
+    "verified": "cmdlet and parameters exist (Get-Command after Connect-ExchangeOnline app-only, module 3.6.0); Get-TransportConfig read OK on test tenant (already true by default).",
+    "notes": "Exchange has no report-only mode for SMTP AUTH. The audit form is a read of who still uses it before the switch.",
+    "payload_audit": {
+      "apply": "none (no change to the tenant during audit)",
+      "read": "GET /v1.0/auditLogs/signIns?$filter=clientAppUsed eq 'Authenticated SMTP'&$select=userPrincipalName,createdDateTime",
+      "check": "every account found is either excepted by record or remediated before stage: enforce"
+    }
+  },
+  "EXO-002": {
+    "status": "resolved",
+    "provider": "exchange",
+    "step": "policy.exchange",
+    "method": "cmdlet",
+    "apply": "Get-CASMailboxPlan | Set-CASMailboxPlan -PopEnabled $false -ImapEnabled $false",
+    "payload": {
+      "Set-CASMailboxPlan(each plan)": {
+        "PopEnabled": false,
+        "ImapEnabled": false
+      }
+    },
+    "read": "Get-CASMailboxPlan | Select-Object Name, PopEnabled, ImapEnabled",
+    "check": "every CASMailboxPlan: PopEnabled == false and ImapEnabled == false",
+    "permissions": [
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [
+      "Exchange Administrator"
+    ],
+    "tcm": {
+      "resource": "microsoft.exchange.casmailboxplan",
+      "note": "S-02 not done; candidate resource name, unconfirmed"
+    },
+    "verified": "cmdlet and parameters exist (Get-Command after Connect-ExchangeOnline app-only, module 3.6.0); Get-CASMailboxPlan read OK: 4 plans on the test tenant, POP and IMAP currently on.",
+    "notes": "Applies to mailboxes created after the change. Existing mailboxes keep their values; Set-CASMailbox -PopEnabled $false -ImapEnabled $false brings them in line if wanted (not stated by the setting)."
+  },
+  "EXO-003": {
+    "status": "resolved",
+    "provider": "exchange",
+    "step": "policy.exchange",
+    "method": "cmdlet",
+    "apply": "Set-OrganizationConfig -RejectDirectSend $true",
+    "payload": {
+      "Set-OrganizationConfig": {
+        "RejectDirectSend": true
+      }
+    },
+    "read": "Get-OrganizationConfig | Select-Object RejectDirectSend",
+    "check": "RejectDirectSend == true",
+    "permissions": [
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [
+      "Exchange Administrator"
+    ],
+    "tcm": {
+      "resource": "microsoft.exchange.organizationconfig",
+      "note": "S-02 not done; candidate resource name, unconfirmed"
+    },
+    "verified": "cmdlet and parameters exist (Get-Command after Connect-ExchangeOnline app-only, module 3.6.0); RejectDirectSend returned by Get-OrganizationConfig on the test tenant (currently false).",
+    "notes": "Newer setting (2025); no audit mode. Devices or services that send as the company's domains without a connector must move to an inbound connector or SMTP relay first.",
+    "payload_audit": {
+      "apply": "none during audit",
+      "read": "Get-MessageTraceV2 -StartDate <audit start> -EndDate <now> -SenderAddress *@{domain:primary} | where the message arrived from the internet without a connector (FromIP outside Exchange Online)",
+      "check": "no legitimate direct-send senders remain unlisted before enforce"
+    }
+  },
+  "EXO-004": {
+    "status": "resolved",
+    "provider": "exchange",
+    "step": "policy.exchange",
+    "method": "cmdlet",
+    "apply": "Set-RemoteDomain -Identity Default -AutoForwardEnabled $false",
+    "payload": {
+      "Set-RemoteDomain": {
+        "Identity": "Default",
+        "AutoForwardEnabled": false
+      }
+    },
+    "read": "Get-RemoteDomain -Identity Default | Select-Object DomainName, AutoForwardEnabled",
+    "check": "Default (DomainName '*').AutoForwardEnabled == false",
+    "permissions": [
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [
+      "Exchange Administrator"
+    ],
+    "tcm": {
+      "resource": "microsoft.exchange.remotedomain",
+      "note": "S-02 not done; candidate resource name, unconfirmed"
+    },
+    "verified": "cmdlet and parameters exist (Get-Command after Connect-ExchangeOnline app-only, module 3.6.0); Get-RemoteDomain read OK (default domain currently true).",
+    "notes": "The baseline's outbound spam setting (Set-HostedOutboundSpamFilterPolicy -Identity Default -AutoForwardingMode Off; currently Automatic) is the companion control and stays in the mail baseline (T2-02)."
+  },
+  "EXO-005": {
+    "status": "resolved",
+    "provider": "exchange",
+    "step": "policy.exchange",
+    "method": "cmdlet",
+    "apply": "New-TransportRule (or Set-TransportRule when it exists) named 'Block auto-forward leaving the company'",
+    "payload": {
+      "New-TransportRule": {
+        "Name": "Block auto-forward leaving the company",
+        "FromScope": "InOrganization",
+        "SentToScope": "NotInOrganization",
+        "MessageTypeMatches": "AutoForward",
+        "RejectMessageEnhancedStatusCode": "5.7.1",
+        "RejectMessageReasonText": "Automatic forwarding outside the company is not allowed.",
+        "Mode": "Enforce",
+        "Priority": 0
+      }
+    },
+    "read": "Get-TransportRule -Identity 'Block auto-forward leaving the company' | Select-Object State, Mode, FromScope, SentToScope, MessageTypeMatches, RejectMessageEnhancedStatusCode",
+    "check": "rule exists; State == Enabled; Mode == Enforce; FromScope == InOrganization; SentToScope == NotInOrganization; MessageTypeMatches == AutoForward",
+    "permissions": [
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [
+      "Exchange Administrator"
+    ],
+    "tcm": {
+      "resource": "microsoft.exchange.transportrule",
+      "note": "S-02 not done; candidate resource name, unconfirmed"
+    },
+    "verified": "cmdlet and parameters exist (Get-Command after Connect-ExchangeOnline app-only, module 3.6.0); Get-TransportRule read OK (no rules on the test tenant yet).",
+    "notes": "Rule name is engine data, not company data."
+  },
+  "EXO-007": {
+    "status": "resolved",
+    "provider": "exchange",
+    "step": "policy.exchange",
+    "method": "cmdlet",
+    "apply": "Set-ExternalInOutlook -Enabled $true",
+    "payload": {
+      "Set-ExternalInOutlook": {
+        "Enabled": true
+      }
+    },
+    "read": "Get-ExternalInOutlook | Select-Object Enabled",
+    "check": "Enabled == true",
+    "permissions": [
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [
+      "Exchange Administrator"
+    ],
+    "tcm": {
+      "resource": "microsoft.exchange.externalinoutlook",
+      "note": "S-02 not done; candidate resource name, unconfirmed"
+    },
+    "verified": "cmdlet and parameters exist (Get-Command after Connect-ExchangeOnline app-only, module 3.6.0); Get-ExternalInOutlook read OK (currently false).",
+    "notes": "Can take up to 48 hours to show in clients. AllowList stays empty."
+  },
+  "EXO-008": {
+    "status": "resolved",
+    "provider": "exchange",
+    "step": "policy.exchange",
+    "method": "cmdlet",
+    "apply": "Set-OrganizationConfig -MailTipsAllTipsEnabled $true -MailTipsExternalRecipientsTipsEnabled $true -MailTipsGroupMetricsEnabled $true -MailTipsLargeAudienceThreshold 25",
+    "payload": {
+      "Set-OrganizationConfig": {
+        "MailTipsAllTipsEnabled": true,
+        "MailTipsExternalRecipientsTipsEnabled": true,
+        "MailTipsGroupMetricsEnabled": true,
+        "MailTipsLargeAudienceThreshold": 25
+      }
+    },
+    "read": "Get-OrganizationConfig | Select-Object MailTips*",
+    "check": "MailTipsAllTipsEnabled == true; MailTipsExternalRecipientsTipsEnabled == true; MailTipsGroupMetricsEnabled == true; MailTipsLargeAudienceThreshold == 25",
+    "permissions": [
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [
+      "Exchange Administrator"
+    ],
+    "tcm": {
+      "resource": "microsoft.exchange.organizationconfig",
+      "note": "S-02 not done; candidate resource name, unconfirmed"
+    },
+    "verified": "cmdlet and parameters exist (Get-Command after Connect-ExchangeOnline app-only, module 3.6.0); read OK (external recipients tip currently false; others already on, threshold 25).",
+    "notes": "Large audience threshold 25 is the product default; the setting states no number."
+  },
+  "EXO-009": {
+    "status": "resolved",
+    "provider": "exchange",
+    "step": "policy.exchange",
+    "method": "cmdlet",
+    "apply": "Set-OrganizationConfig -AuditDisabled $false; for any mailbox reporting AuditEnabled false: Set-Mailbox -Identity <mailbox> -AuditEnabled $true",
+    "payload": {
+      "Set-OrganizationConfig": {
+        "AuditDisabled": false
+      },
+      "Set-Mailbox(per exception)": {
+        "AuditEnabled": true
+      }
+    },
+    "read": "Get-OrganizationConfig | Select-Object AuditDisabled; Get-EXOMailbox -ResultSize Unlimited -Properties AuditEnabled -RecipientTypeDetails UserMailbox,SharedMailbox",
+    "check": "AuditDisabled == false; every UserMailbox and SharedMailbox has AuditEnabled == true",
+    "permissions": [
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [
+      "Exchange Administrator"
+    ],
+    "tcm": {
+      "resource": "microsoft.exchange.organizationconfig",
+      "note": "S-02 not done; candidate resource name, unconfirmed"
+    },
+    "verified": "cmdlet and parameters exist (Get-Command after Connect-ExchangeOnline app-only, module 3.6.0); read OK: AuditDisabled false; user and shared mailboxes on the test tenant report AuditEnabled true.",
+    "notes": "Mailbox audit on by default covers shared mailboxes. The discovery mailbox reports false and is excluded from the check."
+  },
+  "EXO-010": {
+    "status": "resolved",
+    "provider": "exchange",
+    "step": "policy.exchange",
+    "method": "graph",
+    "apply": "PATCH /v1.0/users/{user:shared-mailbox} for each shared mailbox (already done by step exchange.shared-mailboxes)",
+    "payload": {
+      "accountEnabled": false
+    },
+    "read": "GET /v1.0/users/{user:shared-mailbox}?$select=accountEnabled,assignedLicenses",
+    "check": "accountEnabled == false and assignedLicenses is empty, for every RecipientTypeDetails == SharedMailbox",
+    "permissions": [
+      "graph:User.ReadWrite.All",
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [
+      "Exchange Administrator"
+    ],
+    "tcm": {
+      "resource": "microsoft.exchange.sharedmailbox",
+      "note": "S-02 not done; TCM shared mailbox resource does not carry sign-in state. Monitor with box drift."
+    },
+    "verified": "Implemented and verified by exchange.shared-mailboxes (T2-01); Graph read of accountEnabled works app-only.",
+    "notes": "No new code: policy.exchange reads the state for evidence; exchange.shared-mailboxes applies it."
+  },
+  "EXO-011": {
+    "status": "resolved",
+    "provider": "exchange",
+    "step": "policy.exchange",
+    "method": "cmdlet",
+    "apply": "Add-MailboxPermission -AccessRights FullAccess and Add-RecipientPermission -AccessRights SendAs for members of the access group named in mail.shared[].access; remove any non-inherited grant not from that group (step exchange.shared-mailboxes)",
+    "payload": {
+      "Add-MailboxPermission": {
+        "Identity": "{mailbox:<shared>}",
+        "User": "{group-members:<access group>}",
+        "AccessRights": "FullAccess",
+        "AutoMapping": true
+      },
+      "Add-RecipientPermission": {
+        "Identity": "{mailbox:<shared>}",
+        "Trustee": "{group-members:<access group>}",
+        "AccessRights": "SendAs"
+      }
+    },
+    "read": "Get-EXOMailboxPermission -Identity <shared>; Get-EXORecipientPermission -Identity <shared>",
+    "check": "the set of non-inherited FullAccess users and SendAs trustees equals the members of the configured access group",
+    "permissions": [
+      "exchange:Exchange.ManageAsApp",
+      "graph:Group.ReadWrite.All"
+    ],
+    "roles": [
+      "Exchange Administrator"
+    ],
+    "tcm": {
+      "resource": "microsoft.exchange.mailboxpermission",
+      "note": "S-02 not done; candidate resource name, unconfirmed"
+    },
+    "verified": "Implemented in exchange.shared-mailboxes (T2-01); parameters exist.",
+    "notes": "Exchange grants only to mail-enabled groups, so the provider expands the Entra access group to its members on every apply (existing design)."
+  },
+  "EXO-012": {
+    "status": "resolved",
+    "provider": "exchange",
+    "step": "policy.exchange",
+    "method": "cmdlet",
+    "apply": "Set-OwaMailboxPolicy -Identity OwaMailboxPolicy-Default -AdditionalStorageProvidersAvailable $false",
+    "payload": {
+      "Set-OwaMailboxPolicy": {
+        "Identity": "OwaMailboxPolicy-Default",
+        "AdditionalStorageProvidersAvailable": false
+      }
+    },
+    "read": "Get-OwaMailboxPolicy | Select-Object Name, IsDefault, AdditionalStorageProvidersAvailable",
+    "check": "every OwaMailboxPolicy: AdditionalStorageProvidersAvailable == false",
+    "permissions": [
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [
+      "Exchange Administrator"
+    ],
+    "tcm": {
+      "resource": "microsoft.exchange.owamailboxpolicy",
+      "note": "S-02 not done; candidate resource name, unconfirmed"
+    },
+    "verified": "cmdlet and parameters exist (Get-Command after Connect-ExchangeOnline app-only, module 3.6.0); read OK (default policy currently true).",
+    "notes": "ThirdPartyFileProvidersEnabled is already false and is no longer settable in this module version."
+  },
+  "EXO-013": {
+    "status": "resolved",
+    "provider": "exchange",
+    "step": "policy.exchange",
+    "method": "cmdlet",
+    "apply": "Set-OwaMailboxPolicy -Identity OwaMailboxPolicy-Default -ConditionalAccessPolicy ReadOnly",
+    "payload": {
+      "Set-OwaMailboxPolicy": {
+        "Identity": "OwaMailboxPolicy-Default",
+        "ConditionalAccessPolicy": "ReadOnly"
+      }
+    },
+    "read": "Get-OwaMailboxPolicy | Select-Object Name, ConditionalAccessPolicy",
+    "check": "ConditionalAccessPolicy == ReadOnly",
+    "permissions": [
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [
+      "Exchange Administrator"
+    ],
+    "tcm": {
+      "resource": "microsoft.exchange.owamailboxpolicy",
+      "note": "S-02 not done; candidate resource name, unconfirmed"
+    },
+    "verified": "cmdlet and parameters exist (Get-Command after Connect-ExchangeOnline app-only, module 3.6.0); read OK (currently Off).",
+    "notes": "Takes effect only with the Conditional Access session control 'Use app enforced restrictions' for Exchange Online (ENT-009, entra_p1). ReadOnly lets users view attachments in the browser but not download them."
+  },
+  "EXO-014": {
+    "status": "resolved",
+    "provider": "exchange",
+    "step": "policy.exchange",
+    "method": "cmdlet",
+    "apply": "Get-ManagementRoleAssignment -RoleAssignee 'Default Role Assignment Policy' | Where-Object Role -in 'My Custom Apps','My Marketplace Apps','My ReadWriteMailbox Apps' | Remove-ManagementRoleAssignment -Confirm:$false",
+    "payload": {
+      "remove_roles_from_default_role_assignment_policy": [
+        "My Custom Apps",
+        "My Marketplace Apps",
+        "My ReadWriteMailbox Apps"
+      ]
+    },
+    "read": "Get-RoleAssignmentPolicy | Select-Object Name, IsDefault, AssignedRoles",
+    "check": "no role assignment policy lists 'My Custom Apps', 'My Marketplace Apps' or 'My ReadWriteMailbox Apps' in AssignedRoles",
+    "permissions": [
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [
+      "Exchange Administrator"
+    ],
+    "tcm": {
+      "resource": "microsoft.exchange.roleassignmentpolicy",
+      "note": "S-02 not done; candidate resource name, unconfirmed"
+    },
+    "verified": "Get-RoleAssignmentPolicy read OK (all three roles currently assigned); Get-/Remove-ManagementRoleAssignment exist. Set-RoleAssignmentPolicy has no -Roles parameter in module 3.6.0, so removal is by role assignment.",
+    "notes": "Same mechanism delivers OFC-009. Approved add-ins are then deployed centrally (Integrated apps), see OFC-009."
+  },
+  "EXO-015": {
+    "status": "resolved",
+    "provider": "exchange",
+    "step": "policy.exchange",
+    "method": "cmdlet",
+    "apply": "Set-SharingPolicy -Identity 'Default Sharing Policy' -Domains '*:CalendarSharingFreeBusySimple'",
+    "payload": {
+      "Set-SharingPolicy": {
+        "Identity": "Default Sharing Policy",
+        "Domains": [
+          "*:CalendarSharingFreeBusySimple"
+        ],
+        "Enabled": true
+      }
+    },
+    "read": "Get-SharingPolicy | Select-Object Name, Default, Enabled, Domains",
+    "check": "every enabled sharing policy: each Domains entry ends in ':CalendarSharingFreeBusySimple' and no 'Anonymous:' entry",
+    "permissions": [
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [
+      "Exchange Administrator"
+    ],
+    "tcm": {
+      "resource": "microsoft.exchange.sharingpolicy",
+      "note": "S-02 not done; candidate resource name, unconfirmed"
+    },
+    "verified": "cmdlet and parameters exist (Get-Command after Connect-ExchangeOnline app-only, module 3.6.0); read OK: default policy currently has '*:CalendarSharingFreeBusySimple' plus 'Anonymous:CalendarSharingFreeBusyReviewer' (anonymous publishing with titles and locations), which this removes.",
+    "notes": ""
+  },
+  "EXO-016": {
+    "status": "resolved",
+    "provider": "exchange",
+    "step": "policy.exchange",
+    "method": "cmdlet",
+    "apply": "per custom sending domain: New-DkimSigningConfig -DomainName {domain:primary} -KeySize 2048 -Enabled $false; after the selector CNAMEs resolve (dns provider, T2-03): Set-DkimSigningConfig -Identity {domain:primary} -Enabled $true; a config whose Selector1KeySize < 2048: Rotate-DkimSigningConfig -Identity {domain:primary} -KeySize 2048",
+    "payload": {
+      "New-DkimSigningConfig": {
+        "DomainName": "{domain:primary}",
+        "KeySize": 2048,
+        "Enabled": false
+      },
+      "Set-DkimSigningConfig": {
+        "Identity": "{domain:primary}",
+        "Enabled": true
+      }
+    },
+    "read": "Get-DkimSigningConfig | Select-Object Domain, Enabled, Status, Selector1KeySize, Selector2KeySize, Selector1CNAME, Selector2CNAME",
+    "check": "for every accepted sending domain: Enabled == true; Status == Valid; Selector1KeySize == 2048",
+    "permissions": [
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [
+      "Exchange Administrator"
+    ],
+    "tcm": {
+      "resource": "microsoft.exchange.dkimsigningconfig",
+      "note": "S-02 not done; candidate resource name, unconfirmed"
+    },
+    "verified": "cmdlet and parameters exist (Get-Command after Connect-ExchangeOnline app-only, module 3.6.0); Get-DkimSigningConfig returned no objects on the test tenant (no custom domain added yet).",
+    "notes": "Order matters: create disabled, publish CNAMEs (Selector1CNAME/Selector2CNAME values) through the dns provider, then enable. Baseline already declares DKIM."
+  },
+  "EXO-017": {
+    "status": "resolved",
+    "provider": "dns",
+    "step": "policy.exchange",
+    "method": "rest",
+    "apply": "dns provider records (T2-03) and dated staging (T2-04): SPF TXT, DMARC TXT p=none -> quarantine (day 14) -> reject (day 45), TLS-RPT TXT, MTA-STS TXT plus policy file mode testing -> enforce",
+    "payload": {
+      "SPF": "TXT @ 'v=spf1 include:spf.protection.outlook.com -all'",
+      "DMARC": "TXT _dmarc 'v=DMARC1; p=reject; rua=mailto:{mailbox:dmarc}'",
+      "TLS-RPT": "TXT _smtp._tls 'v=TLSRPTv1; rua=mailto:{mailbox:dmarc}'",
+      "MTA-STS": "TXT _mta-sts 'v=STSv1; id=<serial>' and https://mta-sts.{domain:primary}/.well-known/mta-sts.txt 'mode: enforce'"
+    },
+    "read": "DNS TXT lookups for each name; HTTPS GET of the MTA-STS policy file",
+    "check": "records resolve to the expected values; DMARC p == reject; MTA-STS mode == enforce (after their staging dates)",
+    "permissions": [
+      "dns:<provider token from keychain>"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "DNS is outside Microsoft 365; monitored by box drift through the dns provider"
+    },
+    "verified": "not verified: DNS provider steps are tasks T2-03/T2-04, not this task",
+    "notes": "Not an Exchange API setting. Staged form: DMARC p=none and MTA-STS mode testing.",
+    "payload_audit": {
+      "DMARC": "p=none",
+      "MTA-STS": "mode: testing"
+    }
+  },
+  "EXO-018": {
+    "status": "resolved",
+    "provider": "exchange",
+    "step": "policy.exchange",
+    "method": "cmdlet",
+    "apply": "Set-OrganizationConfig -EwsApplicationAccessPolicy EnforceAllowList -EwsAllowList {config:ews_allowed_apps}",
+    "payload": {
+      "Set-OrganizationConfig": {
+        "EwsApplicationAccessPolicy": "EnforceAllowList",
+        "EwsAllowList": "{config:ews_allowed_apps}"
+      }
+    },
+    "read": "Get-OrganizationConfig | Select-Object EwsEnabled, EwsApplicationAccessPolicy, EwsAllowList",
+    "check": "EwsApplicationAccessPolicy == EnforceAllowList; EwsAllowList equals the configured list",
+    "permissions": [
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [
+      "Exchange Administrator"
+    ],
+    "tcm": {
+      "resource": "microsoft.exchange.organizationconfig",
+      "note": "S-02 not done; candidate resource name, unconfirmed"
+    },
+    "verified": "cmdlet and parameters exist (Get-Command after Connect-ExchangeOnline app-only, module 3.6.0); EwsApplicationAccessPolicy and EwsAllowList readable (currently unset).",
+    "notes": "Enhanced tier. The allow list is company data with no home in the configuration schema yet; an empty list blocks all EWS user agents. EWS in Exchange Online is being retired by Microsoft; EwsEnabled $false is the end state once nothing uses it."
+  },
+  "EXO-019": {
+    "status": "resolved",
+    "provider": "exchange",
+    "step": "policy.exchange",
+    "method": "cmdlet",
+    "apply": "Set-OrganizationConfig -OAuth2ClientProfileEnabled $true",
+    "payload": {
+      "Set-OrganizationConfig": {
+        "OAuth2ClientProfileEnabled": true
+      }
+    },
+    "read": "Get-OrganizationConfig | Select-Object OAuth2ClientProfileEnabled",
+    "check": "OAuth2ClientProfileEnabled == true",
+    "permissions": [
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [
+      "Exchange Administrator"
+    ],
+    "tcm": {
+      "resource": "microsoft.exchange.organizationconfig",
+      "note": "S-02 not done; candidate resource name, unconfirmed"
+    },
+    "verified": "cmdlet and parameters exist (Get-Command after Connect-ExchangeOnline app-only, module 3.6.0); read OK (already true on the test tenant).",
+    "notes": ""
+  }
+}

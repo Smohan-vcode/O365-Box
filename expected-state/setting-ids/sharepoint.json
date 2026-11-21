@@ -1,0 +1,508 @@
+{
+  "SPO-001": {
+    "status": "resolved",
+    "provider": "sharepoint",
+    "step": "policy.sharepoint",
+    "method": "cmdlet",
+    "apply": "Set-PnPTenant -SharingCapability ExistingExternalUserSharingOnly",
+    "payload": {
+      "Set-PnPTenant": {
+        "SharingCapability": "ExistingExternalUserSharingOnly"
+      }
+    },
+    "read": "Get-PnPTenant -Connection <admin>",
+    "check": "SharingCapability == ExistingExternalUserSharingOnly",
+    "permissions": [
+      "sharepoint:Sites.FullControl.All"
+    ],
+    "roles": [
+      "SharePoint Administrator"
+    ],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; no SharePoint resource known in Tenant Configuration Management. Monitor with box drift."
+    },
+    "verified": "Set-PnPTenant parameter exists (PnP.PowerShell 2.12.0); Get-PnPTenant app-only read OK on the test tenant (already ExistingExternalUserSharingOnly).",
+    "notes": "Already applied by sharepoint.tenant (T3-01) from baseline/sharepoint.yaml tenant.sharing_capability."
+  },
+  "SPO-002": {
+    "status": "resolved",
+    "provider": "sharepoint",
+    "step": "policy.sharepoint",
+    "method": "cmdlet",
+    "apply": "for every site: Set-PnPTenantSite -Identity <site url> -SharingCapability (Disabled unless structure.sites[].external names it shareable, then ExistingExternalUserSharingOnly)",
+    "payload": {
+      "Set-PnPTenantSite": {
+        "Identity": "{site:<url>}",
+        "SharingCapability": "Disabled | ExistingExternalUserSharingOnly per {config:structure.sites[].external}"
+      }
+    },
+    "read": "Get-PnPTenantSite -Connection <admin> | Select-Object Url, SharingCapability",
+    "check": "each site's SharingCapability == Disabled unless its configuration entry allows sharing",
+    "permissions": [
+      "sharepoint:Sites.FullControl.All"
+    ],
+    "roles": [
+      "SharePoint Administrator"
+    ],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; no SharePoint resource known in Tenant Configuration Management. Monitor with box drift."
+    },
+    "verified": "Set-PnPTenantSite -SharingCapability exists; read OK: 16 sites, 13 Disabled, 3 ExistingExternalUserSharingOnly on the test tenant.",
+    "notes": "Already applied by sharepoint.sites (T3-01). Group-connected and OneDrive sites are covered by the tenant and OneDrive values."
+  },
+  "SPO-003": {
+    "status": "resolved",
+    "provider": "sharepoint",
+    "step": "policy.sharepoint",
+    "method": "cmdlet",
+    "apply": "Set-PnPTenant -DefaultSharingLinkType Direct -DefaultLinkPermission View",
+    "payload": {
+      "Set-PnPTenant": {
+        "DefaultSharingLinkType": "Direct",
+        "DefaultLinkPermission": "View"
+      }
+    },
+    "read": "Get-PnPTenant -Connection <admin>",
+    "check": "DefaultSharingLinkType == Direct; DefaultLinkPermission == View",
+    "permissions": [
+      "sharepoint:Sites.FullControl.All"
+    ],
+    "roles": [
+      "SharePoint Administrator"
+    ],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; no SharePoint resource known in Tenant Configuration Management. Monitor with box drift."
+    },
+    "verified": "Set-PnPTenant parameter exists (PnP.PowerShell 2.12.0); Get-PnPTenant app-only read OK on the test tenant (already Direct / View).",
+    "notes": "Already applied by sharepoint.tenant (T3-01)."
+  },
+  "SPO-004": {
+    "status": "resolved",
+    "provider": "sharepoint",
+    "step": "policy.sharepoint",
+    "method": "cmdlet",
+    "apply": "Set-PnPTenant -SharingCapability ExistingExternalUserSharingOnly -OneDriveSharingCapability Disabled (Anyone links exist only with ExternalUserAndGuestSharing)",
+    "payload": {
+      "Set-PnPTenant": {
+        "SharingCapability": "ExistingExternalUserSharingOnly",
+        "OneDriveSharingCapability": "Disabled"
+      },
+      "Set-PnPTenantSite(each site)": {
+        "SharingCapability": "not ExternalUserAndGuestSharing"
+      }
+    },
+    "read": "Get-PnPTenant; Get-PnPTenantSite | Select-Object Url, SharingCapability",
+    "check": "tenant SharingCapability != ExternalUserAndGuestSharing and no site has SharingCapability == ExternalUserAndGuestSharing",
+    "permissions": [
+      "sharepoint:Sites.FullControl.All"
+    ],
+    "roles": [
+      "SharePoint Administrator"
+    ],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; no SharePoint resource known in Tenant Configuration Management. Monitor with box drift."
+    },
+    "verified": "Set-PnPTenant parameter exists (PnP.PowerShell 2.12.0); Get-PnPTenant app-only read OK on the test tenant; no site on the test tenant allows Anyone links.",
+    "notes": "Anyone links have no separate switch: they are off whenever no level allows ExternalUserAndGuestSharing. Same values as SPO-001/SPO-012."
+  },
+  "SPO-005": {
+    "status": "resolved",
+    "provider": "sharepoint",
+    "step": "policy.sharepoint",
+    "method": "cmdlet",
+    "apply": "Set-PnPTenant -ExternalUserExpirationRequired $true -ExternalUserExpireInDays 30",
+    "payload": {
+      "Set-PnPTenant": {
+        "ExternalUserExpirationRequired": true,
+        "ExternalUserExpireInDays": 30
+      }
+    },
+    "read": "Get-PnPTenant -Connection <admin>",
+    "check": "ExternalUserExpirationRequired == true; ExternalUserExpireInDays == 30",
+    "permissions": [
+      "sharepoint:Sites.FullControl.All"
+    ],
+    "roles": [
+      "SharePoint Administrator"
+    ],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; no SharePoint resource known in Tenant Configuration Management. Monitor with box drift."
+    },
+    "verified": "Set-PnPTenant parameter exists (PnP.PowerShell 2.12.0); Get-PnPTenant app-only read OK on the test tenant (currently false / 60).",
+    "notes": "Expiry removes the guest's access to sites after 30 days unless a site owner extends it. Site overrides (OverrideTenantExternalUserExpirationPolicy) must not be set."
+  },
+  "SPO-006": {
+    "status": "resolved",
+    "provider": "sharepoint",
+    "step": "policy.sharepoint",
+    "method": "cmdlet",
+    "apply": "Set-PnPTenant -RequireAcceptingAccountMatchInvitedAccount $true -PreventExternalUsersFromResharing $true",
+    "payload": {
+      "Set-PnPTenant": {
+        "RequireAcceptingAccountMatchInvitedAccount": true,
+        "PreventExternalUsersFromResharing": true
+      }
+    },
+    "read": "Get-PnPTenant -Connection <admin>",
+    "check": "RequireAcceptingAccountMatchInvitedAccount == true; PreventExternalUsersFromResharing == true",
+    "permissions": [
+      "sharepoint:Sites.FullControl.All"
+    ],
+    "roles": [
+      "SharePoint Administrator"
+    ],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; no SharePoint resource known in Tenant Configuration Management. Monitor with box drift."
+    },
+    "verified": "Set-PnPTenant parameter exists (PnP.PowerShell 2.12.0); Get-PnPTenant app-only read OK on the test tenant (both currently false).",
+    "notes": "With Entra B2B integration on, invited-account matching is enforced by Entra; the SharePoint flag is kept for evidence."
+  },
+  "SPO-007": {
+    "status": "resolved",
+    "provider": "sharepoint",
+    "step": "policy.sharepoint",
+    "method": "cmdlet",
+    "apply": "Set-PnPTenant -SharingDomainRestrictionMode AllowList -SharingAllowedDomainList {config:sharing_allowed_domains} (empty at start)",
+    "payload": {
+      "Set-PnPTenant": {
+        "SharingDomainRestrictionMode": "AllowList",
+        "SharingAllowedDomainList": "{config:sharing_allowed_domains} (empty at start)"
+      }
+    },
+    "read": "Get-PnPTenant -Connection <admin>",
+    "check": "SharingDomainRestrictionMode == AllowList; SharingAllowedDomainList equals the configured list",
+    "permissions": [
+      "sharepoint:Sites.FullControl.All"
+    ],
+    "roles": [
+      "SharePoint Administrator"
+    ],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; no SharePoint resource known in Tenant Configuration Management. Monitor with box drift."
+    },
+    "verified": "Set-PnPTenant parameter exists (PnP.PowerShell 2.12.0); Get-PnPTenant app-only read OK on the test tenant (currently None, list empty).",
+    "notes": "Enhanced tier. Not verified on the tenant whether SharePoint accepts AllowList with an empty list (apply is a later task); if refused, the step waits until a domain is configured and reports it. The allow list has no home in the configuration schema yet."
+  },
+  "SPO-008": {
+    "status": "resolved",
+    "provider": "sharepoint",
+    "step": "policy.sharepoint",
+    "method": "cmdlet",
+    "apply": "Set-PnPTenant -ConditionalAccessPolicy AllowLimitedAccess",
+    "payload": {
+      "Set-PnPTenant": {
+        "ConditionalAccessPolicy": "AllowLimitedAccess"
+      }
+    },
+    "read": "Get-PnPTenant -Connection <admin>",
+    "check": "ConditionalAccessPolicy == AllowLimitedAccess",
+    "permissions": [
+      "sharepoint:Sites.FullControl.All"
+    ],
+    "roles": [
+      "SharePoint Administrator"
+    ],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; no SharePoint resource known in Tenant Configuration Management. Monitor with box drift."
+    },
+    "verified": "Set-PnPTenant parameter exists (PnP.PowerShell 2.12.0); Get-PnPTenant app-only read OK on the test tenant (currently AllowFullAccess).",
+    "notes": "Same as baseline unmanaged_device_access: limited_web_only. Needs the Conditional Access policy with 'Use app enforced restrictions' for SharePoint (ENT-009, entra_p1); setting it in PowerShell does not create that policy."
+  },
+  "SPO-009": {
+    "status": "resolved",
+    "provider": "sharepoint",
+    "step": "policy.sharepoint",
+    "method": "cmdlet",
+    "apply": "Set-PnPBrowserIdleSignout -Enabled $true -WarnAfter (New-TimeSpan -Minutes 55) -SignoutAfter (New-TimeSpan -Minutes 60)",
+    "payload": {
+      "Set-PnPBrowserIdleSignout": {
+        "Enabled": true,
+        "WarnAfter": "00:55:00",
+        "SignoutAfter": "01:00:00"
+      }
+    },
+    "read": "Get-PnPBrowserIdleSignout -Connection <admin>",
+    "check": "Enabled == true; WarnAfter == 00:55:00; SignOutAfter == 01:00:00",
+    "permissions": [
+      "sharepoint:Sites.FullControl.All"
+    ],
+    "roles": [
+      "SharePoint Administrator"
+    ],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; no SharePoint resource known in Tenant Configuration Management. Monitor with box drift."
+    },
+    "verified": "Set-/Get-PnPBrowserIdleSignout exist; read OK (currently disabled).",
+    "notes": "Applies to SharePoint and OneDrive on unmanaged devices only. Microsoft 365's organisation-wide idle session timeout (m365-admin area) takes precedence when set; the values should agree."
+  },
+  "SPO-010": {
+    "status": "resolved",
+    "provider": "sharepoint",
+    "step": "policy.sharepoint",
+    "method": "cmdlet",
+    "apply": "Set-PnPTenant -LegacyAuthProtocolsEnabled $false",
+    "payload": {
+      "Set-PnPTenant": {
+        "LegacyAuthProtocolsEnabled": false
+      }
+    },
+    "read": "Get-PnPTenant -Connection <admin>",
+    "check": "LegacyAuthProtocolsEnabled == false",
+    "permissions": [
+      "sharepoint:Sites.FullControl.All"
+    ],
+    "roles": [
+      "SharePoint Administrator"
+    ],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; no SharePoint resource known in Tenant Configuration Management. Monitor with box drift."
+    },
+    "verified": "Set-PnPTenant parameter exists (PnP.PowerShell 2.12.0); Get-PnPTenant app-only read OK on the test tenant (already false).",
+    "notes": "Already applied by sharepoint.tenant (T3-01). LegacyBrowserAuthProtocolsEnabled is a CSOM tenant property not exposed by Set-PnPTenant 2.12.0; not needed for the stated value."
+  },
+  "SPO-011": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.sharepoint",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceManagement/configurationPolicies (Windows settings catalog) with the OneDrive tenant allow list; device condition by Conditional Access (ENT-004)",
+    "payload": {
+      "intune_windows": {
+        "platforms": "windows10",
+        "technologies": "mdm",
+        "settings": [
+          {
+            "settingDefinitionId": "device_vendor_msft_policy_config_onedrivengscv2~policy~onedrivengsc_allowtenantlist",
+            "choice": "device_vendor_msft_policy_config_onedrivengscv2~policy~onedrivengsc_allowtenantlist_1",
+            "children": [
+              {
+                "settingDefinitionId": "device_vendor_msft_policy_config_onedrivengscv2~policy~onedrivengsc_allowtenantlist_allowtenantlistbox",
+                "value": [
+                  "{tenant:id}"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "identity_conditional_access": "ENT-004: grant control compliantDevice (or domainJoinedDevice) for Office 365 SharePoint Online, which also covers the OneDrive sync client"
+    },
+    "read": "GET /beta/deviceManagement/configurationPolicies/{id}/settings; GET /v1.0/identity/conditionalAccess/policies/{id}",
+    "check": "AllowTenantList enabled with exactly {tenant:id}; the ENT-004 policy is enabled and covers SharePoint Online",
+    "permissions": [
+      "graph:DeviceManagementConfiguration.ReadWrite.All",
+      "graph:Policy.ReadWrite.ConditionalAccess"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Intune settings catalogue coverage in Tenant Configuration Management unconfirmed. Monitor with box drift."
+    },
+    "verified": "Settings catalogue definitions onedrivengsc_allowtenantlist and _allowtenantlistbox exist (GET /beta/deviceManagement/configurationSettings/{id} returned them). Set-PnPTenantSyncClientRestriction exists but needs on-premises AD domain GUIDs.",
+    "notes": "Set-PnPTenantSyncClientRestriction -DomainGuids works only for on-premises Active Directory joined devices, which a cloud-only company does not have, so the device condition comes from Conditional Access (entra_p1). macOS: the settings catalogue has no AllowTenantList key (only com.apple.managedclient.preferences_blockexternalsync); a custom preference file profile (macOSCustomAppConfiguration, domain com.microsoft.OneDrive, key AllowTenantList) is needed. Partial on macOS: listed in findings."
+  },
+  "SPO-012": {
+    "status": "resolved",
+    "provider": "sharepoint",
+    "step": "policy.sharepoint",
+    "method": "cmdlet",
+    "apply": "Set-PnPTenant -OneDriveSharingCapability Disabled",
+    "payload": {
+      "Set-PnPTenant": {
+        "OneDriveSharingCapability": "Disabled"
+      }
+    },
+    "read": "Get-PnPTenant -Connection <admin>",
+    "check": "OneDriveSharingCapability == Disabled",
+    "permissions": [
+      "sharepoint:Sites.FullControl.All"
+    ],
+    "roles": [
+      "SharePoint Administrator"
+    ],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; no SharePoint resource known in Tenant Configuration Management. Monitor with box drift."
+    },
+    "verified": "Set-PnPTenant parameter exists (PnP.PowerShell 2.12.0); Get-PnPTenant app-only read OK on the test tenant (already Disabled).",
+    "notes": "Already applied by sharepoint.tenant (T3-01)."
+  },
+  "SPO-013": {
+    "status": "resolved",
+    "provider": "sharepoint",
+    "step": "policy.sharepoint",
+    "method": "cmdlet",
+    "apply": "Set-PnPTenant -EnableAutoExpirationVersionTrim $false -MajorVersionLimit 500 -ExpireVersionsAfterDays 0; libraries created by the engine: Set-PnPList -EnableVersioning $true -MajorVersions <n >= 100>",
+    "payload": {
+      "Set-PnPTenant": {
+        "EnableAutoExpirationVersionTrim": false,
+        "MajorVersionLimit": 500,
+        "ExpireVersionsAfterDays": 0
+      },
+      "Set-PnPList(each library)": {
+        "EnableVersioning": true,
+        "MajorVersions": ">= 100 (baseline site_defaults.versioning.major_versions: 100)"
+      }
+    },
+    "read": "Get-PnPTenant (MajorVersionLimit, EnableAutoExpirationVersionTrim); per library Get-PnPList -Includes EnableVersioning, MajorVersionLimit",
+    "check": "tenant MajorVersionLimit >= 100 and EnableAutoExpirationVersionTrim == false; every library EnableVersioning == true and MajorVersionLimit >= 100",
+    "permissions": [
+      "sharepoint:Sites.FullControl.All"
+    ],
+    "roles": [
+      "SharePoint Administrator"
+    ],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; no SharePoint resource known in Tenant Configuration Management. Monitor with box drift."
+    },
+    "verified": "Set-PnPTenant parameter exists (PnP.PowerShell 2.12.0); Get-PnPTenant app-only read OK on the test tenant (tenant MajorVersionLimit 500, trim off). Set-PnPSiteVersionPolicy also exists for site-level limits.",
+    "notes": "Tenant default 500 already meets 'at least 100'; the step fixes it against lowering. The libraries step (T3-02) sets per-library versioning."
+  },
+  "SPO-014": {
+    "status": "resolved",
+    "provider": "sharepoint",
+    "step": "policy.sharepoint",
+    "method": "cmdlet",
+    "apply": "CSOM: $t = New-Object Microsoft.Online.SharePoint.TenantAdministration.Tenant((Get-PnPContext -Connection <admin>)); $t.SelfServiceSiteCreationDisabled = $true; $t.Update(); ExecuteQuery",
+    "payload": {
+      "Tenant(CSOM)": {
+        "SelfServiceSiteCreationDisabled": true
+      }
+    },
+    "read": "CSOM Tenant.SelfServiceSiteCreationDisabled via the PnP admin connection",
+    "check": "SelfServiceSiteCreationDisabled == true",
+    "permissions": [
+      "sharepoint:Sites.FullControl.All"
+    ],
+    "roles": [
+      "SharePoint Administrator"
+    ],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; no SharePoint resource known in Tenant Configuration Management. Monitor with box drift."
+    },
+    "verified": "Set-PnPTenant 2.12.0 has no SelfServiceSiteCreationDisabled parameter; the CSOM Tenant property exists and was read app-only on the test tenant (currently false).",
+    "notes": "Stops site creation from the SharePoint start page and OneDrive. Microsoft 365 group (team) sites are created through group creation, which ENT-034 restricts in Entra (Group.Unified EnableGroupCreation false). Both are needed for the stated value."
+  },
+  "SPO-015": {
+    "status": "resolved",
+    "provider": "sharepoint",
+    "step": "policy.sharepoint",
+    "method": "cmdlet",
+    "apply": "Set-PnPTenant -DisableCustomAppAuthentication $true -IsSharePointAddInsDisabled $true -SiteOwnerManageLegacyServicePrincipalEnabled $false; per site: Set-PnPTenantSite -Identity <site> -DenyAddAndCustomizePages $true",
+    "payload": {
+      "Set-PnPTenant": {
+        "DisableCustomAppAuthentication": true,
+        "IsSharePointAddInsDisabled": true,
+        "SiteOwnerManageLegacyServicePrincipalEnabled": false
+      },
+      "Set-PnPTenantSite(each site)": {
+        "DenyAddAndCustomizePages": true
+      }
+    },
+    "read": "Get-PnPTenant (DisableCustomAppAuthentication, SharePointAddInsDisabled, SiteOwnerManageLegacyServicePrincipalEnabled); Get-PnPTenantSite | Select-Object Url, DenyAddAndCustomizePages",
+    "check": "DisableCustomAppAuthentication == true; SharePointAddInsDisabled == true; SiteOwnerManageLegacyServicePrincipalEnabled == false; every site DenyAddAndCustomizePages == Enabled",
+    "permissions": [
+      "sharepoint:Sites.FullControl.All"
+    ],
+    "roles": [
+      "SharePoint Administrator"
+    ],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; no SharePoint resource known in Tenant Configuration Management. Monitor with box drift."
+    },
+    "verified": "Parameters exist; read OK: DisableCustomAppAuthentication true, SharePointAddInsDisabled false, all 16 sites DenyAddAndCustomizePages Enabled.",
+    "notes": "Custom script is off per site (Microsoft resets it within 24 hours; CSOM DelayDenyAddAndCustomizePagesEnforcement reads false). Set parameter is IsSharePointAddInsDisabled; the read property is SharePointAddInsDisabled."
+  },
+  "SPO-016": {
+    "status": "resolved",
+    "provider": "sharepoint",
+    "step": "policy.sharepoint",
+    "method": "cmdlet",
+    "apply": "for every site web: Set-PnPRequestAccessEmails -Disabled -Connection <site>",
+    "payload": {
+      "Set-PnPRequestAccessEmails": {
+        "Disabled": true
+      }
+    },
+    "read": "Get-PnPWeb -Includes RequestAccessEmail, UseAccessRequestDefault -Connection <site>",
+    "check": "UseAccessRequestDefault == false and RequestAccessEmail is empty on every site",
+    "permissions": [
+      "sharepoint:Sites.FullControl.All"
+    ],
+    "roles": [
+      "SharePoint Administrator"
+    ],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; no SharePoint resource known in Tenant Configuration Management. Monitor with box drift."
+    },
+    "verified": "Set-/Get-PnPRequestAccessEmails exist; Get-PnPWeb read OK on one site (UseAccessRequestDefault true, so access requests are on today).",
+    "notes": "No tenant-wide switch exists; it is per site, matching baseline site_defaults.access_requests: off. Group-connected sites send requests to group owners; the same call applies."
+  },
+  "SPO-017": {
+    "status": "resolved",
+    "provider": "sharepoint",
+    "step": "policy.sharepoint",
+    "method": "cmdlet",
+    "apply": "Set-PnPTenant -NotifyOwnersWhenItemsReshared $true -NotifyOwnersWhenInvitationsAccepted $true -OwnerAnonymousNotification $true",
+    "payload": {
+      "Set-PnPTenant": {
+        "NotifyOwnersWhenItemsReshared": true,
+        "NotifyOwnersWhenInvitationsAccepted": true,
+        "OwnerAnonymousNotification": true
+      }
+    },
+    "read": "Get-PnPTenant -Connection <admin>",
+    "check": "NotifyOwnersWhenItemsReshared == true; NotifyOwnersWhenInvitationsAccepted == true; OwnerAnonymousNotification == true",
+    "permissions": [
+      "sharepoint:Sites.FullControl.All"
+    ],
+    "roles": [
+      "SharePoint Administrator"
+    ],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; no SharePoint resource known in Tenant Configuration Management. Monitor with box drift."
+    },
+    "verified": "Set-PnPTenant parameter exists (PnP.PowerShell 2.12.0); Get-PnPTenant app-only read OK on the test tenant (reshared true, invitations accepted false, anonymous true).",
+    "notes": "These are the OneDrive owner notifications. SharePoint site owners are notified of sharing by the access-request and sharing emails; there is no further tenant switch."
+  },
+  "SPO-018": {
+    "status": "resolved",
+    "provider": "sharepoint",
+    "step": "policy.sharepoint",
+    "method": "cmdlet",
+    "apply": "sharepoint.sites and sharepoint.libraries grant only the configured access groups (Set-PnPWebPermission / Set-PnPListPermission with -Group); weekly: box drift reads role assignments and reports any individual principal",
+    "payload": {
+      "grant": "access groups from {config:structure.sites[].access} and libraries[].access only",
+      "schedule": "weekly drift check"
+    },
+    "read": "Get-PnPSiteCollectionAdmin; Get-PnPGroup / Get-PnPGroupMember; web and list RoleAssignments (Get-PnPProperty -Property RoleAssignments)",
+    "check": "every role assignment principal is a SharePoint group whose members are access groups, or an Entra security group; no user principal other than break-glass site collection admins",
+    "permissions": [
+      "sharepoint:Sites.FullControl.All"
+    ],
+    "roles": [
+      "SharePoint Administrator"
+    ],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; no SharePoint resource known in Tenant Configuration Management. Monitor with box drift."
+    },
+    "verified": "Cmdlets exist; the existing providers already grant groups only (T3-01/T3-02).",
+    "notes": "Mode enforce plus a weekly check: the check is a drift run (SPEC 14.4), not a tenant setting."
+  }
+}

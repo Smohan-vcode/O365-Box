@@ -11,3 +11,4 @@ delegated:
   - User.ReadWrite.All
   - Group.ReadWrite.All
   - Directory.Read.All
+  - Policy.Read.All          # discovery: security defaults and Conditional Access state (SPEC §18.3)

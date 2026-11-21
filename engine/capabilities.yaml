@@ -16,3 +16,20 @@ skus:
   SPB: business_premium
   O365_BUSINESS_PREMIUM: business_standard
   O365_BUSINESS_ESSENTIALS: business_basic
+# Microsoft service plans (subscribedSkus servicePlans[].servicePlanName)
+# that provide each policy capability (T14-02). Microsoft constants, the
+# same for every tenant; confirmed on a Business Premium tenant.
+# "free" needs no service plan.
+service_plans:
+  exchange: [EXCHANGE_S_STANDARD]
+  sharepoint: [SHAREPOINTSTANDARD]
+  teams: [TEAMS1]
+  power_platform: [FLOW_O365_P1, POWERAPPS_O365_P1]
+  m365_apps: [OFFICE_BUSINESS]
+  entra_p1: [AAD_PREMIUM]
+  intune_p1: [INTUNE_A]
+  defender_business: [MDE_SMB]
+  defender_o365_p1: [ATP_ENTERPRISE]
+  purview_ip: [RMS_S_PREMIUM]
+  purview_dlp_core: [BPOS_S_DlpAddOn]
+  purview_audit: [EXCHANGE_S_STANDARD]

@@ -380,8 +380,13 @@ func (x *Executor) evidence(ctx context.Context, n *plan.Node) []string {
 		return nil
 	}
 	var refs []string
+	var items []any
 	for _, it := range e.Items {
 		refs = append(refs, it.Ref)
+		items = append(items, map[string]any{"kind": it.Kind, "ref": it.Ref, "summary": it.Summary})
+	}
+	if len(items) > 0 {
+		x.emit(events.Event{Ev: events.Log, Level: "evidence", Step: n.Step.ID, Msg: e.Items[0].Summary, Data: map[string]any{"evidence": items}})
 	}
 	return refs
 }

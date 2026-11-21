@@ -301,6 +301,63 @@ function Get-DirectoryChanges($In, [switch] $Apply) {
   return $changes
 }
 
+# ---------- policy.capabilities (T14-02) ----------
+# Pure function, tested by Pester: users whose own licences lack a service
+# plan that provides a needed, user-assigned capability.
+function Get-NotCoveredUsers {
+  param([hashtable] $UserPlans, [hashtable] $Needed)
+  # UserPlans: upn -> array of enabled service plan names
+  # Needed:    capability -> array of service plan names that provide it (user-assigned only)
+  $out = @()
+  foreach ($upn in ($UserPlans.Keys | Sort-Object)) {
+    $missing = @()
+    foreach ($cap in ($Needed.Keys | Sort-Object)) {
+      $has = @($UserPlans[$upn] | Where-Object { $_ -in $Needed[$cap] })
+      if ($has.Count -eq 0) { $missing += $cap }
+    }
+    if ($missing.Count) { $out += [pscustomobject]@{ user = $upn; missing = $missing } }
+  }
+  return $out
+}
+
+function Get-CapabilityReport($In) {
+  if ($In.policy_error) { throw "policy resolution failed: $($In.policy_error)" }
+  $pol = $In.policy
+  $skus = @(Get-BoxGraphAll '/subscribedSkus')
+  $tenantPlans = @{}       # name -> @{ id; status; appliesTo }
+  foreach ($s in $skus) { foreach ($p in @($s.servicePlans)) { $tenantPlans[[string]$p.servicePlanName] = @{ id = [string]$p.servicePlanId; status = [string]$p.provisioningStatus; appliesTo = [string]$p.appliesTo } } }
+  $missingCaps = @()
+  $userCaps = @{}
+  foreach ($cp in $pol.capabilities_needed.PSObject.Properties) {
+    $cap = $cp.Name
+    if ($cap -eq 'free') { continue }
+    $plans = @($pol.service_plans.$cap)
+    if ($plans.Count -eq 0) { $missingCaps += "$cap (no service plan known)"; continue }
+    $present = @($plans | Where-Object { $tenantPlans.ContainsKey($_) -and $tenantPlans[$_].status -in 'Success', 'PendingActivation', 'PendingProvisioning' })
+    if ($present.Count -eq 0) { $missingCaps += "$cap needed by $(@($cp.Value).Count) setting(s): $(@($cp.Value)[0..2] -join ', ')"; continue }
+    if (@($present | Where-Object { $tenantPlans[$_].appliesTo -eq 'User' }).Count) { $userCaps[$cap] = @($present | Where-Object { $tenantPlans[$_].appliesTo -eq 'User' }) }
+  }
+  # Users in the configuration (break-glass accounts hold no licence by design).
+  $byId = @{}; foreach ($n in $tenantPlans.Keys) { $byId[$tenantPlans[$n].id] = $n }
+  $userPlans = @{}
+  foreach ($u in @($In.config.users | Where-Object { -not $_.break_glass })) {
+    $d = [string]$In.config.company.primary_domain; if (-not $d) { $d = [string]$In.tenant.initial_domain }
+    $upn = "$($u.primary)@$d"
+    $usr = Get-BoxGraphOne "/users/$([uri]::EscapeDataString($upn))?`$select=assignedPlans"
+    if (-not $usr) { continue }
+    $userPlans[$upn] = @($usr.assignedPlans | Where-Object { $_.capabilityStatus -eq 'Enabled' -and $byId.ContainsKey([string]$_.servicePlanId) } | ForEach-Object { $byId[[string]$_.servicePlanId] })
+  }
+  $notCovered = @(Get-NotCoveredUsers -UserPlans $userPlans -Needed $userCaps)
+  # One read-only probe per capability that Graph can reach with the app's permissions.
+  $probes = [ordered]@{ entra_p1 = '/identity/conditionalAccess/policies?$top=1'; intune_p1 = '/deviceManagement/deviceCompliancePolicies?$top=1'; sharepoint = '/sites/root?$select=id' }
+  $probe = [ordered]@{}
+  foreach ($k in $probes.Keys) {
+    if (-not $pol.capabilities_needed.PSObject.Properties[$k]) { continue }
+    try { Invoke-BoxGraph -Uri $probes[$k] | Out-Null; $probe[$k] = 'usable' } catch { $probe[$k] = "not usable: $_" }
+  }
+  return @{ missing = $missingCaps; not_covered = $notCovered; probes = $probe; applied = $pol.applied; plan = $pol.plan }
+}
+
 # ---------- identity.security-defaults (fallback) ----------
 function Get-SDChanges([switch] $Apply) {
   $cur = Invoke-BoxGraph -Uri '/policies/identitySecurityDefaultsEnforcementPolicy'
@@ -366,6 +423,23 @@ $script:Steps = [ordered]@{
     verify = { param($In) $c = @(Get-CAChanges $In | Where-Object { $_ }); @{ ok = ($c.Count -eq 0); drift = $c } }
     evidence = { param($In) New-Evidence 'conditional-access' 'policies exclude grp-break-glass' }
   }
+  'policy.capabilities' = @{
+    test = { param($In)
+      $r = Get-CapabilityReport $In
+      $bad = @($r.missing) + @($r.probes.GetEnumerator() | Where-Object { $_.Value -ne 'usable' } | ForEach-Object { "$($_.Key) $($_.Value)" })
+      if ($bad.Count) { return @{ ok = $false; reason = "the tenant lacks capabilities the resolved settings need: $($bad -join '; ')" } }
+      return @{ ok = $true } }
+    plan = { param($In) Result-Changes @() }
+    apply = { param($In) Result-Changes @() }
+    verify = { param($In)
+      $r = Get-CapabilityReport $In
+      foreach ($n in @($r.not_covered)) { Write-Warning "not covered: $($n.user) lacks $($n.missing -join ', ')" }
+      @{ ok = (@($r.missing).Count -eq 0); drift = @($r.missing | ForEach-Object { New-BoxChange update "capability $_" 'licence missing' }) } }
+    evidence = { param($In)
+      $r = Get-CapabilityReport $In
+      $nc = @($r.not_covered)
+      New-Evidence 'capabilities' "$($r.applied) resolved settings on plan $($r.plan); capabilities confirmed; probes: $(($r.probes.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)" }) -join ', '); users not covered: $($nc.Count)" }
+  }
   'identity.security-defaults' = @{
     test = $ok
     plan = { param($In) Result-Changes (Get-SDChanges) }
@@ -381,4 +455,4 @@ function Invoke-BoxStep {
 }
 function Get-BoxStepIds { @($script:Steps.Keys) }
 function Get-BoxStepProblems { Test-BoxStepTable -Steps $script:Steps }
-Export-ModuleMember -Function Invoke-BoxStep, Get-BoxStepIds, Get-BoxStepProblems
+Export-ModuleMember -Function Invoke-BoxStep, Get-BoxStepIds, Get-BoxStepProblems, Get-NotCoveredUsers

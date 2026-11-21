@@ -83,3 +83,18 @@ Describe 'Graph helper result shapes' {
     @(Get-BoxGraphAll '/x').Count | Should -Be 1
   }
 }
+
+Describe 'policy.capabilities: users not covered (T14-02)' {
+  BeforeAll { Import-Module (Join-Path $PSScriptRoot 'identity' 'Box.identity.psm1') -Force }
+  It 'lists a user on a lower plan as not covered' {
+    $users = @{ 'premium@x' = @('AAD_PREMIUM', 'INTUNE_A', 'EXCHANGE_S_STANDARD'); 'standard@x' = @('EXCHANGE_S_STANDARD', 'OFFICE_BUSINESS') }
+    $needed = @{ entra_p1 = @('AAD_PREMIUM'); intune_p1 = @('INTUNE_A') }
+    $r = @(Get-NotCoveredUsers -UserPlans $users -Needed $needed)
+    $r.Count | Should -Be 1
+    $r[0].user | Should -Be 'standard@x'
+    $r[0].missing | Should -Be @('entra_p1', 'intune_p1')
+  }
+  It 'reports nobody when every user has every capability' {
+    @(Get-NotCoveredUsers -UserPlans @{ 'a@x' = @('AAD_PREMIUM') } -Needed @{ entra_p1 = @('AAD_PREMIUM') }).Count | Should -Be 0
+  }
+}

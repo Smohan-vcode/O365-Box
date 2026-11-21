@@ -203,7 +203,23 @@ func loadCatalogue(root string) (*policy.Catalogue, []report.Issue, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	return cat, cat.Validate(plans), nil
+	issues := cat.Validate(plans)
+	// Every capability a plan includes needs the service plans that provide
+	// it, so the tenant check can confirm it (T14-02).
+	sp, err := servicePlans(root)
+	if err != nil {
+		return nil, nil, err
+	}
+	for key, c := range cat.Capabilities {
+		if key == "free" || len(c.IncludedIn) == 0 {
+			continue
+		}
+		if len(sp[key]) == 0 {
+			issues = append(issues, report.Issue{Check: "policy", File: "engine/capabilities.yaml",
+				Message: fmt.Sprintf("capability %q has no service_plans entry", key)})
+		}
+	}
+	return cat, issues, nil
 }
 
 func enginePlans(root string) (map[string][]string, error) {

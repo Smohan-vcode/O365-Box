@@ -73,6 +73,7 @@ type session struct {
 	pipeline   *bootstrap.Pipeline
 	defaults   map[string]any
 	dictionary map[string]string
+	policyIn   map[string]any
 }
 
 func (g *globals) open(f *runFlags, out io.Writer, exact bool) (*session, error) {
@@ -217,6 +218,57 @@ func (s *session) appCredentials() error {
 	return nil
 }
 
+// policyInput resolves the configuration's policy selection for the
+// tenant's plan and lists, per capability, the applied settings that need
+// it, with the service plans that provide each capability (T14-02).
+func (s *session) policyInput() (map[string]any, error) {
+	if s.policyIn != nil {
+		return s.policyIn, nil
+	}
+	cat, issues, err := loadCatalogue(s.root)
+	if err != nil {
+		return nil, err
+	}
+	if len(issues) > 0 {
+		return nil, fmt.Errorf("policy catalogue has %d problem(s); run box policy validate", len(issues))
+	}
+	plans, err := enginePlans(s.root)
+	if err != nil {
+		return nil, err
+	}
+	planName := s.doc.Config.Tenant.DefaultPlan
+	caps := map[string]bool{}
+	for _, c := range plans[planName] {
+		caps[c] = true
+	}
+	res, err := cat.Resolve(selection(s.doc.Config.Policy), planName, caps)
+	if err != nil {
+		return nil, err
+	}
+	needed := map[string][]string{}
+	for _, c := range res.Applied {
+		for _, a := range c.Settings {
+			if st := cat.Setting(a.ID); st != nil {
+				needed[st.Capability] = append(needed[st.Capability], a.ID)
+			}
+		}
+	}
+	sp, err := servicePlans(s.root)
+	if err != nil {
+		return nil, err
+	}
+	s.policyIn = map[string]any{"plan": planName, "applied": res.AppliedCount(), "capabilities_needed": needed, "service_plans": sp}
+	return s.policyIn, nil
+}
+
+func servicePlans(root string) (map[string][]string, error) {
+	var file struct {
+		ServicePlans map[string][]string `yaml:"service_plans"`
+	}
+	err := readYAMLFile(filepath.Join(root, "engine", "capabilities.yaml"), &file)
+	return file.ServicePlans, err
+}
+
 // engineDefaults loads the engine data steps may need (roles, baseline).
 func engineDefaults(root string) (map[string]any, error) {
 	out := map[string]any{}
@@ -283,6 +335,12 @@ func (s *session) input(step *plan.Step) any {
 			}
 		case "@dictionary":
 			in["dictionary"] = s.dictionary
+		case "@policy":
+			if p, err := s.policyInput(); err == nil {
+				in["policy"] = p
+			} else {
+				in["policy_error"] = err.Error()
+			}
 		}
 	}
 	if s.pipeline != nil {
@@ -400,7 +458,9 @@ func (t *textSink) Emit(e events.Event) {
 	case events.GatePassed:
 		line = "✓ gate " + e.Gate + " passed"
 	case events.Log:
-		if e.Level == "warning" || e.Level == "error" || e.Level == "raw" {
+		if e.Level == "evidence" {
+			line = "  ≡ " + e.Step + ": " + e.Msg
+		} else if e.Level == "warning" || e.Level == "error" || e.Level == "raw" {
 			line = fmt.Sprintf("  ! %s %s", e.Level, e.Msg)
 		}
 	}

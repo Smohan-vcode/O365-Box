@@ -48,3 +48,9 @@ steps:
     track: T1
     task: T1-05
     fallback_only: true
+  - id: policy.capabilities
+    title: Licences provide every capability the resolved settings need
+    track: T14
+    task: T14-02
+    depends_on: [identity.users]
+    reads: ["@policy", tenant, users, company]

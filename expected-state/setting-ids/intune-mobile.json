@@ -4,7 +4,7 @@
     "provider": "intune",
     "step": "policy.intune-mobile",
     "method": "graph-beta",
-    "apply": "POST /beta/deviceAppManagement/iosManagedAppProtections and /androidManagedAppProtections (targetedAppManagementLevels 'unmanaged' or 'unspecified'); PATCH /beta/deviceManagement/deviceEnrollmentConfigurations/{default-platform-restrictions-id} to block personal enrolment",
+    "apply": "POST /beta/deviceAppManagement/iosManagedAppProtections and /androidManagedAppProtections (targetedAppManagementLevels 'unspecified'), assigned by the step; enrolment restrictions: gate G-12 (the owner creates per-platform restrictions in the Intune admin centre; the step only reads them)",
     "payload": {
       "appProtection": {
         "appGroupType": "allCoreMicrosoftApps",
@@ -33,8 +33,8 @@
         }
       }
     },
-    "read": "GET /beta/deviceAppManagement/iosManagedAppProtections?$expand=assignments ; GET /beta/deviceAppManagement/androidManagedAppProtections?$expand=assignments ; GET /beta/deviceManagement/deviceEnrollmentConfigurations",
-    "check": "an iOS and an Android app protection policy exist, isAssigned == true for grp-staff; default platform restriction iosRestriction.personalDeviceEnrollmentBlocked == true and androidForWorkRestriction.personalDeviceEnrollmentBlocked == true; Conditional Access requires an app protection policy on iOS/Android (entra area)",
+    "read": "GET /beta/deviceAppManagement/iosManagedAppProtections?$expand=assignments ; GET /beta/deviceAppManagement/androidManagedAppProtections?$expand=assignments ; GET /beta/deviceManagement/deviceEnrollmentConfigurations (+ /{id}/assignments) for gate G-12 (step intune.gate-g12)",
+    "check": "an iOS and an Android app protection policy exist and are assigned; gate G-12: for iOS and Android work profile personalDeviceEnrollmentBlocked == true and for Android device administrator platformBlocked == true, in the default restriction or a per-platform deviceEnrollmentPlatformRestrictionConfiguration assigned to a group; Conditional Access requires an app protection policy on iOS/Android (entra area)",
     "permissions": [
       "graph:DeviceManagementApps.ReadWrite.All",
       "graph:DeviceManagementServiceConfig.ReadWrite.All"
@@ -44,8 +44,8 @@
       "resource": null,
       "note": "S-02 not done; Microsoft365DSC: IntuneAppProtectionPolicyiOS/Android, IntuneDeviceEnrollmentPlatformRestriction"
     },
-    "verified": "appManagementLevel, targetedManagedAppGroupType and deviceEnrollmentPlatformRestriction.personalDeviceEnrollmentBlocked confirmed in beta $metadata. Not verified on the tenant: app protection GET 403 (needs DeviceManagementApps.Read.All); enrolment restriction GET not attempted with the needed scope (DeviceManagementServiceConfig.Read.All not granted).",
-    "notes": "Blocking personal enrolment stops personal phones from enrolling; app protection without enrolment then protects the data. The 'require app protection policy' Conditional Access grant belongs to the entra area and must exist for this to bite. Android device administrator enrolment is blocked outright (deprecated). Needs DeviceManagementApps.ReadWrite.All and DeviceManagementServiceConfig.ReadWrite.All (neither granted)."
+    "verified": "test tenant 2026-11-21: app protection policies created, read back and assigned app-only. Enrolment restrictions refused app-only: POST /beta/deviceManagement/deviceEnrollmentConfigurations with #microsoft.graph.deviceEnrollmentPlatformRestrictionConfiguration (platformType ios) and PATCH of the default restriction (beta and v1.0) answer 403 'Tenant is not Global Admin or Intune Service Admin. Operation is restricted.' with Intune Administrator assigned to the pipeline app at tenant scope and DeviceManagementServiceConfig.ReadWrite.All granted; v1.0 rejects the per-platform type and the single-policy form is 'no longer supported'. GET of the collection works app-only.",
+    "notes": "Blocking personal enrolment stops personal phones from enrolling; app protection without enrolment then protects the data. The enrolment restriction part is gate G-12 (engine/gates.yaml) because Intune allows the write only to a signed-in Global Administrator or Intune Administrator, not to an app; the step reports the gate state and intune.gate-g12 checks it read-only. Assign the restrictions to the pilot group first and to all users at enforce. The 'require app protection policy' Conditional Access grant belongs to the entra area and must exist for this to bite. Android device administrator enrolment is blocked outright (deprecated)."
   },
   "MOB-002": {
     "status": "gate",

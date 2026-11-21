@@ -1,0 +1,2032 @@
+{
+  "MAC-001": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.intune-macos",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceManagement/deviceCompliancePolicies (one policy 'Box macOS compliance' holds MAC-001..MAC-006; PATCH /beta/deviceManagement/deviceCompliancePolicies/{id} to update; POST .../{id}/assign)",
+    "payload": {
+      "@odata.type": "#microsoft.graph.macOSCompliancePolicy",
+      "displayName": "Box macOS compliance",
+      "storageRequireEncryption": true,
+      "scheduledActionsForRule": [
+        {
+          "ruleName": "PasswordRequired",
+          "scheduledActionConfigurations": [
+            {
+              "actionType": "block",
+              "gracePeriodHours": 0
+            }
+          ]
+        }
+      ]
+    },
+    "read": "GET /beta/deviceManagement/deviceCompliancePolicies/{id}",
+    "check": "storageRequireEncryption == true",
+    "permissions": [
+      "graph:DeviceManagementConfiguration.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalent: IntuneDeviceCompliancePolicyMacOS"
+    },
+    "verified": "property present on microsoft.graph.macOSCompliancePolicy in the beta and v1.0 $metadata of the test tenant; GET /beta/deviceManagement/deviceCompliancePolicies returned 200 (none yet)",
+    "notes": "One shared compliance policy for MAC-001..MAC-006; the payload shows only this setting's properties. scheduledActionsForRule (block, 0 h) is required on create."
+  },
+  "MAC-002": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.intune-macos",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceManagement/deviceCompliancePolicies (one policy 'Box macOS compliance' holds MAC-001..MAC-006; PATCH /beta/deviceManagement/deviceCompliancePolicies/{id} to update; POST .../{id}/assign)",
+    "payload": {
+      "@odata.type": "#microsoft.graph.macOSCompliancePolicy",
+      "displayName": "Box macOS compliance",
+      "systemIntegrityProtectionEnabled": true,
+      "scheduledActionsForRule": [
+        {
+          "ruleName": "PasswordRequired",
+          "scheduledActionConfigurations": [
+            {
+              "actionType": "block",
+              "gracePeriodHours": 0
+            }
+          ]
+        }
+      ]
+    },
+    "read": "GET /beta/deviceManagement/deviceCompliancePolicies/{id}",
+    "check": "systemIntegrityProtectionEnabled == true",
+    "permissions": [
+      "graph:DeviceManagementConfiguration.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalent: IntuneDeviceCompliancePolicyMacOS"
+    },
+    "verified": "property present on microsoft.graph.macOSCompliancePolicy in the beta and v1.0 $metadata of the test tenant; GET /beta/deviceManagement/deviceCompliancePolicies returned 200 (none yet)",
+    "notes": "One shared compliance policy for MAC-001..MAC-006; the payload shows only this setting's properties. scheduledActionsForRule (block, 0 h) is required on create."
+  },
+  "MAC-003": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.intune-macos",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceManagement/deviceCompliancePolicies (one policy 'Box macOS compliance' holds MAC-001..MAC-006; PATCH /beta/deviceManagement/deviceCompliancePolicies/{id} to update; POST .../{id}/assign)",
+    "payload": {
+      "@odata.type": "#microsoft.graph.macOSCompliancePolicy",
+      "displayName": "Box macOS compliance",
+      "firewallEnabled": true,
+      "scheduledActionsForRule": [
+        {
+          "ruleName": "PasswordRequired",
+          "scheduledActionConfigurations": [
+            {
+              "actionType": "block",
+              "gracePeriodHours": 0
+            }
+          ]
+        }
+      ]
+    },
+    "read": "GET /beta/deviceManagement/deviceCompliancePolicies/{id}",
+    "check": "firewallEnabled == true",
+    "permissions": [
+      "graph:DeviceManagementConfiguration.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalent: IntuneDeviceCompliancePolicyMacOS"
+    },
+    "verified": "property present on microsoft.graph.macOSCompliancePolicy in the beta and v1.0 $metadata of the test tenant; GET /beta/deviceManagement/deviceCompliancePolicies returned 200 (none yet)",
+    "notes": "One shared compliance policy for MAC-001..MAC-006; the payload shows only this setting's properties. scheduledActionsForRule (block, 0 h) is required on create."
+  },
+  "MAC-004": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.intune-macos",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceManagement/deviceCompliancePolicies (one policy 'Box macOS compliance' holds MAC-001..MAC-006; PATCH /beta/deviceManagement/deviceCompliancePolicies/{id} to update; POST .../{id}/assign)",
+    "payload": {
+      "@odata.type": "#microsoft.graph.macOSCompliancePolicy",
+      "displayName": "Box macOS compliance",
+      "gatekeeperAllowedAppSource": "macAppStoreAndIdentifiedDevelopers",
+      "scheduledActionsForRule": [
+        {
+          "ruleName": "PasswordRequired",
+          "scheduledActionConfigurations": [
+            {
+              "actionType": "block",
+              "gracePeriodHours": 0
+            }
+          ]
+        }
+      ]
+    },
+    "read": "GET /beta/deviceManagement/deviceCompliancePolicies/{id}",
+    "check": "gatekeeperAllowedAppSource == 'macAppStoreAndIdentifiedDevelopers'",
+    "permissions": [
+      "graph:DeviceManagementConfiguration.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalent: IntuneDeviceCompliancePolicyMacOS"
+    },
+    "verified": "property present on microsoft.graph.macOSCompliancePolicy in the beta and v1.0 $metadata of the test tenant; GET /beta/deviceManagement/deviceCompliancePolicies returned 200 (none yet)",
+    "notes": "One shared compliance policy for MAC-001..MAC-006; the payload shows only this setting's properties. scheduledActionsForRule (block, 0 h) is required on create. Enum macOSGatekeeperAppSources: notConfigured, macAppStore, macAppStoreAndIdentifiedDevelopers, anywhere."
+  },
+  "MAC-005": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.intune-macos",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceManagement/deviceCompliancePolicies (one policy 'Box macOS compliance' holds MAC-001..MAC-006; PATCH /beta/deviceManagement/deviceCompliancePolicies/{id} to update; POST .../{id}/assign)",
+    "payload": {
+      "@odata.type": "#microsoft.graph.macOSCompliancePolicy",
+      "displayName": "Box macOS compliance",
+      "osMinimumVersion": "{config:devices.macos.minimum_version}",
+      "scheduledActionsForRule": [
+        {
+          "ruleName": "PasswordRequired",
+          "scheduledActionConfigurations": [
+            {
+              "actionType": "block",
+              "gracePeriodHours": 0
+            }
+          ]
+        }
+      ]
+    },
+    "read": "GET /beta/deviceManagement/deviceCompliancePolicies/{id}",
+    "check": "osMinimumVersion == {config:devices.macos.minimum_version}",
+    "permissions": [
+      "graph:DeviceManagementConfiguration.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalent: IntuneDeviceCompliancePolicyMacOS"
+    },
+    "verified": "property present on microsoft.graph.macOSCompliancePolicy in the beta and v1.0 $metadata of the test tenant; GET /beta/deviceManagement/deviceCompliancePolicies returned 200 (none yet)",
+    "notes": "One shared compliance policy for MAC-001..MAC-006; the payload shows only this setting's properties. scheduledActionsForRule (block, 0 h) is required on create. Intune has no relative ('current release') value: osMinimumVersion is a fixed version string. The value must come from configuration and be raised at each release; no configuration key exists yet (propose devices.macos.minimum_version). Decision needed on who maintains it."
+  },
+  "MAC-006": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.intune-macos",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceManagement/deviceCompliancePolicies (one policy 'Box macOS compliance' holds MAC-001..MAC-006; PATCH /beta/deviceManagement/deviceCompliancePolicies/{id} to update; POST .../{id}/assign)",
+    "payload": {
+      "@odata.type": "#microsoft.graph.macOSCompliancePolicy",
+      "displayName": "Box macOS compliance",
+      "passwordRequired": true,
+      "passwordMinimumLength": 12,
+      "passwordBlockSimple": true,
+      "scheduledActionsForRule": [
+        {
+          "ruleName": "PasswordRequired",
+          "scheduledActionConfigurations": [
+            {
+              "actionType": "block",
+              "gracePeriodHours": 0
+            }
+          ]
+        }
+      ]
+    },
+    "read": "GET /beta/deviceManagement/deviceCompliancePolicies/{id}",
+    "check": "passwordRequired == true && passwordMinimumLength == 12",
+    "permissions": [
+      "graph:DeviceManagementConfiguration.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalent: IntuneDeviceCompliancePolicyMacOS"
+    },
+    "verified": "property present on microsoft.graph.macOSCompliancePolicy in the beta and v1.0 $metadata of the test tenant; GET /beta/deviceManagement/deviceCompliancePolicies returned 200 (none yet)",
+    "notes": "One shared compliance policy for MAC-001..MAC-006; the payload shows only this setting's properties. scheduledActionsForRule (block, 0 h) is required on create. Minimum length 12 mirrors MAC-013 so compliance reports the configured policy."
+  },
+  "MAC-007": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.intune-macos",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceManagement/configurationPolicies (PUT .../configurationPolicies/{id} with the full settings list to update; POST .../{id}/assign)",
+    "payload": {
+      "name": "Box macOS FileVault",
+      "platforms": "macOS",
+      "technologies": "mdm,appleRemoteManagement",
+      "settings": [
+        {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+          "settingInstance": {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationGroupSettingCollectionInstance",
+            "settingDefinitionId": "com.apple.mcx.filevault2_com.apple.mcx.filevault2",
+            "groupSettingCollectionValue": [
+              {
+                "children": [
+                  {
+                    "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+                    "settingDefinitionId": "com.apple.mcx.filevault2_enable",
+                    "choiceSettingValue": {
+                      "value": "com.apple.mcx.filevault2_enable_0",
+                      "children": []
+                    }
+                  },
+                  {
+                    "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+                    "settingDefinitionId": "com.apple.mcx.filevault2_defer",
+                    "choiceSettingValue": {
+                      "value": "com.apple.mcx.filevault2_defer_true",
+                      "children": []
+                    }
+                  },
+                  {
+                    "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+                    "settingDefinitionId": "com.apple.mcx.filevault2_deferdontaskatuserlogout",
+                    "choiceSettingValue": {
+                      "value": "com.apple.mcx.filevault2_deferdontaskatuserlogout_false",
+                      "children": []
+                    }
+                  },
+                  {
+                    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance",
+                    "settingDefinitionId": "com.apple.mcx.filevault2_deferforceatuserloginmaxbypassattempts",
+                    "simpleSettingValue": {
+                      "@odata.type": "#microsoft.graph.deviceManagementConfigurationIntegerSettingValue",
+                      "value": 0
+                    }
+                  },
+                  {
+                    "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+                    "settingDefinitionId": "com.apple.mcx.filevault2_userecoverykey",
+                    "choiceSettingValue": {
+                      "value": "com.apple.mcx.filevault2_userecoverykey_true",
+                      "children": []
+                    }
+                  },
+                  {
+                    "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+                    "settingDefinitionId": "com.apple.mcx.filevault2_showrecoverykey",
+                    "choiceSettingValue": {
+                      "value": "com.apple.mcx.filevault2_showrecoverykey_false",
+                      "children": []
+                    }
+                  },
+                  {
+                    "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+                    "settingDefinitionId": "com.apple.mcx.filevault2_recoverykeyrotationinmonths",
+                    "choiceSettingValue": {
+                      "value": "com.apple.mcx.filevault2_recoverykeyrotationinmonths_6",
+                      "children": []
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+          "settingInstance": {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationGroupSettingCollectionInstance",
+            "settingDefinitionId": "com.apple.mcx_com.apple.mcx-fdefilevaultoptions",
+            "groupSettingCollectionValue": [
+              {
+                "children": [
+                  {
+                    "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+                    "settingDefinitionId": "com.apple.mcx_dontallowfdedisable",
+                    "choiceSettingValue": {
+                      "value": "com.apple.mcx_dontallowfdedisable_true",
+                      "children": []
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "assignments": [
+        {
+          "target": {
+            "@odata.type": "#microsoft.graph.groupAssignmentTarget",
+            "groupId": "{group:grp-staff}"
+          }
+        }
+      ]
+    },
+    "read": "GET /beta/deviceManagement/configurationPolicies/{id}?$expand=settings",
+    "check": "settings contain com.apple.mcx.filevault2_enable == com.apple.mcx.filevault2_enable_0 (On), _defer == _defer_true, _deferdontaskatuserlogout == _false, _deferforceatuserloginmaxbypassattempts == 0, com.apple.mcx_dontallowfdedisable == _true",
+    "permissions": [
+      "graph:DeviceManagementConfiguration.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalent: IntuneDiskEncryptionMacOS"
+    },
+    "verified": "settings catalogue definition id GET /beta/deviceManagement/configurationSettings/{id} returned 200 on the test tenant (2026-11-21); option ids recorded from the definition",
+    "notes": "Option id com.apple.mcx.filevault2_enable_0 is 'On' and _1 is 'Off' (counter-intuitive; read from the definition). Bypass attempts 0 forces enablement at the next sign-in with no deferral. Same definitions back the endpoint security 'MacOS Filevault' template e688156f-6564-4c03-b34f-83b90fe6bb82_1; MAC-007 and MAC-008 are one policy."
+  },
+  "MAC-008": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.intune-macos",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceManagement/configurationPolicies (PUT .../configurationPolicies/{id} with the full settings list to update; POST .../{id}/assign)",
+    "payload": {
+      "name": "Box macOS FileVault",
+      "platforms": "macOS",
+      "technologies": "mdm,appleRemoteManagement",
+      "settings": [
+        {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+          "settingInstance": {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationGroupSettingCollectionInstance",
+            "settingDefinitionId": "com.apple.mcx.filevault2_com.apple.mcx.filevault2",
+            "groupSettingCollectionValue": [
+              {
+                "children": [
+                  {
+                    "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+                    "settingDefinitionId": "com.apple.mcx.filevault2_userecoverykey",
+                    "choiceSettingValue": {
+                      "value": "com.apple.mcx.filevault2_userecoverykey_true",
+                      "children": []
+                    }
+                  },
+                  {
+                    "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+                    "settingDefinitionId": "com.apple.mcx.filevault2_showrecoverykey",
+                    "choiceSettingValue": {
+                      "value": "com.apple.mcx.filevault2_showrecoverykey_false",
+                      "children": []
+                    }
+                  },
+                  {
+                    "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+                    "settingDefinitionId": "com.apple.mcx.filevault2_recoverykeyrotationinmonths",
+                    "choiceSettingValue": {
+                      "value": "com.apple.mcx.filevault2_recoverykeyrotationinmonths_6",
+                      "children": []
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+          "settingInstance": {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationGroupSettingCollectionInstance",
+            "settingDefinitionId": "com.apple.security.fderecoverykeyescrow_com.apple.security.fderecoverykeyescrow",
+            "groupSettingCollectionValue": [
+              {
+                "children": [
+                  {
+                    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance",
+                    "settingDefinitionId": "com.apple.security.fderecoverykeyescrow_location",
+                    "simpleSettingValue": {
+                      "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue",
+                      "value": "{text:filevault_escrow_location}"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "assignments": [
+        {
+          "target": {
+            "@odata.type": "#microsoft.graph.groupAssignmentTarget",
+            "groupId": "{group:grp-staff}"
+          }
+        }
+      ]
+    },
+    "read": "GET /beta/deviceManagement/configurationPolicies/{id}?$expand=settings",
+    "check": "com.apple.mcx.filevault2_userecoverykey == _true, _showrecoverykey == _false, _recoverykeyrotationinmonths == _6, com.apple.security.fderecoverykeyescrow_location non-empty",
+    "permissions": [
+      "graph:DeviceManagementConfiguration.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalent: IntuneDiskEncryptionMacOS"
+    },
+    "verified": "settings catalogue definition id GET /beta/deviceManagement/configurationSettings/{id} returned 200 on the test tenant (2026-11-21); option ids recorded from the definition",
+    "notes": "Escrow goes to Intune (personal recovery key); the location text is what the user is told (for example 'Your company IT department'), a Dictionary text value. Same policy as MAC-007."
+  },
+  "MAC-009": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.intune-macos",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceManagement/configurationPolicies (PUT .../configurationPolicies/{id} with the full settings list to update; POST .../{id}/assign)",
+    "payload": {
+      "name": "Box macOS firewall",
+      "platforms": "macOS",
+      "technologies": "mdm,appleRemoteManagement",
+      "settings": [
+        {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+          "settingInstance": {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationGroupSettingCollectionInstance",
+            "settingDefinitionId": "com.apple.security.firewall_com.apple.security.firewall",
+            "groupSettingCollectionValue": [
+              {
+                "children": [
+                  {
+                    "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+                    "settingDefinitionId": "com.apple.security.firewall_enablefirewall",
+                    "choiceSettingValue": {
+                      "value": "com.apple.security.firewall_enablefirewall_true",
+                      "children": []
+                    }
+                  },
+                  {
+                    "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+                    "settingDefinitionId": "com.apple.security.firewall_enablestealthmode",
+                    "choiceSettingValue": {
+                      "value": "com.apple.security.firewall_enablestealthmode_true",
+                      "children": []
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "assignments": [
+        {
+          "target": {
+            "@odata.type": "#microsoft.graph.groupAssignmentTarget",
+            "groupId": "{group:grp-staff}"
+          }
+        }
+      ]
+    },
+    "read": "GET /beta/deviceManagement/configurationPolicies/{id}?$expand=settings",
+    "check": "com.apple.security.firewall_enablefirewall == _true && com.apple.security.firewall_enablestealthmode == _true",
+    "permissions": [
+      "graph:DeviceManagementConfiguration.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalent: IntuneSettingCatalogCustomPolicy (macOS)"
+    },
+    "verified": "settings catalogue definition id GET /beta/deviceManagement/configurationSettings/{id} returned 200 on the test tenant (2026-11-21); option ids recorded from the definition",
+    "notes": "Same definitions as the endpoint security 'macOS Firewall' template de730c94-09d5-4972-9672-1b9cefe77b64_1. MAC-009 and MAC-010 are one policy."
+  },
+  "MAC-010": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.intune-macos",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceManagement/configurationPolicies (PUT .../configurationPolicies/{id} with the full settings list to update; POST .../{id}/assign)",
+    "payload": {
+      "name": "Box macOS firewall",
+      "platforms": "macOS",
+      "technologies": "mdm,appleRemoteManagement",
+      "settings": [
+        {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+          "settingInstance": {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationGroupSettingCollectionInstance",
+            "settingDefinitionId": "com.apple.security.firewall_com.apple.security.firewall",
+            "groupSettingCollectionValue": [
+              {
+                "children": [
+                  {
+                    "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+                    "settingDefinitionId": "com.apple.security.firewall_blockallincoming",
+                    "choiceSettingValue": {
+                      "value": "com.apple.security.firewall_blockallincoming_true",
+                      "children": []
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "assignments": [
+        {
+          "target": {
+            "@odata.type": "#microsoft.graph.groupAssignmentTarget",
+            "groupId": "{group:grp-staff}"
+          }
+        }
+      ]
+    },
+    "read": "GET /beta/deviceManagement/configurationPolicies/{id}?$expand=settings",
+    "check": "com.apple.security.firewall_blockallincoming == _true (enhanced tier only; core sets _false)",
+    "permissions": [
+      "graph:DeviceManagementConfiguration.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalent: IntuneSettingCatalogCustomPolicy (macOS)"
+    },
+    "verified": "settings catalogue definition id GET /beta/deviceManagement/configurationSettings/{id} returned 200 on the test tenant (2026-11-21); option ids recorded from the definition",
+    "notes": "Enhanced tier. Blocks every incoming connection except basic services (DHCP, Bonjour, IPsec)."
+  },
+  "MAC-011": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.intune-macos",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceManagement/configurationPolicies (PUT .../configurationPolicies/{id} with the full settings list to update; POST .../{id}/assign)",
+    "payload": {
+      "name": "Box macOS Gatekeeper",
+      "platforms": "macOS",
+      "technologies": "mdm,appleRemoteManagement",
+      "settings": [
+        {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+          "settingInstance": {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationGroupSettingCollectionInstance",
+            "settingDefinitionId": "com.apple.systempolicy.control_com.apple.systempolicy.control",
+            "groupSettingCollectionValue": [
+              {
+                "children": [
+                  {
+                    "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+                    "settingDefinitionId": "com.apple.systempolicy.control_enableassessment",
+                    "choiceSettingValue": {
+                      "value": "com.apple.systempolicy.control_enableassessment_true",
+                      "children": []
+                    }
+                  },
+                  {
+                    "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+                    "settingDefinitionId": "com.apple.systempolicy.control_allowidentifieddevelopers",
+                    "choiceSettingValue": {
+                      "value": "com.apple.systempolicy.control_allowidentifieddevelopers_true",
+                      "children": []
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+          "settingInstance": {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationGroupSettingCollectionInstance",
+            "settingDefinitionId": "com.apple.systempolicy.managed_com.apple.systempolicy.managed",
+            "groupSettingCollectionValue": [
+              {
+                "children": [
+                  {
+                    "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+                    "settingDefinitionId": "com.apple.systempolicy.managed_disableoverride",
+                    "choiceSettingValue": {
+                      "value": "com.apple.systempolicy.managed_disableoverride_true",
+                      "children": []
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "assignments": [
+        {
+          "target": {
+            "@odata.type": "#microsoft.graph.groupAssignmentTarget",
+            "groupId": "{group:grp-staff}"
+          }
+        }
+      ]
+    },
+    "read": "GET /beta/deviceManagement/configurationPolicies/{id}?$expand=settings",
+    "check": "com.apple.systempolicy.managed_disableoverride == _true && com.apple.systempolicy.control_enableassessment == _true && _allowidentifieddevelopers == _true",
+    "permissions": [
+      "graph:DeviceManagementConfiguration.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalent: IntuneSettingCatalogCustomPolicy (macOS)"
+    },
+    "verified": "settings catalogue definition id GET /beta/deviceManagement/configurationSettings/{id} returned 200 on the test tenant (2026-11-21); option ids recorded from the definition",
+    "notes": "Enforces the MAC-004 source (App Store and identified developers) and removes the user's Control-click override."
+  },
+  "MAC-012": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.intune-macos",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceManagement/configurationPolicies (PUT .../configurationPolicies/{id} with the full settings list to update; POST .../{id}/assign)",
+    "payload": {
+      "name": "Box macOS screen lock",
+      "platforms": "macOS",
+      "technologies": "mdm,appleRemoteManagement",
+      "settings": [
+        {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+          "settingInstance": {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationGroupSettingCollectionInstance",
+            "settingDefinitionId": "com.apple.screensaver_com.apple.screensaver",
+            "groupSettingCollectionValue": [
+              {
+                "children": [
+                  {
+                    "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+                    "settingDefinitionId": "com.apple.screensaver_askforpassword",
+                    "choiceSettingValue": {
+                      "value": "com.apple.screensaver_askforpassword_true",
+                      "children": []
+                    }
+                  },
+                  {
+                    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance",
+                    "settingDefinitionId": "com.apple.screensaver_askforpassworddelay",
+                    "simpleSettingValue": {
+                      "@odata.type": "#microsoft.graph.deviceManagementConfigurationIntegerSettingValue",
+                      "value": 0
+                    }
+                  },
+                  {
+                    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance",
+                    "settingDefinitionId": "com.apple.screensaver_loginwindowidletime",
+                    "simpleSettingValue": {
+                      "@odata.type": "#microsoft.graph.deviceManagementConfigurationIntegerSettingValue",
+                      "value": 900
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+          "settingInstance": {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationGroupSettingCollectionInstance",
+            "settingDefinitionId": "com.apple.screensaver.user_com.apple.screensaver.user",
+            "groupSettingCollectionValue": [
+              {
+                "children": [
+                  {
+                    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance",
+                    "settingDefinitionId": "com.apple.screensaver.user_idletime",
+                    "simpleSettingValue": {
+                      "@odata.type": "#microsoft.graph.deviceManagementConfigurationIntegerSettingValue",
+                      "value": 900
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "assignments": [
+        {
+          "target": {
+            "@odata.type": "#microsoft.graph.groupAssignmentTarget",
+            "groupId": "{group:grp-staff}"
+          }
+        }
+      ]
+    },
+    "read": "GET /beta/deviceManagement/configurationPolicies/{id}?$expand=settings",
+    "check": "com.apple.screensaver.user_idletime == 900 (core) or 300 (enhanced) seconds; com.apple.screensaver_askforpassword == _true; com.apple.screensaver_askforpassworddelay == 0",
+    "permissions": [
+      "graph:DeviceManagementConfiguration.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalent: IntuneSettingCatalogCustomPolicy (macOS)"
+    },
+    "verified": "settings catalogue definition id GET /beta/deviceManagement/configurationSettings/{id} returned 200 on the test tenant (2026-11-21); option ids recorded from the definition",
+    "notes": "Idle time is in seconds: 900 core, 300 enhanced. com.apple.screensaver_idletime (system scope) does not exist (404); idle time is the user-scope definition com.apple.screensaver.user_idletime, so the policy carries user-channel settings. DDM passcode_maximuminactivityinminutes (0-15) is an alternative lock timer."
+  },
+  "MAC-013": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.intune-macos",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceManagement/configurationPolicies (PUT .../configurationPolicies/{id} with the full settings list to update; POST .../{id}/assign)",
+    "payload": {
+      "name": "Box macOS passcode (DDM)",
+      "platforms": "macOS",
+      "technologies": "appleRemoteManagement",
+      "settings": [
+        {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+          "settingInstance": {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationGroupSettingCollectionInstance",
+            "settingDefinitionId": "passcode_passcode",
+            "groupSettingCollectionValue": [
+              {
+                "children": [
+                  {
+                    "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+                    "settingDefinitionId": "passcode_requirepasscode",
+                    "choiceSettingValue": {
+                      "value": "passcode_requirepasscode_true",
+                      "children": []
+                    }
+                  },
+                  {
+                    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance",
+                    "settingDefinitionId": "passcode_minimumlength",
+                    "simpleSettingValue": {
+                      "@odata.type": "#microsoft.graph.deviceManagementConfigurationIntegerSettingValue",
+                      "value": 12
+                    }
+                  },
+                  {
+                    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance",
+                    "settingDefinitionId": "passcode_maximumfailedattempts",
+                    "simpleSettingValue": {
+                      "@odata.type": "#microsoft.graph.deviceManagementConfigurationIntegerSettingValue",
+                      "value": 10
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "assignments": [
+        {
+          "target": {
+            "@odata.type": "#microsoft.graph.groupAssignmentTarget",
+            "groupId": "{group:grp-staff}"
+          }
+        }
+      ]
+    },
+    "read": "GET /beta/deviceManagement/configurationPolicies/{id}?$expand=settings",
+    "check": "passcode_requirepasscode == _true && passcode_minimumlength == 12 && passcode_maximumfailedattempts == 10",
+    "permissions": [
+      "graph:DeviceManagementConfiguration.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalent: IntuneSettingCatalogCustomPolicy (macOS)"
+    },
+    "verified": "settings catalogue definition id GET /beta/deviceManagement/configurationSettings/{id} returned 200 on the test tenant (2026-11-21); option ids recorded from the definition",
+    "notes": "Declarative device management (DDM) passcode declaration; the MDM com.apple.mobiledevice.passwordpolicy_* definitions are marked deprecated. Ranges from the definitions: minimum length 0-16, failed attempts 2-11. Local-account passcode; with Platform SSO (MAC-024) the Entra password policy also applies."
+  },
+  "MAC-014": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.intune-macos",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceManagement/deviceConfigurations (macOSCustomConfiguration); POST .../{id}/assign",
+    "payload": {
+      "@odata.type": "#microsoft.graph.macOSCustomConfiguration",
+      "displayName": "Box macOS disable automatic login",
+      "deploymentChannel": "deviceChannel",
+      "payloadName": "Disable automatic login",
+      "payloadFileName": "box-loginwindow.mobileconfig",
+      "payload": "base64(mobileconfig with PayloadType com.apple.loginwindow and key com.apple.login.mcx.DisableAutoLoginClient = true)"
+    },
+    "read": "GET /beta/deviceManagement/deviceConfigurations/{id}",
+    "check": "payload decodes to a com.apple.loginwindow payload with com.apple.login.mcx.DisableAutoLoginClient == true; deviceStatusOverview shows no errors",
+    "permissions": [
+      "graph:DeviceManagementConfiguration.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalent: IntuneDeviceConfigurationCustomPolicyMacOS (not certain it exists)"
+    },
+    "verified": "GET /beta/deviceManagement/deviceConfigurations returned 200; macOSCustomConfiguration present in beta $metadata. The settings catalogue has only autologinusername/autologinpassword, no 'disable automatic login' definition (searched by keyword and id). The mobileconfig key is from Apple's loginwindow payload; not verified: Apple documentation host blocked.",
+    "notes": "FileVault (MAC-007) also turns automatic login off on macOS; the custom profile makes it explicit and survives a FileVault exception."
+  },
+  "MAC-015": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.intune-macos",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceManagement/configurationPolicies (PUT .../configurationPolicies/{id} with the full settings list to update; POST .../{id}/assign)",
+    "payload": {
+      "name": "Box macOS accounts",
+      "platforms": "macOS",
+      "technologies": "mdm,appleRemoteManagement",
+      "settings": [
+        {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+          "settingInstance": {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationGroupSettingCollectionInstance",
+            "settingDefinitionId": "com.apple.mcx_com.apple.mcx-accounts",
+            "groupSettingCollectionValue": [
+              {
+                "children": [
+                  {
+                    "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+                    "settingDefinitionId": "com.apple.mcx_disableguestaccount",
+                    "choiceSettingValue": {
+                      "value": "com.apple.mcx_disableguestaccount_true",
+                      "children": []
+                    }
+                  },
+                  {
+                    "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+                    "settingDefinitionId": "com.apple.mcx_enableguestaccount",
+                    "choiceSettingValue": {
+                      "value": "com.apple.mcx_enableguestaccount_false",
+                      "children": []
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "assignments": [
+        {
+          "target": {
+            "@odata.type": "#microsoft.graph.groupAssignmentTarget",
+            "groupId": "{group:grp-staff}"
+          }
+        }
+      ]
+    },
+    "read": "GET /beta/deviceManagement/configurationPolicies/{id}?$expand=settings",
+    "check": "com.apple.mcx_disableguestaccount == _true && com.apple.mcx_enableguestaccount == _false",
+    "permissions": [
+      "graph:DeviceManagementConfiguration.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalent: IntuneSettingCatalogCustomPolicy (macOS)"
+    },
+    "verified": "settings catalogue definition id GET /beta/deviceManagement/configurationSettings/{id} returned 200 on the test tenant (2026-11-21); option ids recorded from the definition",
+    "notes": ""
+  },
+  "MAC-016": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.intune-macos",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceManagement/configurationPolicies (PUT .../configurationPolicies/{id} with the full settings list to update; POST .../{id}/assign)",
+    "payload": {
+      "name": "Box macOS software update (DDM)",
+      "platforms": "macOS",
+      "technologies": "appleRemoteManagement",
+      "settings": [
+        {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+          "settingInstance": {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationGroupSettingCollectionInstance",
+            "settingDefinitionId": "softwareupdate_softwareupdate",
+            "groupSettingCollectionValue": [
+              {
+                "children": [
+                  {
+                    "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+                    "settingDefinitionId": "softwareupdate_automaticactions_download",
+                    "choiceSettingValue": {
+                      "value": "softwareupdate_automaticactions_download_1",
+                      "children": []
+                    }
+                  },
+                  {
+                    "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+                    "settingDefinitionId": "softwareupdate_automaticactions_installosupdates",
+                    "choiceSettingValue": {
+                      "value": "softwareupdate_automaticactions_installosupdates_1",
+                      "children": []
+                    }
+                  },
+                  {
+                    "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+                    "settingDefinitionId": "softwareupdate_automaticactions_installsecurityupdate",
+                    "choiceSettingValue": {
+                      "value": "softwareupdate_automaticactions_installsecurityupdate_1",
+                      "children": []
+                    }
+                  },
+                  {
+                    "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+                    "settingDefinitionId": "softwareupdate_rapidsecurityresponse_enable",
+                    "choiceSettingValue": {
+                      "value": "softwareupdate_rapidsecurityresponse_enable_true",
+                      "children": []
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "assignments": [
+        {
+          "target": {
+            "@odata.type": "#microsoft.graph.groupAssignmentTarget",
+            "groupId": "{group:grp-staff}"
+          }
+        }
+      ]
+    },
+    "read": "GET /beta/deviceManagement/configurationPolicies/{id}?$expand=settings",
+    "check": "softwareupdate_automaticactions_download == _1 (AlwaysOn), _installosupdates == _1 (AlwaysOn), _installsecurityupdate == _1 (AlwaysOn), softwareupdate_rapidsecurityresponse_enable == _true",
+    "permissions": [
+      "graph:DeviceManagementConfiguration.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalent: IntuneSettingCatalogCustomPolicy (macOS)"
+    },
+    "verified": "settings catalogue definition id GET /beta/deviceManagement/configurationSettings/{id} returned 200 on the test tenant (2026-11-21); option ids recorded from the definition",
+    "notes": "DDM declaration com.apple.configuration.softwareupdate.settings (macOS 14+). The MDM com.apple.softwareupdate_* definitions are marked deprecated. 'Rapid security response' is shown as 'Background Security Improvement Settings'. The settings group child structure (automaticactions / rapidsecurityresponse sub-groups) must be built from the definitions' childIds at apply time."
+  },
+  "MAC-017": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.intune-macos",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceManagement/configurationPolicies (PUT .../configurationPolicies/{id} with the full settings list to update; POST .../{id}/assign)",
+    "payload": {
+      "name": "Box macOS update deadline (DDM)",
+      "platforms": "macOS",
+      "technologies": "appleRemoteManagement",
+      "settings": [
+        {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+          "settingInstance": {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationGroupSettingCollectionInstance",
+            "settingDefinitionId": "ddm-latestsoftwareupdate_ddm-latestsoftwareupdate",
+            "groupSettingCollectionValue": [
+              {
+                "children": [
+                  {
+                    "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+                    "settingDefinitionId": "ddm-latestsoftwareupdate_enforcelatestsoftwareupdateversion",
+                    "choiceSettingValue": {
+                      "value": "ddm-latestsoftwareupdate_enforcelatestsoftwareupdateversion_0",
+                      "children": [
+                        {
+                          "@odata.type": "#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance",
+                          "settingDefinitionId": "ddm-latestsoftwareupdate_delayindays",
+                          "simpleSettingValue": {
+                            "@odata.type": "#microsoft.graph.deviceManagementConfigurationIntegerSettingValue",
+                            "value": 7
+                          }
+                        },
+                        {
+                          "@odata.type": "#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance",
+                          "settingDefinitionId": "ddm-latestsoftwareupdate_installtime",
+                          "simpleSettingValue": {
+                            "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue",
+                            "value": "{text:update_install_time}"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "assignments": [
+        {
+          "target": {
+            "@odata.type": "#microsoft.graph.groupAssignmentTarget",
+            "groupId": "{group:grp-staff}"
+          }
+        }
+      ]
+    },
+    "read": "GET /beta/deviceManagement/configurationPolicies/{id}?$expand=settings",
+    "check": "ddm-latestsoftwareupdate_enforcelatestsoftwareupdateversion == _0 (True) && ddm-latestsoftwareupdate_delayindays == 7",
+    "permissions": [
+      "graph:DeviceManagementConfiguration.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalent: IntuneSettingCatalogCustomPolicy (macOS)"
+    },
+    "verified": "settings catalogue definition id GET /beta/deviceManagement/configurationSettings/{id} returned 200 on the test tenant (2026-11-21); option ids recorded from the definition",
+    "notes": "Intune 'Enforce latest software update' DDM setting: 'number of days that should pass before a deadline is enforced after a new update is released by Apple' (0-30), forces restart after the deadline. Install time is a local time string (regEx, max 20 chars), e.g. 17:00; it is a configuration choice with no value in the requirement. Newer Intune setting: confirm OS support for the fleet before relying on it."
+  },
+  "MAC-018": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.intune-macos",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceManagement/deviceShellScripts (scriptContent base64, runAsAccount system, executionFrequency P1D, retryCount 3); POST .../{id}/assign; plus POST /beta/deviceManagement/configurationPolicies for the restriction settings",
+    "payload": {
+      "deviceShellScript": {
+        "displayName": "Box macOS remote login off",
+        "fileName": "mac-018.sh",
+        "runAsAccount": "system",
+        "executionFrequency": "P1D",
+        "retryCount": 3,
+        "blockExecutionNotifications": true,
+        "scriptContent": "base64(systemsetup -f -setremotelogin off; systemsetup -setremoteappleevents off; report state)"
+      },
+      "configurationPolicy": {
+        "name": "Box macOS remote login off restrictions",
+        "platforms": "macOS",
+        "technologies": "mdm,appleRemoteManagement",
+        "settings": [
+          {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+            "settingInstance": {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationGroupSettingCollectionInstance",
+              "settingDefinitionId": "com.apple.applicationaccess_com.apple.applicationaccess",
+              "groupSettingCollectionValue": [
+                {
+                  "children": [
+                    {
+                      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+                      "settingDefinitionId": "com.apple.applicationaccess_allowremoteappleeventsmodification",
+                      "choiceSettingValue": {
+                        "value": "com.apple.applicationaccess_allowremoteappleeventsmodification_false",
+                        "children": []
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "read": "GET /beta/deviceManagement/deviceShellScripts/{id}?$expand=assignments ; GET /beta/deviceManagement/deviceShellScripts/{id}/deviceRunStates",
+    "check": "deviceRunStates[*].runState == 'success' and resultMessage reports 'Remote Login: Off' and 'Remote Apple Events: Off'; restriction com.apple.applicationaccess_allowremoteappleeventsmodification == _false",
+    "permissions": [
+      "graph:DeviceManagementScripts.ReadWrite.All",
+      "graph:DeviceManagementConfiguration.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC has no shell script resource for macOS"
+    },
+    "verified": "not verified: GET /beta/deviceManagement/deviceShellScripts returned 403 (needs DeviceManagementScripts.Read.All / ReadWrite.All, not granted); restriction definitions verified: GET /beta/deviceManagement/configurationSettings/{id} returned 200",
+    "notes": "No configuration profile or DDM key turns SSH (Remote Login) off; a shell script is the only Intune path. com.apple.applicationaccess_allowremoteappleeventsmodification (macOS 14+) only prevents users changing the setting, so it is paired with the script. Proof is per device (run state), not a policy property. Needs DeviceManagementScripts.ReadWrite.All, not in app-permissions.yaml."
+  },
+  "MAC-019": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.intune-macos",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceManagement/deviceShellScripts (scriptContent base64, runAsAccount system, executionFrequency P1D, retryCount 3); POST .../{id}/assign; plus POST /beta/deviceManagement/configurationPolicies for the restriction settings",
+    "payload": {
+      "deviceShellScript": {
+        "displayName": "Box macOS sharing services off",
+        "fileName": "mac-019.sh",
+        "runAsAccount": "system",
+        "executionFrequency": "P1D",
+        "retryCount": 3,
+        "blockExecutionNotifications": true,
+        "scriptContent": "base64(launchctl disable system/com.apple.screensharing; launchctl disable system/com.apple.smbd; cupsctl --no-share-printers; defaults write /Library/Preferences/SystemConfiguration/com.apple.nat NAT -dict Enabled -int 0; per-user Bluetooth sharing off; report state)"
+      },
+      "configurationPolicy": {
+        "name": "Box macOS sharing services off restrictions",
+        "platforms": "macOS",
+        "technologies": "mdm,appleRemoteManagement",
+        "settings": [
+          {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+            "settingInstance": {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationGroupSettingCollectionInstance",
+              "settingDefinitionId": "com.apple.applicationaccess_com.apple.applicationaccess",
+              "groupSettingCollectionValue": [
+                {
+                  "children": [
+                    {
+                      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+                      "settingDefinitionId": "com.apple.applicationaccess_allowfilesharingmodification",
+                      "choiceSettingValue": {
+                        "value": "com.apple.applicationaccess_allowfilesharingmodification_false",
+                        "children": []
+                      }
+                    },
+                    {
+                      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+                      "settingDefinitionId": "com.apple.applicationaccess_allowprintersharingmodification",
+                      "choiceSettingValue": {
+                        "value": "com.apple.applicationaccess_allowprintersharingmodification_false",
+                        "children": []
+                      }
+                    },
+                    {
+                      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+                      "settingDefinitionId": "com.apple.applicationaccess_allowinternetsharingmodification",
+                      "choiceSettingValue": {
+                        "value": "com.apple.applicationaccess_allowinternetsharingmodification_false",
+                        "children": []
+                      }
+                    },
+                    {
+                      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+                      "settingDefinitionId": "com.apple.applicationaccess_allowbluetoothsharingmodification",
+                      "choiceSettingValue": {
+                        "value": "com.apple.applicationaccess_allowbluetoothsharingmodification_false",
+                        "children": []
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+            "settingInstance": {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationGroupSettingCollectionInstance",
+              "settingDefinitionId": "command_remotedesktop",
+              "groupSettingCollectionValue": [
+                {
+                  "children": [
+                    {
+                      "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+                      "settingDefinitionId": "command_remotedesktop_remotedesktop",
+                      "choiceSettingValue": {
+                        "value": "command_remotedesktop_remotedesktop_false",
+                        "children": []
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "read": "GET /beta/deviceManagement/deviceShellScripts/{id}?$expand=assignments ; GET /beta/deviceManagement/deviceShellScripts/{id}/deviceRunStates",
+    "check": "deviceRunStates[*].runState == 'success' with each service reported off; restrictions allowfilesharingmodification, allowprintersharingmodification, allowinternetsharingmodification, allowbluetoothsharingmodification == _false; command_remotedesktop_remotedesktop == _false",
+    "permissions": [
+      "graph:DeviceManagementScripts.ReadWrite.All",
+      "graph:DeviceManagementConfiguration.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC has no shell script resource for macOS"
+    },
+    "verified": "not verified: GET /beta/deviceManagement/deviceShellScripts returned 403 (needs DeviceManagementScripts.Read.All / ReadWrite.All, not granted); restriction definitions verified: GET /beta/deviceManagement/configurationSettings/{id} returned 200",
+    "notes": "Apple has no profile key that turns file, printer, internet or Bluetooth sharing off; the macOS 14+ '...Modification' restrictions only lock the current state, so a script turns them off first. Screen sharing / Remote Management is turned off with the 'Remote Desktop' setting (command_remotedesktop_remotedesktop_false). Needs DeviceManagementScripts.ReadWrite.All (not granted)."
+  },
+  "MAC-020": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.intune-macos",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceManagement/configurationPolicies (PUT .../configurationPolicies/{id} with the full settings list to update; POST .../{id}/assign)",
+    "payload": {
+      "name": "Box macOS restrictions (enhanced)",
+      "platforms": "macOS",
+      "technologies": "mdm,appleRemoteManagement",
+      "settings": [
+        {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+          "settingInstance": {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationGroupSettingCollectionInstance",
+            "settingDefinitionId": "com.apple.applicationaccess_com.apple.applicationaccess",
+            "groupSettingCollectionValue": [
+              {
+                "children": [
+                  {
+                    "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+                    "settingDefinitionId": "com.apple.applicationaccess_allowairdrop",
+                    "choiceSettingValue": {
+                      "value": "com.apple.applicationaccess_allowairdrop_false",
+                      "children": []
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "assignments": [
+        {
+          "target": {
+            "@odata.type": "#microsoft.graph.groupAssignmentTarget",
+            "groupId": "{group:grp-staff}"
+          }
+        }
+      ]
+    },
+    "read": "GET /beta/deviceManagement/configurationPolicies/{id}?$expand=settings",
+    "check": "com.apple.applicationaccess_allowairdrop == _false",
+    "permissions": [
+      "graph:DeviceManagementConfiguration.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalent: IntuneSettingCatalogCustomPolicy (macOS)"
+    },
+    "verified": "settings catalogue definition id GET /beta/deviceManagement/configurationSettings/{id} returned 200 on the test tenant (2026-11-21); option ids recorded from the definition",
+    "notes": "Enhanced tier. Restrictions payload needs supervision on some OS versions; Intune-enrolled Macs via ADE are supervised."
+  },
+  "MAC-021": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.intune-macos",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceManagement/configurationPolicies (PUT .../configurationPolicies/{id} with the full settings list to update; POST .../{id}/assign)",
+    "payload": {
+      "name": "Box macOS restrictions (enhanced)",
+      "platforms": "macOS",
+      "technologies": "mdm,appleRemoteManagement",
+      "settings": [
+        {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+          "settingInstance": {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationGroupSettingCollectionInstance",
+            "settingDefinitionId": "com.apple.applicationaccess_com.apple.applicationaccess",
+            "groupSettingCollectionValue": [
+              {
+                "children": [
+                  {
+                    "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+                    "settingDefinitionId": "com.apple.applicationaccess_allowclouddocumentsync",
+                    "choiceSettingValue": {
+                      "value": "com.apple.applicationaccess_allowclouddocumentsync_false",
+                      "children": []
+                    }
+                  },
+                  {
+                    "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+                    "settingDefinitionId": "com.apple.applicationaccess_allowclouddesktopanddocuments",
+                    "choiceSettingValue": {
+                      "value": "com.apple.applicationaccess_allowclouddesktopanddocuments_false",
+                      "children": []
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "assignments": [
+        {
+          "target": {
+            "@odata.type": "#microsoft.graph.groupAssignmentTarget",
+            "groupId": "{group:grp-staff}"
+          }
+        }
+      ]
+    },
+    "read": "GET /beta/deviceManagement/configurationPolicies/{id}?$expand=settings",
+    "check": "com.apple.applicationaccess_allowclouddocumentsync == _false && com.apple.applicationaccess_allowclouddesktopanddocuments == _false",
+    "permissions": [
+      "graph:DeviceManagementConfiguration.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalent: IntuneSettingCatalogCustomPolicy (macOS)"
+    },
+    "verified": "settings catalogue definition id GET /beta/deviceManagement/configurationSettings/{id} returned 200 on the test tenant (2026-11-21); option ids recorded from the definition",
+    "notes": "Enhanced tier. MAC-020 and MAC-021 share one restrictions policy."
+  },
+  "MAC-022": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.intune-macos",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceManagement/deviceShellScripts (scriptContent base64, runAsAccount system, executionFrequency P1D, retryCount 3); POST .../{id}/assign",
+    "payload": {
+      "deviceShellScript": {
+        "displayName": "Box macOS admin password for system settings",
+        "fileName": "mac-022.sh",
+        "runAsAccount": "system",
+        "executionFrequency": "P1D",
+        "retryCount": 3,
+        "blockExecutionNotifications": true,
+        "scriptContent": "base64(security authorizationdb read system.preferences > plist; set 'shared' false; security authorizationdb write system.preferences < plist; report state)"
+      }
+    },
+    "read": "GET /beta/deviceManagement/deviceShellScripts/{id}?$expand=assignments ; GET /beta/deviceManagement/deviceShellScripts/{id}/deviceRunStates",
+    "check": "deviceRunStates[*].runState == 'success' and resultMessage reports system.preferences shared == false",
+    "permissions": [
+      "graph:DeviceManagementScripts.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC has no shell script resource for macOS"
+    },
+    "verified": "not verified: GET /beta/deviceManagement/deviceShellScripts returned 403 (needs DeviceManagementScripts.Read.All / ReadWrite.All, not granted)",
+    "notes": "No profile or DDM key exists; CIS macOS benchmark uses the authorizationdb edit shown. Proof is per device. Needs DeviceManagementScripts.ReadWrite.All (not granted)."
+  },
+  "MAC-023": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.intune-macos",
+    "method": "graph-beta",
+    "apply": "PATCH /beta/deviceManagement/depOnboardingSettings/{dep:id}/enrollmentProfiles/{id} (depMacOSEnrollmentProfile) or, for the newer ADE settings-catalogue profile, POST /beta/deviceManagement/configurationPolicies with technologies 'enrollment'",
+    "payload": {
+      "depMacOSEnrollmentProfile": {
+        "@odata.type": "#microsoft.graph.depMacOSEnrollmentProfile",
+        "displayName": "Box macOS ADE",
+        "requiresUserAuthentication": true,
+        "supervisedModeEnabled": true,
+        "skipPrimarySetupAccountCreation": false,
+        "setPrimarySetupAccountAsRegularUser": true
+      },
+      "settingsCatalogAlternative": {
+        "platforms": "macOS",
+        "technologies": "enrollment",
+        "settings": [
+          {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+            "settingDefinitionId": "ade_accountsettings_createlocalprimary",
+            "choiceSettingValue": {
+              "value": "ade_accountsettings_createlocalprimary_1",
+              "children": []
+            }
+          }
+        ]
+      }
+    },
+    "read": "GET /beta/deviceManagement/depOnboardingSettings/{dep:id}/enrollmentProfiles/{id}",
+    "check": "setPrimarySetupAccountAsRegularUser == true (or ade_accountsettings_createlocalprimary == _1 'Yes - Standard Account Type')",
+    "permissions": [
+      "graph:DeviceManagementServiceConfig.ReadWrite.All",
+      "graph:DeviceManagementConfiguration.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalent: IntuneDeviceEnrollmentProfile... (no macOS ADE resource known)"
+    },
+    "verified": "depMacOSEnrollmentProfile.setPrimarySetupAccountAsRegularUser present in beta $metadata; ade_accountsettings_createlocalprimary definition returned 200 (options _0 No, _1 Standard, _2 Administrator). GET /beta/deviceManagement/depOnboardingSettings returned 403 (needs DeviceManagementServiceConfig.Read.All / ReadWrite.All, not granted).",
+    "notes": "Prerequisite: an Apple Business Manager (ADE) token uploaded in the Intune admin centre, a portal step with the company's Apple account like G-07; propose a gate. Applies only to Macs enrolled through ADE; a Mac enrolled by the user keeps the account the user created. Needs DeviceManagementServiceConfig.ReadWrite.All (not granted)."
+  },
+  "MAC-024": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.intune-macos",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceManagement/configurationPolicies (PUT .../configurationPolicies/{id} with the full settings list to update; POST .../{id}/assign)",
+    "payload": {
+      "name": "Box macOS Platform SSO",
+      "platforms": "macOS",
+      "technologies": "mdm",
+      "settings": [
+        {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+          "settingInstance": {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationGroupSettingCollectionInstance",
+            "settingDefinitionId": "com.apple.extensiblesso_com.apple.extensiblesso",
+            "groupSettingCollectionValue": [
+              {
+                "children": [
+                  {
+                    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance",
+                    "settingDefinitionId": "com.apple.extensiblesso_extensionidentifier",
+                    "simpleSettingValue": {
+                      "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue",
+                      "value": "com.microsoft.CompanyPortalMac.ssoextension"
+                    }
+                  },
+                  {
+                    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance",
+                    "settingDefinitionId": "com.apple.extensiblesso_teamidentifier",
+                    "simpleSettingValue": {
+                      "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue",
+                      "value": "UBF8T346G9"
+                    }
+                  },
+                  {
+                    "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+                    "settingDefinitionId": "com.apple.extensiblesso_type",
+                    "choiceSettingValue": {
+                      "value": "com.apple.extensiblesso_type_1",
+                      "children": []
+                    }
+                  },
+                  {
+                    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSimpleSettingCollectionInstance",
+                    "settingDefinitionId": "com.apple.extensiblesso_urls",
+                    "simpleSettingCollectionValue": [
+                      {
+                        "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue",
+                        "value": "https://login.microsoftonline.com"
+                      },
+                      {
+                        "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue",
+                        "value": "https://login.microsoft.com"
+                      },
+                      {
+                        "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue",
+                        "value": "https://sts.windows.net"
+                      }
+                    ]
+                  },
+                  {
+                    "@odata.type": "#microsoft.graph.deviceManagementConfigurationGroupSettingCollectionInstance",
+                    "settingDefinitionId": "com.apple.extensiblesso_platformsso",
+                    "groupSettingCollectionValue": [
+                      {
+                        "children": [
+                          {
+                            "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+                            "settingDefinitionId": "com.apple.extensiblesso_platformsso_authenticationmethod",
+                            "choiceSettingValue": {
+                              "value": "com.apple.extensiblesso_platformsso_authenticationmethod_1",
+                              "children": []
+                            }
+                          },
+                          {
+                            "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+                            "settingDefinitionId": "com.apple.extensiblesso_platformsso_useshareddevicekeys",
+                            "choiceSettingValue": {
+                              "value": "com.apple.extensiblesso_platformsso_useshareddevicekeys_true",
+                              "children": []
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "assignments": [
+        {
+          "target": {
+            "@odata.type": "#microsoft.graph.groupAssignmentTarget",
+            "groupId": "{group:grp-staff}"
+          }
+        }
+      ]
+    },
+    "read": "GET /beta/deviceManagement/configurationPolicies/{id}?$expand=settings",
+    "check": "com.apple.extensiblesso_platformsso_authenticationmethod == _1 (UserSecureEnclaveKey) && com.apple.extensiblesso_platformsso_useshareddevicekeys == _true && extensionidentifier == com.microsoft.CompanyPortalMac.ssoextension && type == _1 (Redirect)",
+    "permissions": [
+      "graph:DeviceManagementConfiguration.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalent: IntuneSettingCatalogCustomPolicy (macOS)"
+    },
+    "verified": "settings catalogue definition id GET /beta/deviceManagement/configurationSettings/{id} returned 200 on the test tenant (2026-11-21); option ids recorded from the definition",
+    "notes": "Platform SSO with the Secure Enclave key (hardware-bound, phishing-resistant). Microsoft's published values: extension com.microsoft.CompanyPortalMac.ssoextension, team UBF8T346G9, Redirect type and the Entra login URLs (Microsoft lists more URLs; take the full list at apply time). Needs Company Portal deployed to the Mac (macOS app assignment). The platformsso group child layout follows the definition's childIds."
+  },
+  "MAC-025": {
+    "status": "gate",
+    "provider": "intune",
+    "step": "policy.intune-macos",
+    "method": "portal",
+    "apply": "Gate: download the macOS onboarding package from the Defender portal; then POST /beta/deviceManagement/deviceConfigurations (macOSCustomConfiguration with the onboarding .mobileconfig) and POST /beta/deviceManagement/configurationPolicies for the approvals",
+    "payload": {
+      "guide": "Microsoft Defender portal > Settings > Endpoints > Onboarding > macOS > Mobile Device Management / Microsoft Intune > Download onboarding package; give the WindowsDefenderATPOnboarding file to the pipeline (it contains the organisation id, not a secret, but it is tenant data and never goes in the repository).",
+      "onboarding": {
+        "@odata.type": "#microsoft.graph.macOSCustomConfiguration",
+        "displayName": "Box Defender onboarding",
+        "deploymentChannel": "deviceChannel",
+        "payload": "base64({file:defender-macos-onboarding})"
+      },
+      "approvals": {
+        "platforms": "macOS",
+        "technologies": "mdm",
+        "settings": [
+          {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationGroupSettingCollectionInstance",
+            "settingDefinitionId": "com.apple.system-extension-policy_com.apple.system-extension-policy",
+            "groupSettingCollectionValue": [
+              {
+                "children": [
+                  {
+                    "settingDefinitionId": "com.apple.system-extension-policy_allowedsystemextensions",
+                    "value": {
+                      "UBF8T346G9": [
+                        "com.microsoft.wdav.epsext",
+                        "com.microsoft.wdav.netext"
+                      ]
+                    }
+                  },
+                  {
+                    "settingDefinitionId": "com.apple.system-extension-policy_allowedteamidentifiers",
+                    "value": [
+                      "UBF8T346G9"
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "settingDefinitionId": "com.apple.tcc.configuration-profile-policy_services_systempolicyallfiles",
+            "value": [
+              {
+                "identifier": "com.microsoft.wdav",
+                "identifiertype": "bundleID",
+                "allowed": true
+              },
+              {
+                "identifier": "com.microsoft.wdav.epsext",
+                "identifiertype": "bundleID",
+                "allowed": true
+              }
+            ]
+          },
+          {
+            "settingDefinitionId": "com.apple.webcontent-filter_com.apple.webcontent-filter",
+            "value": {
+              "filtertype": "com.apple.webcontent-filter_filtertype_1 (Plugin)",
+              "pluginbundleid": "com.microsoft.wdav",
+              "filterdataproviderbundleidentifier": "com.microsoft.wdav.netext",
+              "filtersockets": true
+            }
+          },
+          {
+            "settingDefinitionId": "com.apple.managedclient.preferences_systemextensions",
+            "value": "com.apple.managedclient.preferences_systemextensions_0 (enabled)"
+          }
+        ]
+      }
+    },
+    "read": "GET /beta/deviceManagement/deviceConfigurations/{id} and GET /beta/deviceManagement/configurationPolicies/{id}?$expand=settings; onboarding state per device in the Defender portal (Device inventory) or GET /beta/deviceManagement/managedDevices?$filter=operatingSystem eq 'macOS' (needs DeviceManagementManagedDevices.Read.All)",
+    "check": "onboarding custom profile assigned with no errors; system extension, full disk access and network filter settings present; Defender device inventory lists every enrolled Mac as onboarded",
+    "permissions": [
+      "graph:DeviceManagementConfiguration.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done"
+    },
+    "verified": "approval definitions verified on the test tenant (system-extension-policy_allowedsystemextensions, _allowedteamidentifiers, tcc ..._systempolicyallfiles, webcontent-filter_filtertype options BuiltIn/Plugin, managedclient.preferences_systemextensions). The macOS EDR template (a6ff37f6-..._1) has only device tags, no onboarding setting. Onboarding package: not verified, portal download (Defender API host blocked).",
+    "notes": "Gate because the onboarding package exists only as a Defender portal download; the approvals are API-resolved. Microsoft's published identifiers (team UBF8T346G9, bundles com.microsoft.wdav, .epsext, .netext) also need notifications and background-service approvals; take Microsoft's current list at apply time. The 'approvals' payload is shorthand, to be expanded to setting instances from the definitions. Proposed gate: 'Defender for Endpoint macOS onboarding package'."
+  },
+  "MAC-026": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.intune-macos",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceManagement/configurationPolicies (PUT .../configurationPolicies/{id} with the full settings list to update; POST .../{id}/assign)",
+    "payload": {
+      "name": "Box macOS Defender antivirus",
+      "platforms": "macOS",
+      "technologies": "mdm,appleRemoteManagement",
+      "settings": [
+        {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+          "settingInstance": {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+            "settingDefinitionId": "com.apple.managedclient.preferences_enforcementlevel_antivirusengine",
+            "choiceSettingValue": {
+              "value": "com.apple.managedclient.preferences_enforcementlevel_antivirusengine_2",
+              "children": []
+            }
+          }
+        },
+        {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+          "settingInstance": {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+            "settingDefinitionId": "com.apple.managedclient.preferences_enabled",
+            "choiceSettingValue": {
+              "value": "com.apple.managedclient.preferences_enabled_true",
+              "children": []
+            }
+          }
+        }
+      ],
+      "templateReference": {
+        "templateId": "2d345ec2-c817-49e5-9156-3ed416dc972a_1"
+      },
+      "assignments": [
+        {
+          "target": {
+            "@odata.type": "#microsoft.graph.groupAssignmentTarget",
+            "groupId": "{group:grp-staff}"
+          }
+        }
+      ]
+    },
+    "read": "GET /beta/deviceManagement/configurationPolicies/{id}?$expand=settings",
+    "check": "com.apple.managedclient.preferences_enforcementlevel_antivirusengine == _2 (real_time) && com.apple.managedclient.preferences_enabled == _true (cloud-delivered protection)",
+    "permissions": [
+      "graph:DeviceManagementConfiguration.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalent: IntuneAntivirusPolicyMacOS (not certain it exists)"
+    },
+    "verified": "settings catalogue definition id GET /beta/deviceManagement/configurationSettings/{id} returned 200 on the test tenant (2026-11-21); option ids recorded from the definition",
+    "notes": "Endpoint security antivirus policy, template 'Microsoft Defender Antivirus' (macOS) 2d345ec2-c817-49e5-9156-3ed416dc972a_1; templateFamily endpointSecurityAntivirus. com.apple.managedclient.preferences_enabled is the Defender cloud-delivered protection key (description verified). The deprecated enablerealtimeprotection is not used. MAC-026..MAC-029 are one policy."
+  },
+  "MAC-027": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.intune-macos",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceManagement/configurationPolicies (PUT .../configurationPolicies/{id} with the full settings list to update; POST .../{id}/assign)",
+    "payload": {
+      "name": "Box macOS Defender antivirus",
+      "platforms": "macOS",
+      "technologies": "mdm,appleRemoteManagement",
+      "settings": [
+        {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+          "settingInstance": {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationGroupSettingCollectionInstance",
+            "settingDefinitionId": "com.apple.managedclient.preferences_threattypesettings",
+            "groupSettingCollectionValue": [
+              {
+                "children": [
+                  {
+                    "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+                    "settingDefinitionId": "com.apple.managedclient.preferences_threattypesettings_item_key",
+                    "choiceSettingValue": {
+                      "value": "com.apple.managedclient.preferences_threattypesettings_item_key_0",
+                      "children": []
+                    }
+                  },
+                  {
+                    "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+                    "settingDefinitionId": "com.apple.managedclient.preferences_threattypesettings_item_value",
+                    "choiceSettingValue": {
+                      "value": "com.apple.managedclient.preferences_threattypesettings_item_value_1",
+                      "children": []
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "templateReference": {
+        "templateId": "2d345ec2-c817-49e5-9156-3ed416dc972a_1"
+      },
+      "assignments": [
+        {
+          "target": {
+            "@odata.type": "#microsoft.graph.groupAssignmentTarget",
+            "groupId": "{group:grp-staff}"
+          }
+        }
+      ]
+    },
+    "read": "GET /beta/deviceManagement/configurationPolicies/{id}?$expand=settings",
+    "check": "threattypesettings contains item_key == _0 (potentially_unwanted_application) with item_value == _1 (block)",
+    "permissions": [
+      "graph:DeviceManagementConfiguration.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalent: IntuneSettingCatalogCustomPolicy (macOS)"
+    },
+    "verified": "settings catalogue definition id GET /beta/deviceManagement/configurationSettings/{id} returned 200 on the test tenant (2026-11-21); option ids recorded from the definition",
+    "notes": ""
+  },
+  "MAC-028": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.intune-macos",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceManagement/configurationPolicies (PUT .../configurationPolicies/{id} with the full settings list to update; POST .../{id}/assign)",
+    "payload": {
+      "name": "Box macOS Defender antivirus",
+      "platforms": "macOS",
+      "technologies": "mdm,appleRemoteManagement",
+      "settings": [
+        {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+          "settingInstance": {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+            "settingDefinitionId": "com.apple.managedclient.preferences_enforcementlevel_tamperprotection",
+            "choiceSettingValue": {
+              "value": "com.apple.managedclient.preferences_enforcementlevel_tamperprotection_2",
+              "children": []
+            }
+          }
+        }
+      ],
+      "templateReference": {
+        "templateId": "2d345ec2-c817-49e5-9156-3ed416dc972a_1"
+      },
+      "assignments": [
+        {
+          "target": {
+            "@odata.type": "#microsoft.graph.groupAssignmentTarget",
+            "groupId": "{group:grp-staff}"
+          }
+        }
+      ]
+    },
+    "read": "GET /beta/deviceManagement/configurationPolicies/{id}?$expand=settings",
+    "check": "com.apple.managedclient.preferences_enforcementlevel_tamperprotection == _2 (block)",
+    "permissions": [
+      "graph:DeviceManagementConfiguration.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalent: IntuneSettingCatalogCustomPolicy (macOS)"
+    },
+    "verified": "settings catalogue definition id GET /beta/deviceManagement/configurationSettings/{id} returned 200 on the test tenant (2026-11-21); option ids recorded from the definition",
+    "notes": "Per-device tamper protection for Defender on macOS through Intune (technologies include microsoftSense). The tenant-wide switch is DEF-002 (portal)."
+  },
+  "MAC-029": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.intune-macos",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceManagement/configurationPolicies (PUT .../configurationPolicies/{id} with the full settings list to update; POST .../{id}/assign)",
+    "payload": {
+      "name": "Box macOS Defender antivirus",
+      "platforms": "macOS",
+      "technologies": "mdm,appleRemoteManagement",
+      "settings": [
+        {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+          "settingInstance": {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+            "settingDefinitionId": "com.apple.managedclient.preferences_enforcementlevel",
+            "choiceSettingValue": {
+              "value": "com.apple.managedclient.preferences_enforcementlevel_2",
+              "children": []
+            }
+          }
+        }
+      ],
+      "templateReference": {
+        "templateId": "2d345ec2-c817-49e5-9156-3ed416dc972a_1"
+      },
+      "assignments": [
+        {
+          "target": {
+            "@odata.type": "#microsoft.graph.groupAssignmentTarget",
+            "groupId": "{group:grp-staff}"
+          }
+        }
+      ]
+    },
+    "read": "GET /beta/deviceManagement/configurationPolicies/{id}?$expand=settings",
+    "check": "com.apple.managedclient.preferences_enforcementlevel == _2 (block)",
+    "permissions": [
+      "graph:DeviceManagementConfiguration.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalent: IntuneSettingCatalogCustomPolicy (macOS)"
+    },
+    "verified": "settings catalogue definition id GET /beta/deviceManagement/configurationSettings/{id} returned 200 on the test tenant (2026-11-21); option ids recorded from the definition",
+    "notes": "The definition id com.apple.managedclient.preferences_enforcementlevel has no suffix; its description is 'Specifies if network protection is disabled, in audit mode, or enforced' (verified), default _1 audit."
+  },
+  "MAC-030": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.intune-macos",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceManagement/configurationPolicies (PUT .../configurationPolicies/{id} with the full settings list to update; POST .../{id}/assign)",
+    "payload": {
+      "name": "Box macOS Edge",
+      "platforms": "macOS",
+      "technologies": "mdm,appleRemoteManagement",
+      "settings": [
+        {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+          "settingInstance": {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+            "settingDefinitionId": "com.apple.managedclient.preferences_smartscreenenabled",
+            "choiceSettingValue": {
+              "value": "com.apple.managedclient.preferences_smartscreenenabled_true",
+              "children": []
+            }
+          }
+        },
+        {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+          "settingInstance": {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+            "settingDefinitionId": "com.apple.managedclient.preferences_preventsmartscreenpromptoverride",
+            "choiceSettingValue": {
+              "value": "com.apple.managedclient.preferences_preventsmartscreenpromptoverride_true",
+              "children": []
+            }
+          }
+        },
+        {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+          "settingInstance": {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+            "settingDefinitionId": "com.apple.managedclient.preferences_preventsmartscreenpromptoverrideforfiles",
+            "choiceSettingValue": {
+              "value": "com.apple.managedclient.preferences_preventsmartscreenpromptoverrideforfiles_true",
+              "children": []
+            }
+          }
+        },
+        {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+          "settingInstance": {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+            "settingDefinitionId": "com.apple.managedclient.preferences_smartscreenpuaenabled",
+            "choiceSettingValue": {
+              "value": "com.apple.managedclient.preferences_smartscreenpuaenabled_true",
+              "children": []
+            }
+          }
+        },
+        {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+          "settingInstance": {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+            "settingDefinitionId": "com.apple.managedclient.preferences_sslversionmin",
+            "choiceSettingValue": {
+              "value": "com.apple.managedclient.preferences_sslversionmin_2",
+              "children": []
+            }
+          }
+        },
+        {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+          "settingInstance": {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance",
+            "settingDefinitionId": "com.apple.managedclient.preferences_restrictsignintopattern",
+            "simpleSettingValue": {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue",
+              "value": "{text:edge_signin_pattern}"
+            }
+          }
+        },
+        {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+          "settingInstance": {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationSimpleSettingCollectionInstance",
+            "settingDefinitionId": "com.apple.managedclient.preferences_extensioninstallblocklist",
+            "simpleSettingCollectionValue": [
+              {
+                "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue",
+                "value": "*"
+              }
+            ]
+          }
+        },
+        {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+          "settingInstance": {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationSimpleSettingCollectionInstance",
+            "settingDefinitionId": "com.apple.managedclient.preferences_extensioninstallallowlist",
+            "simpleSettingCollectionValue": [
+              {
+                "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue",
+                "value": "{list:edge_extension_allowlist}"
+              }
+            ]
+          }
+        },
+        {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
+          "settingInstance": {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+            "settingDefinitionId": "com.apple.managedclient.preferences_passwordmanagerenabled",
+            "choiceSettingValue": {
+              "value": "com.apple.managedclient.preferences_passwordmanagerenabled_false",
+              "children": []
+            }
+          }
+        }
+      ],
+      "assignments": [
+        {
+          "target": {
+            "@odata.type": "#microsoft.graph.groupAssignmentTarget",
+            "groupId": "{group:grp-staff}"
+          }
+        }
+      ]
+    },
+    "read": "GET /beta/deviceManagement/configurationPolicies/{id}?$expand=settings",
+    "check": "smartscreenenabled == _true, preventsmartscreenpromptoverride == _true, preventsmartscreenpromptoverrideforfiles == _true, smartscreenpuaenabled == _true, sslversionmin == _2 (tls1.2), restrictsignintopattern == {text:edge_signin_pattern}; enhanced: extensioninstallblocklist == ['*'] with the allow list, passwordmanagerenabled == _false",
+    "permissions": [
+      "graph:DeviceManagementConfiguration.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalent: IntuneSettingCatalogCustomPolicy (macOS)"
+    },
+    "verified": "settings catalogue definition id GET /beta/deviceManagement/configurationSettings/{id} returned 200 on the test tenant (2026-11-21); option ids recorded from the definition",
+    "notes": "Mirrors WIN-065..WIN-070 (Edge policies) with the macOS Edge definitions under com.apple.managedclient.preferences_*, all verified (200). The extension and password-manager items follow the tier of WIN-069/WIN-070 (enhanced) and the password manager only where a company password manager is named. 'Sync of work data to personal profiles blocked' follows whatever Edge policy the Windows resolution picks; the macOS id is the same policy name lower-cased under the com.apple.managedclient.preferences_ prefix. Keep this entry in step with the intune-windows resolution."
+  },
+  "MAC-031": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.intune-macos",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceManagement/configurationPolicies (OneDrive settings); POST /beta/deviceManagement/deviceConfigurations (macOSCustomConfiguration for AllowTenantList)",
+    "payload": {
+      "configurationPolicy": {
+        "platforms": "macOS",
+        "technologies": "mdm,appleRemoteManagement",
+        "settings": [
+          {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+            "settingDefinitionId": "com.apple.managedclient.preferences_disablepersonalsync",
+            "choiceSettingValue": {
+              "value": "com.apple.managedclient.preferences_disablepersonalsync_true",
+              "children": []
+            }
+          },
+          {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+            "settingDefinitionId": "com.apple.managedclient.preferences_blockexternalsync",
+            "choiceSettingValue": {
+              "value": "com.apple.managedclient.preferences_blockexternalsync_true",
+              "children": []
+            }
+          },
+          {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance",
+            "settingDefinitionId": "com.apple.managedclient.preferences_kfmsilentoptin",
+            "simpleSettingValue": {
+              "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue",
+              "value": "{tenant:id}"
+            }
+          },
+          {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+            "settingDefinitionId": "com.apple.managedclient.preferences_kfmsilentoptindesktop",
+            "choiceSettingValue": {
+              "value": "com.apple.managedclient.preferences_kfmsilentoptindesktop_true",
+              "children": []
+            }
+          },
+          {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+            "settingDefinitionId": "com.apple.managedclient.preferences_kfmsilentoptindocuments",
+            "choiceSettingValue": {
+              "value": "com.apple.managedclient.preferences_kfmsilentoptindocuments_true",
+              "children": []
+            }
+          },
+          {
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+            "settingDefinitionId": "com.apple.managedclient.preferences_kfmblockoptout",
+            "choiceSettingValue": {
+              "value": "com.apple.managedclient.preferences_kfmblockoptout_true",
+              "children": []
+            }
+          }
+        ]
+      },
+      "allowTenantList": {
+        "@odata.type": "#microsoft.graph.macOSCustomConfiguration",
+        "displayName": "Box OneDrive tenant list",
+        "deploymentChannel": "deviceChannel",
+        "payload": "base64(mobileconfig, PayloadType com.microsoft.OneDrive, AllowTenantList = [{tenant:id}])"
+      }
+    },
+    "read": "GET /beta/deviceManagement/configurationPolicies/{id}?$expand=settings ; GET /beta/deviceManagement/deviceConfigurations/{id}",
+    "check": "disablepersonalsync == _true, blockexternalsync == _true, kfmsilentoptin == {tenant:id}, kfmsilentoptindesktop == _true, kfmsilentoptindocuments == _true, kfmblockoptout == _true; custom profile AllowTenantList == [{tenant:id}]",
+    "permissions": [
+      "graph:DeviceManagementConfiguration.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done"
+    },
+    "verified": "OneDrive definitions verified (200). AllowTenantList is not in the settings catalogue (searched by id and keyword), so it goes in a custom profile; key name from Microsoft's OneDrive macOS documentation, not verified: host blocked.",
+    "notes": "'Sync only the company tenant' = DisablePersonalSync + BlockExternalSync + AllowTenantList. 'Folder backup on' = KFMSilentOptIn with Desktop and Documents, users cannot opt out."
+  }
+}

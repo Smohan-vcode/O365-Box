@@ -21,6 +21,8 @@ type Selection struct {
 	// the recommended option because the configuration does not answer them.
 	Choices   map[string]string `json:"choices,omitempty"`
 	Defaulted []string          `json:"defaulted_choices,omitempty"`
+	// Values are configuration values the choices supply (dotted path).
+	Values map[string]string `json:"values,omitempty"`
 	// ChoiceBundles are the permission bundles choices need, with the choice.
 	ChoiceBundles map[string]string `json:"choice_bundles,omitempty"`
 }

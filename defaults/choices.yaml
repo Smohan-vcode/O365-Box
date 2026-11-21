@@ -234,3 +234,119 @@ choices:
         label: No, leave it to each person
         cost: none
         effects: {exceptions: [OFC-011]}
+
+  # ---------- Security step: device values (suggested, the owner confirms) ----------
+  - id: devices.windows_minimum
+    step: security
+    question: Oldest Windows version allowed on company PCs
+    help: Older versions stop getting security fixes. PCs below this are marked not compliant and lose access until updated.
+    when: module devices
+    options:
+      - value: win11_23h2
+        label: Windows 11 version 23H2 or later
+        detail: Every Windows 11 release still getting security fixes.
+        recommended: true
+        cost: none
+        effects: {values: {devices.windows.minimum_os_version: "10.0.22631"}}
+      - value: win11_24h2
+        label: Windows 11 version 24H2 or later
+        detail: Stricter; older Windows 11 PCs must update first.
+        cost: none
+        effects: {values: {devices.windows.minimum_os_version: "10.0.26100"}}
+
+  - id: devices.windows_feature_update
+    step: security
+    question: Which Windows 11 release should company PCs move to?
+    help: Windows gets one big update a year. We hold PCs on the release you pick until you choose the next one.
+    when: module devices
+    options:
+      - value: "24h2"
+        label: Windows 11, version 24H2
+        detail: The widely deployed release, well tested by businesses.
+        recommended: true
+        cost: none
+        effects: {values: {devices.windows.feature_update_version: "Windows 11, version 24H2"}}
+      - value: "25h2"
+        label: Windows 11, version 25H2
+        detail: The newest release.
+        cost: none
+        effects: {values: {devices.windows.feature_update_version: "Windows 11, version 25H2"}}
+
+  - id: devices.apple_android_minimum
+    step: security
+    question: Oldest Mac, iPhone and Android versions allowed
+    help: Devices below these versions get a warning, then lose access to company data until updated.
+    when: module devices
+    options:
+      - value: supported
+        label: Versions that still get security fixes
+        detail: macOS 15, iOS 18 and Android 13 or later. Warn below these; block iOS below 17 and Android below 12.
+        recommended: true
+        cost: none
+        effects:
+          values:
+            devices.macos.minimum_version: "15.0"
+            devices.ios.minimum_version: "18.0"
+            devices.ios.block_below_version: "17.0"
+            devices.android.minimum_version: "13.0"
+            devices.android.block_below_version: "12.0"
+      - value: latest
+        label: Latest versions only
+        detail: macOS 26, iOS 26 and Android 14 or later. Strongest; some older phones cannot update.
+        cost: none
+        effects:
+          values:
+            devices.macos.minimum_version: "26.0"
+            devices.ios.minimum_version: "26.0"
+            devices.ios.block_below_version: "18.0"
+            devices.android.minimum_version: "14.0"
+            devices.android.block_below_version: "13.0"
+
+  - id: devices.update_time
+    step: security
+    question: When may Macs install required updates?
+    help: When an update is due, Macs install it at this time so nobody is interrupted mid-work.
+    when: module devices
+    options:
+      - value: night
+        label: Overnight, at 2 a.m.
+        recommended: true
+        cost: none
+        effects: {values: {values.update_install_time: "02:00"}}
+      - value: lunch
+        label: Lunchtime, at 12:30
+        cost: none
+        effects: {values: {values.update_install_time: "12:30"}}
+
+  - id: devices.disk_recovery
+    step: security
+    question: What should staff see when a Mac's disk is locked?
+    help: Mac disks are encrypted. If someone forgets their password, the recovery key is held by your company in Microsoft Intune.
+    when: module devices
+    options:
+      - value: it
+        label: '"Contact IT: your recovery key is held by the company"'
+        recommended: true
+        cost: none
+        effects: {values: {values.filevault_escrow_location: "Your company IT team (Microsoft Intune)"}}
+      - value: helpdesk
+        label: '"Contact the help desk"'
+        cost: none
+        effects: {values: {values.filevault_escrow_location: "The company help desk"}}
+
+  - id: devices.browser_extensions
+    step: security
+    question: Browser extensions in Microsoft Edge
+    help: Extensions can read everything on a web page, including company data.
+    when: module devices
+    options:
+      - value: approved
+        label: Only extensions the company approves
+        detail: None at first; add any you need from the home screen.
+        recommended: true
+        cost: none
+        effects: {values: {values.edge_extension_allowlist: ""}}
+      - value: store
+        label: Anything from the Microsoft Edge store
+        cost: none
+        effects: {exceptions: [MAC-030]}

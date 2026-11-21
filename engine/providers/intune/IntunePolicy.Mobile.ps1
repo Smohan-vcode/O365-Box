@@ -75,8 +75,11 @@ function Resolve-ImValue($o, $In, [System.Collections.Generic.List[string]] $Mis
         param($m)
         $kind = $m.Groups[1].Value; $key = $m.Groups[2].Value
         if ($kind -eq 'tenant' -and $key -eq 'id' -and $tenantId) { return $tenantId }
-        if ($kind -eq 'config') {
-          $v = Get-ImConfigValue $In $key
+        if ($kind -in 'config', 'text', 'list') {
+          # {text:x} and {list:x} are filled from the values the company's
+          # choices supply (configuration values.x), never invented here.
+          $path = if ($kind -eq 'config') { $key } else { "values.$key" }
+          $v = Get-ImConfigValue $In $path
           if ($null -ne $v -and $v -isnot [System.Collections.IEnumerable] -or $v -is [string]) {
             if ("$v" -ne '') { return "$v" }
           }

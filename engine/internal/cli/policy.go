@@ -263,6 +263,9 @@ func selection(root string, cfg *config.Config) (policy.Selection, error) {
 	if len(r.Bundles) > 0 {
 		sel.ChoiceBundles = r.Bundles
 	}
+	if len(r.Values) > 0 {
+		sel.Values = r.Values
+	}
 	// A setting whose provider or permissions belong to a module that is off
 	// is left out (SPEC §24.3): no device policy without the devices module.
 	bundles, maps, err := grantData(root)

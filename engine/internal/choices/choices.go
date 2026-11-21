@@ -5,6 +5,7 @@ package choices
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"sort"
 	"strings"
 
@@ -20,6 +21,10 @@ type Effects struct {
 	Exceptions []string          `yaml:"exceptions" json:"exceptions,omitempty"`
 	Bundles    []string          `yaml:"bundles" json:"bundles,omitempty"`
 	Gates      []string          `yaml:"gates" json:"gates,omitempty"`
+	// Values fill configuration keys the settings read (dotted path ->
+	// value), such as devices.windows.minimum_os_version or values.<name>
+	// for a mapping's {text:<name>} placeholder.
+	Values map[string]string `yaml:"values" json:"values,omitempty"`
 }
 
 // Option is one answer to a choice.
@@ -92,6 +97,8 @@ type Known struct {
 	Gates    map[string]bool // nil: not checked yet
 }
 
+var valueKey = regexp.MustCompile(`^(devices|ai_policy|values)(\.[a-z0-9_]+)+$`)
+
 var steps = map[string]bool{"start": true, "company": true, "addresses": true, "security": true, "structure": true, "people": true}
 
 // Validate checks the catalogue's shape and every reference its effects make.
@@ -144,6 +151,11 @@ func (c *Catalogue) Validate(k Known) []report.Issue {
 					add(op, "unknown setting "+s)
 				} else if k.Variants != nil && !k.Variants[s][v] {
 					add(op, fmt.Sprintf("setting %s has no variant %q in expected-state/setting-ids", s, v))
+				}
+			}
+			for key := range o.Effects.Values {
+				if !valueKey.MatchString(key) {
+					add(op, fmt.Sprintf("value key %q is not devices.*, ai_policy.* or values.*", key))
 				}
 			}
 			if k.Gates != nil {
@@ -248,13 +260,14 @@ type Resolved struct {
 	Modules   map[string]bool
 	Bundles   map[string]string // bundle -> "choice id=value" that needs it
 	Gates     map[string]bool
+	Values    map[string]string // configuration values the answers supply
 }
 
 // Resolve applies the answers (unanswered applicable choices take their
 // default) and gathers their effects.
 func (c *Catalogue) Resolve(answers map[string]string, ctx Context) (*Resolved, error) {
 	r := &Resolved{Answers: map[string]string{}, Defaulted: map[string]bool{}, LeftOut: map[string]string{},
-		Variants: map[string]string{}, Modules: map[string]bool{}, Bundles: map[string]string{}, Gates: map[string]bool{}}
+		Variants: map[string]string{}, Modules: map[string]bool{}, Bundles: map[string]string{}, Gates: map[string]bool{}, Values: map[string]string{}}
 	ids := make([]string, 0, len(answers))
 	for id := range answers {
 		ids = append(ids, id)
@@ -295,6 +308,9 @@ func (c *Catalogue) Resolve(answers map[string]string, ctx Context) (*Resolved, 
 		}
 		for _, g := range o.Effects.Gates {
 			r.Gates[g] = true
+		}
+		for k, v := range o.Effects.Values {
+			r.Values[k] = v
 		}
 	}
 	return r, nil

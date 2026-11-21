@@ -24,6 +24,7 @@ bundles:
       - Policy.ReadWrite.AuthenticationMethod
       - UserAuthenticationMethod.ReadWrite.All   # first sign-in passes (SPEC §18.9)
       - Organization.Read.All
+      - Application.Read.All                     # Conditional Access app conditions, e.g. Azure management (ENT-013); owner approved 2026-11-21
       - Sites.FullControl.All
       - AuditLog.Read.All
       - Reports.Read.All

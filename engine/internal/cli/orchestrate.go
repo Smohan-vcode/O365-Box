@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -333,6 +334,30 @@ func capabilities(root string, doc *config.Document, flag []string) (map[string]
 	return caps, nil
 }
 
+// withDefault returns m with path set to v unless a non-empty value is
+// there; maps on the path are copied, never changed in place.
+func withDefault(m map[string]any, path []string, v string) map[string]any {
+	out := make(map[string]any, len(m)+1)
+	for k, x := range m {
+		out[k] = x
+	}
+	if len(path) == 1 {
+		if cur, ok := out[path[0]]; !ok || cur == nil || cur == "" {
+			out[path[0]] = v
+		}
+		return out
+	}
+	child, _ := out[path[0]].(map[string]any)
+	if child == nil {
+		if _, isOther := out[path[0]]; isOther && out[path[0]] != nil {
+			return out // a non-map value is there; leave it
+		}
+		child = map[string]any{}
+	}
+	out[path[0]] = withDefault(child, path[1:], v)
+	return out
+}
+
 // input gives a step only the configuration sections it declares in reads.
 func (s *session) input(step *plan.Step) any {
 	sub := map[string]any{}
@@ -346,6 +371,17 @@ func (s *session) input(step *plan.Step) any {
 		}
 		if v, ok := s.doc.Raw[top]; ok {
 			sub[top] = v
+		}
+	}
+	// Values the company's choices supply (SPEC §24) fill configuration keys
+	// the configuration leaves empty, for the sections the step reads; a
+	// policy step also gets values.* for its {text:} placeholders.
+	if sel, err := selection(s.root, &s.doc.Config); err == nil {
+		for k, v := range sel.Values {
+			top, _, _ := strings.Cut(k, ".")
+			if _, reads := sub[top]; reads || slices.Contains(step.Reads, top) || (top == "values" && slices.Contains(step.Reads, "@policy")) {
+				sub = withDefault(sub, strings.Split(k, "."), v)
+			}
 		}
 	}
 	in := map[string]any{"config": sub, "environment": s.doc.Config.Tenant.Environment, "defaults": s.defaults}

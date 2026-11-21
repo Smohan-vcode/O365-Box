@@ -1095,3 +1095,70 @@ before they are granted; nothing is granted by this change.
 | --- | --- | --- | --- |
 | SC-01 to SC-16 | APPROVED, applied to SPEC v1.1 | 2026-11-21 | Owner |
 | SC-19 Policy sets (v1.1 package merge) | APPROVED (owner asked for it), applied to SPEC v1.2 | 2026-11-21 | Owner |
+
+## SC-25  The owner approves every change; the product stays simple (2026-11-21)
+
+Owner direction: "When you are writing policies or anything you should give
+the users what you are suggesting and get the approvals before you apply.
+The policies are in so many places, which is why Company in a Box
+simplifies the roll-out. It is not going to make decisions for the user."
+And: "Organize all the features in a super simple manner for anyone to roll
+out a massive Microsoft ecosystem and protect their assets like a world-class
+company on day one."
+
+### A. Suggest, then approve (approved by the owner)
+
+1. Every value the box would otherwise pick (minimum OS versions, update
+   times, wording shown to staff, which group a policy reaches) is a
+   **choice with a recommended answer** (SPEC §24), shown before anything is
+   applied. The box never fills a company value silently and never skips one
+   silently: an unanswered value is listed on the Review screen.
+2. **Nothing is applied without approval.** `box plan` produces a proposal: every
+   change in plain words, grouped by area, with why (requirement, framework)
+   and what it affects. The owner approves all of it, an area, or single
+   changes; a rejected change becomes an exception with the owner's reason.
+   The approval (who, when, the digest of the approved changes) is an
+   `Events` item. `box apply` refuses any change that is not in an approved
+   proposal and says which ones need approval.
+3. **Two approvals for policies:** first to switch on in audit / report-only
+   (nobody is blocked), then, after the audit report, to enforce. Enforcing
+   is never automatic.
+4. Later changes (a new choice, a catalogue update, drift repair) arrive as a
+   new proposal on the home screen, never applied in the background.
+5. Development and testing on a test tenant may apply directly (owner,
+   2026-11-21); the approval gate is how the product treats every company.
+
+### B. Super simple for anyone (proposed)
+
+Organise everything by what an owner cares about, not by Microsoft admin centre:
+
+| Area (home screen card) | What it covers | Behind it |
+| --- | --- | --- |
+| Sign-in and accounts | Who can get in, two-step sign-in, emergency accounts | Entra |
+| Email | Spam, phishing, impersonation, forwarding, your domain's mail records | Exchange, Defender, DNS |
+| Files and sharing | Who can share what, with whom, for how long | SharePoint, OneDrive |
+| Meetings and chat | Guests, lobby, recordings, outside chat | Teams |
+| Computers and phones | Encryption, updates, antivirus, lost devices | Intune, Defender for Endpoint |
+| Sensitive information | Labels, leak prevention, audit trail | Purview |
+| Apps and automation | Office apps, AI features, Power Automate | M365 apps, Power Platform |
+| Your web address | Domain lock, DNS | Registrar, DNS |
+| Cloud | Free Azure safety settings | Azure |
+
+The onboarding stays at five questions a non-technical owner can answer,
+with everything else on the recommendation:
+
+1. **Sign in.** We read what Microsoft knows about your company.
+2. **What do you run?** Switches: computers and phones, files and records,
+   sales, legal, HR, Azure, your own servers.
+3. **How careful?** One dial: Essential, Recommended (preselected), Strict. It
+   sets the tier and every choice's default. "Let me fine-tune" opens the
+   individual choices.
+4. **Who works here?** People, their roles and how they get their first sign-in.
+5. **Review and approve.** One card per area in plain words ("Staff need a
+   second sign-in step", "Laptops are encrypted"), with a count of the
+   settings behind it, the cost (none unless stated), and Approve / Show
+   details / Not now. Then build, in audit mode.
+
+After the build the home screen shows one status per area (protected,
+watching in audit, needs you), the audit report, and an **Enforce** button
+per area when its audit period is clean.

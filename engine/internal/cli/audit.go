@@ -7,6 +7,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"sort"
@@ -163,7 +164,7 @@ func newAuditCmd(g *globals) *cobra.Command {
 	c.Flags().BoolVar(&f.partial, "partial", false, "build the pack even when the account that signs in can change the tenant (its settings are listed as not read)")
 	c.Flags().BoolVar(&f.noSettings, "no-settings", false, "skip the catalogue settings (policy step verify); inventories only")
 	c.Flags().BoolVar(&f.graphOnly, "graph-only", false, "read over Microsoft Graph only: no Exchange, Purview, SharePoint or Teams sign-in (their settings are listed as not read)")
-	c.Flags().StringVar(&f.modulePath, "module-path", "", "PSModulePath for provider workers")
+	c.Flags().StringVar(&f.modulePath, "module-path", os.Getenv("BOX_MODULE_PATH"), "PSModulePath for provider workers")
 	c.Flags().DurationVar(&f.timeout, "step-timeout", 10*time.Minute, "timeout per policy step read")
 	c.AddCommand(&cobra.Command{Use: "verify <folder>", Short: "Check an audit pack's files against its manifest.sha256", Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

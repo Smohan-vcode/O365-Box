@@ -8,6 +8,9 @@ $script:Steps = [ordered]@{}
 . (Join-Path $PSScriptRoot 'IntunePolicy.ps1')
 . (Join-Path $PSScriptRoot 'Policy.Windows.ps1')
 
+# policy.intune-macos, policy.intune-mobile, policy.m365-apps (T14-05, T14-06, T14-07).
+foreach ($f in 'IntunePolicy.Mobile.ps1', 'Policy.Mac.ps1', 'Policy.Mobile.ps1', 'Policy.Apps.ps1') { . (Join-Path $PSScriptRoot $f) }
+
 function Invoke-BoxStep {
   param([string] $Step, [string] $Operation, $InputObject)
   Invoke-BoxDispatch -Steps $script:Steps -Step $Step -Operation $Operation -InputObject $InputObject

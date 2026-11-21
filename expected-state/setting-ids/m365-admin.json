@@ -1,0 +1,339 @@
+{
+  "ADM-001": {
+    "status": "resolved",
+    "provider": "identity",
+    "step": "policy.m365-admin",
+    "method": "graph-beta",
+    "apply": "PATCH /beta/admin/appsAndServices",
+    "payload": {
+      "settings": {
+        "isOfficeStoreEnabled": false,
+        "isAppAndServicesTrialEnabled": false
+      }
+    },
+    "read": "GET /beta/admin/appsAndServices",
+    "check": "settings.isOfficeStoreEnabled == false; settings.isAppAndServicesTrialEnabled == false",
+    "permissions": [
+      "graph:OrgSettings-AppsAndServices.ReadWrite.All (not granted: proposed)"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "not verified: GET /beta/admin/appsAndServices returned 403 (app lacks OrgSettings-AppsAndServices.Read.All)",
+    "notes": "Beta API (preview). Assigned to identity (Graph REST) since no other provider owns /admin org settings."
+  },
+  "ADM-002": {
+    "status": "gate",
+    "provider": "identity",
+    "step": "policy.m365-admin",
+    "method": "portal",
+    "apply": "Microsoft 365 admin centre > Settings > Org settings > Self-service trials and purchases: each product 'Do not allow'",
+    "payload": {
+      "AllowSelfServicePurchase": "Disabled",
+      "AllowSelfServiceTrial": "Disabled"
+    },
+    "read": "none in reach",
+    "check": "owner confirmation recorded as an Events item with a dated screenshot",
+    "permissions": [],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "not verified: the MSCommerce module (Get-/Update-MSCommerceProductPolicy) signs in delegated only and its host is not reachable from this environment",
+    "notes": "No Graph API. MSCommerce PowerShell can set it per product but needs an interactive administrator sign-in, so it cannot run app-only in the pipeline; the gate guide may offer it as an alternative to clicking. New products appear disabled-by-default only for some product types: re-check each quarter."
+  },
+  "ADM-003": {
+    "status": "unresolved",
+    "provider": "identity",
+    "step": "policy.m365-admin",
+    "method": "graph",
+    "apply": "",
+    "payload": {
+      "definition": [
+        "{\"ActivityBasedTimeoutPolicy\":{\"Version\":1,\"ApplicationPolicies\":[{\"ApplicationId\":\"default\",\"WebSessionIdleTimeout\":\"01:00:00\"}]}}"
+      ],
+      "displayName": "Idle session timeout",
+      "isOrganizationDefault": true
+    },
+    "read": "GET /policies/activityBasedTimeoutPolicies",
+    "check": "",
+    "permissions": [
+      "graph:Policy.ReadWrite.ApplicationConfiguration (not granted: proposed)"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "read-only GET /v1.0/policies/activityBasedTimeoutPolicies returned 200 (no policy)",
+    "notes": "Available: the organisation-wide activityBasedTimeoutPolicy (what the admin centre's idle session timeout writes), 1 hour for Microsoft 365 web apps. It is tenant-wide; whether it can be limited to unmanaged devices is not a property of the policy, so the stated value 'on unmanaged devices' is not delivered exactly. Options: accept tenant-wide 1 hour, or rely on ENT-008 (12-hour sign-in frequency on unmanaged devices) plus SharePoint's Set-SPOBrowserIdleSignOut. Decision needed."
+  },
+  "ADM-004": {
+    "status": "resolved",
+    "provider": "identity",
+    "step": "policy.m365-admin",
+    "method": "graph",
+    "apply": "PATCH /domains/{domain} for every verified domain",
+    "payload": {
+      "passwordValidityPeriodInDays": 2147483647
+    },
+    "read": "GET /domains?$select=id,passwordValidityPeriodInDays",
+    "check": "every domain: passwordValidityPeriodInDays == 2147483647",
+    "permissions": [
+      "graph:Domain.ReadWrite.All (not granted: proposed)"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "read-only GET /v1.0/domains returned 200; value already 2147483647",
+    "notes": "Same setting as ENT-028 (the admin centre writes the domain property). Apply once; both ids check the same read."
+  },
+  "ADM-005": {
+    "status": "resolved",
+    "provider": "identity",
+    "step": "policy.m365-admin",
+    "method": "graph-beta",
+    "apply": "PATCH /beta/admin/forms",
+    "payload": {
+      "settings": {
+        "isExternalSendFormEnabled": false,
+        "isExternalShareCollaborationEnabled": false,
+        "isExternalShareResultEnabled": false,
+        "isExternalShareTemplateEnabled": false,
+        "isInOrgFormsPhishingScanEnabled": true
+      }
+    },
+    "read": "GET /beta/admin/forms",
+    "check": "settings.isExternalSendFormEnabled == false; isExternalShareCollaborationEnabled == false; isExternalShareResultEnabled == false; isExternalShareTemplateEnabled == false; isInOrgFormsPhishingScanEnabled == true",
+    "permissions": [
+      "graph:OrgSettings-Forms.ReadWrite.All (not granted: proposed)"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "not verified: GET /beta/admin/forms returned 403 (app lacks OrgSettings-Forms.Read.All)",
+    "notes": "Beta API (preview). CONFLICT to check: gate G-04 has the owner create public NDA and demo-request forms (flows/forms/); isExternalSendFormEnabled false stops forms being answered by people outside the organisation. Decide whether G-04's forms need an exception or a different mechanism."
+  },
+  "ADM-006": {
+    "status": "gate",
+    "provider": "identity",
+    "step": "policy.m365-admin",
+    "method": "portal",
+    "apply": "Microsoft 365 admin centre > Settings > Org settings: Sway 'Let people share Sways outside your organization' off; Whiteboard external sharing off; Bookings social sharing off (Bookings part may instead be applied by the exchange provider: Set-OrganizationConfig -BookingsSocialSharingRestricted $true)",
+    "payload": {
+      "sway": {
+        "externalSharing": false
+      },
+      "whiteboard": {
+        "externalSharing": false
+      },
+      "bookings": {
+        "BookingsSocialSharingRestricted": true
+      }
+    },
+    "read": "Get-OrganizationConfig (Bookings part only)",
+    "check": "Bookings: BookingsSocialSharingRestricted == true (automated); Sway and Whiteboard: owner confirmation recorded as an Events item",
+    "permissions": [
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [
+      "Exchange Administrator"
+    ],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "Get-OrganizationConfig app-only returned BookingsEnabled true and BookingsSocialSharingRestricted false; Set-OrganizationConfig exposes the Bookings* parameters. Sway and Whiteboard not verified: no API",
+    "notes": "Sway and Whiteboard org settings have no API, so the setting as a whole is a gate. Bookings pages are public by design; 'sharing outside off' is read as restricting social sharing; turning Bookings off entirely would be -BookingsEnabled $false. Which Bookings meaning is intended needs confirmation."
+  },
+  "ADM-007": {
+    "status": "resolved",
+    "provider": "identity",
+    "step": "policy.m365-admin",
+    "method": "graph",
+    "apply": "POST /servicePrincipals {appId} when absent, then PATCH /servicePrincipals/{id}",
+    "payload": {
+      "create": {
+        "appId": "c1f33bc0-bdb4-4248-ba9b-096807ddb43e"
+      },
+      "patch": {
+        "accountEnabled": false
+      }
+    },
+    "read": "GET /servicePrincipals?$filter=appId eq 'c1f33bc0-bdb4-4248-ba9b-096807ddb43e'&$select=accountEnabled",
+    "check": "exactly one service principal; accountEnabled == false",
+    "permissions": [
+      "graph:Application.ReadWrite.All (not granted: proposed; high privilege)"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "read-only GET returned 200 with no service principal for the app (third-party storage currently allowed by default)",
+    "notes": "c1f33bc0-bdb4-4248-ba9b-096807ddb43e is Microsoft's well-known 'Microsoft 365 third party storage' app; disabling its service principal is what the admin centre toggle does. Application.ReadWrite.All is a high-privilege permission; the lower-risk alternative is a gate (admin centre > Org settings > Microsoft 365 on the web > third-party storage off) with this same automated read-back. Reviewer to choose."
+  },
+  "ADM-008": {
+    "status": "resolved",
+    "provider": "exchange",
+    "step": "policy.m365-admin",
+    "method": "cmdlet",
+    "apply": "Set-SharingPolicy -Identity '{exchange:default-sharing-policy}' -Domains @('*:CalendarSharingFreeBusySimple')",
+    "payload": {
+      "Identity": "{exchange:default-sharing-policy}",
+      "Domains": [
+        "*:CalendarSharingFreeBusySimple"
+      ],
+      "Enabled": true
+    },
+    "read": "Get-SharingPolicy | Where-Object Default",
+    "check": "Domains == ['*:CalendarSharingFreeBusySimple'] (no Anonymous: entry and no CalendarSharingFreeBusyDetail/Reviewer)",
+    "permissions": [
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [
+      "Exchange Administrator"
+    ],
+    "tcm": {
+      "resource": "microsoft.exchange.sharingpolicy",
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "Get-SharingPolicy app-only returned the default policy with Domains 'Anonymous:CalendarSharingFreeBusyReviewer;*:CalendarSharingFreeBusySimple' (drift: anonymous publishing with titles and locations is on); Set-SharingPolicy has -Domains",
+    "notes": "The admin centre's Calendar org setting writes the default sharing policy. Removing the Anonymous entry stops anonymous calendar publishing. The exchange provider owns Exchange cmdlets; step name stays policy.m365-admin."
+  },
+  "ADM-009": {
+    "status": "gate",
+    "provider": "identity",
+    "step": "policy.m365-admin",
+    "method": "portal",
+    "apply": "Microsoft 365 admin centre > Settings > Org settings > Organization profile > Release preferences: Standard release for everyone",
+    "payload": {
+      "releaseTrack": "standard"
+    },
+    "read": "none via Graph",
+    "check": "owner confirmation recorded as an Events item with a dated screenshot",
+    "permissions": [],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "not verified: no Graph read or write for release preferences",
+    "notes": "No API. Standard release is the default for new tenants, so the gate normally confirms only."
+  },
+  "ADM-010": {
+    "status": "unresolved",
+    "provider": "identity",
+    "step": "policy.m365-admin",
+    "method": "portal",
+    "apply": "",
+    "payload": {},
+    "read": "",
+    "check": "",
+    "permissions": [],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "not verified: the Cloud Policy service host is blocked here and has no app-only Graph API",
+    "notes": "The value 'as approved in the AI policy' states no value to apply, so it cannot be resolved until the AI policy names it (for example web grounding off). Available: Copilot web search is a Cloud Policy setting ('Allow web search in Copilot') in the Microsoft 365 Apps admin centre (no app-only API); the Copilot app pinning and access settings are admin-centre portal settings. Most likely end state is a gate once the value is stated."
+  },
+  "ADM-011": {
+    "status": "unresolved",
+    "provider": "identity",
+    "step": "policy.m365-admin",
+    "method": "graph",
+    "apply": "",
+    "payload": {
+      "itemInsights": {
+        "isEnabledInOrganization": false
+      },
+      "myAnalytics": {
+        "PrivacyMode": "Excluded"
+      }
+    },
+    "read": "GET /admin/people/itemInsights; Get-DefaultTenantMyAnalyticsFeatureConfig",
+    "check": "",
+    "permissions": [
+      "graph:PeopleSettings.ReadWrite.All (not granted: proposed)",
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "read-only GET /v1.0/admin/people/itemInsights returned 200 (isEnabledInOrganization true); Get-DefaultTenantMyAnalyticsFeatureConfig app-only returned the tenant defaults (dashboard, add-in, digest email enabled)",
+    "notes": "The value names no features ('Viva and analytics features not in use'), so there is nothing exact to resolve. Available: Graph /admin/people/itemInsights (item insights, v1.0), Set-DefaultTenantMyAnalyticsFeatureConfig (Viva Insights personal features, Exchange module), Viva module feature access policies (Add-VivaModuleFeaturePolicy; app-only support unconfirmed), and admin-centre-only settings (Viva Glint, Viva Learning, usage analytics). Decision needed on the feature list."
+  },
+  "ADM-012": {
+    "status": "unresolved",
+    "provider": "identity",
+    "step": "policy.m365-admin",
+    "method": "rest",
+    "apply": "",
+    "payload": {
+      "properties": {
+        "blockSubscriptionsLeavingTenant": true,
+        "blockSubscriptionsIntoTenant": true,
+        "exemptedPrincipals": []
+      }
+    },
+    "read": "GET https://management.azure.com/providers/Microsoft.Subscription/policies/default?api-version=2021-01-01-privatepreview",
+    "check": "",
+    "permissions": [],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "not verified: management.azure.com is blocked from this environment and the pipeline has no Azure role",
+    "notes": "Available: Azure subscription policies (leaving/entering the directory) through the Azure Resource Manager API or the Azure portal (Subscriptions > Manage policies), which needs a Global Administrator with elevated Azure access; the API version is private preview. 'Users can create subscriptions' has no tenant-wide switch: it is controlled by billing-account roles (Microsoft Customer Agreement) or is not restrictable for pay-as-you-go sign-ups. The second half could become a gate; the first half cannot be delivered as stated. Decision needed."
+  },
+  "ADM-013": {
+    "status": "not-applied",
+    "provider": "identity",
+    "step": "policy.m365-admin",
+    "method": "cmdlet",
+    "apply": "",
+    "payload": {},
+    "read": "",
+    "check": "",
+    "permissions": [],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "not verified: addon",
+    "notes": "Tier addon, capability purview_suite (Customer Lockbox). Never applied."
+  },
+  "ADM-014": {
+    "status": "resolved",
+    "provider": "identity",
+    "step": "policy.m365-admin",
+    "method": "graph",
+    "apply": "none (report)",
+    "payload": {},
+    "read": "GET /security/secureScores?$top=1; GET /security/secureScoreControlProfiles",
+    "check": "monthly evidence item with currentScore, maxScore and the control list for the latest day",
+    "permissions": [
+      "graph:SecurityEvents.Read.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; TCM support for this resource type not confirmed"
+    },
+    "verified": "read-only GET /v1.0/security/secureScores returned 200 with currentScore and maxScore",
+    "notes": "Mode report: evidence only."
+  }
+}

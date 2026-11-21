@@ -98,6 +98,7 @@ CI runs `box backlog check`.
 | T14-17 | MFA registration campaign | P0 | M | T14-04 | yes | TODO |
 | T14-18 | Edge extension requests: staff ask, the owner decides | P1 | M | T14-05, T14-06, T3-03 | yes | TODO |
 | T14-19 | Edge extensions installed for everyone (owner's choice) | P2 | S | T14-18 |  | TODO |
+| T14-20 | Report: Edge extensions in use | P2 | S | T14-18 | yes | TODO |
 | T15-01 | Directory mode: cloud or hybrid | P1 | M | T13-09, T0-07 | yes | TODO |
 | T15-02 | Domain control | P1 | S | T13-09, T2-03 | yes | TODO |
 | T15-03 | Azure provider and discovery | P1 | M | T13-09, T0-07 | yes | TODO |

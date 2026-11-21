@@ -16,10 +16,26 @@ import (
 	"github.com/Smohan-vcode/O365-Box/engine/internal/approval"
 	"github.com/Smohan-vcode/O365-Box/engine/internal/extensions"
 	"github.com/Smohan-vcode/O365-Box/engine/internal/graph"
+	"github.com/Smohan-vcode/O365-Box/engine/internal/policy"
 	"github.com/Smohan-vcode/O365-Box/engine/internal/tui"
 )
 
 const extA = "aaaabbbbccccddddeeeeffffgggghhhh" // fictional
+
+func TestExtensionNotes(t *testing.T) {
+	core := map[string][]policy.StepSetting{"policy.intune-macos": {{ID: "MAC-030"}}}
+	n := extensionNotes(core, "approved")
+	if len(n) != 1 || !strings.Contains(n[0], "WIN-069") {
+		t.Errorf("core tier notes %v", n)
+	}
+	enh := map[string][]policy.StepSetting{"policy.intune-macos": {{ID: "MAC-030"}}, "policy.intune-windows": {{ID: "WIN-069"}}}
+	if n := extensionNotes(enh, "approved"); len(n) != 0 {
+		t.Errorf("enhanced tier notes %v", n)
+	}
+	if n := extensionNotes(core, "store"); len(n) != 1 || !strings.Contains(n[0], "store") {
+		t.Errorf("store notes %v", n)
+	}
+}
 
 // extFake is the Admin site's ExtensionRequests and Events lists.
 type extFake struct {

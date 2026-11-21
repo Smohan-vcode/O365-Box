@@ -57,7 +57,7 @@ type extDeps struct {
 
 func newExtensionsCmd(g *globals) *cobra.Command {
 	cmd := &cobra.Command{Use: "extensions", Short: "Microsoft Edge extensions: staff requests, the owner's decisions and the extensions in use (T14-18..20)"}
-	cmd.AddCommand(newExtRequestsCmd(g), newExtRequestCmd(g), newExtApproveCmd(g), newExtRejectCmd(g))
+	cmd.AddCommand(newExtRequestsCmd(g), newExtRequestCmd(g), newExtApproveCmd(g), newExtRejectCmd(g), newExtReportCmd(g))
 	return cmd
 }
 

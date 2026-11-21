@@ -13,6 +13,19 @@ import (
 
 var testNow = time.Date(2026, 11, 21, 12, 0, 0, 0, time.UTC)
 
+func TestBrowserExtensionsInventorySaysWhatItNeeds(t *testing.T) {
+	for _, inv := range NotReadInventories(testNow) {
+		if inv.ID != "browser_extensions" {
+			continue
+		}
+		if inv.Status != NotRead || len(inv.Collectors) != 0 || !strings.Contains(inv.Reason, "ThreatHunting.Read.All") || !strings.Contains(inv.Reason, "Vulnerability Management") {
+			t.Errorf("browser extensions inventory %+v", inv)
+		}
+		return
+	}
+	t.Error("no browser_extensions inventory")
+}
+
 func testReader(t *testing.T) (*Reader, *audittest.Graph) {
 	t.Helper()
 	fg := audittest.NewGraph(t)

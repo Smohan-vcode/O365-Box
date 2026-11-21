@@ -1213,7 +1213,7 @@ mode in the executor; T16-02 inventories; T16-03 control mapping and
 status; T16-04 pack writer (HTML, CSV, evidence, manifest); T16-05 the
 "Prepare for an audit" path in the TUI.
 
-## SC-27  MFA registration campaign as a catalogue setting (proposed, T14-17)
+## SC-27  MFA registration campaign as a catalogue setting (approved 2026-11-21, T14-17)
 
 **Why.** IAM-01 and IAM-02 (docs/gap-closure.md, cause D) need people to
 register a sign-in method before CA01 can be enforced. The authentication

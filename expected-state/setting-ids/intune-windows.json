@@ -289,7 +289,7 @@
       "note": "S-02 is not done; resource type is the Microsoft365DSC/UTCM name expected to cover this object, not verified"
     },
     "verified": "GET /beta/deviceManagement/deviceCompliancePolicies returned 200 on the test tenant (2026-11-21); property exists on #microsoft.graph.windows10CompliancePolicy in the beta $metadata",
-    "notes": "One compliance policy carries WIN-001 to WIN-011. Mark non-compliant after 3 days = block action with gracePeriodHours 72. The e-mail notification needs a notification message template created first: POST /beta/deviceManagement/notificationMessageTemplates then POST .../{id}/localizedNotificationMessages (read with GET; returned 200 on the test tenant). After creation the actions are changed only through POST /beta/deviceManagement/deviceCompliancePolicies/{policy:win-compliance}/scheduleActionsForRules (exists in $metadata). Check: scheduledActionsForRule[0].scheduledActionConfigurations contains {actionType: notification, gracePeriodHours: 0} and {actionType: block, gracePeriodHours: 72}."
+    "notes": "One compliance policy carries WIN-001 to WIN-011. Mark non-compliant after 3 days = block action with gracePeriodHours 72. The e-mail notification needs a notification message template created first: POST /beta/deviceManagement/notificationMessageTemplates with displayName, brandingOptions and roleScopeTagIds but no defaultLocale (Graph answers a bare BadRequest when defaultLocale is sent, on POST and PATCH), then POST .../{id}/localizedNotificationMessages {locale en-us, isDefault true}, which sets defaultLocale (verified on the test tenant 2026-11-21). After creation the actions are changed only through POST /beta/deviceManagement/deviceCompliancePolicies/{policy:win-compliance}/scheduleActionsForRules (exists in $metadata). Check: scheduledActionsForRule[0].scheduledActionConfigurations contains {actionType: notification, gracePeriodHours: 0} and {actionType: block, gracePeriodHours: 72}."
   },
   "WIN-012": {
     "status": "resolved",
@@ -2112,10 +2112,10 @@
     "provider": "intune",
     "step": "policy.intune-windows",
     "method": "graph-beta",
-    "apply": "POST /beta/deviceManagement/windowsAutopilotDeploymentProfiles (profile \"Box - Windows - Autopilot\") when absent; PATCH .../{profile:win-autopilot} when it differs; POST .../{profile:win-autopilot}/assignments (all devices)",
+    "apply": "POST /beta/deviceManagement/windowsAutopilotDeploymentProfiles (profile \"Box Windows Autopilot\") when absent; PATCH .../{profile:win-autopilot} when it differs; POST .../{profile:win-autopilot}/assignments (all devices)",
     "payload": {
       "@odata.type": "#microsoft.graph.azureADWindowsAutopilotDeploymentProfile",
-      "displayName": "Box - Windows - Autopilot",
+      "displayName": "Box Windows Autopilot",
       "deviceType": "windowsPc",
       "extractHardwareHash": false,
       "outOfBoxExperienceSetting": {
@@ -2137,8 +2137,8 @@
       "resource": "microsoft.intune.windowsAutopilotDeploymentProfileAzureADJoined",
       "note": "S-02 is not done; resource type is the Microsoft365DSC/UTCM name expected to cover this object, not verified"
     },
-    "verified": "not verified: GET returned 403 on the test tenant (2026-11-21); the app needs DeviceManagementServiceConfig.Read.All or .ReadWrite.All. Property names confirmed in the Graph beta $metadata",
-    "notes": "Only userType is required; the other OOBE fields are the usual Entra-join defaults and are not part of the check. Devices must be registered in Autopilot (hardware hash) for the profile to apply; registration is a device-supply step, not a policy."
+    "verified": "test tenant 2026-11-21: created app-only, read back, second plan 0 changes. Graph answers a bare BadRequest ('An error has occurred') when displayName or description holds '-' or '(' ; letters, digits, spaces and '.' are accepted.",
+    "notes": "Only userType is required; the other OOBE fields are the usual Entra-join defaults and are not part of the check. Profile name and description use letters, digits, spaces and '.' only (Autopilot refuses '-' and brackets). Assigned to all devices at the enforce stage only. Devices must be registered in Autopilot (hardware hash) for the profile to apply; registration is a device-supply step, not a policy."
   },
   "WIN-039": {
     "status": "resolved",
@@ -2195,7 +2195,7 @@
       "note": "S-02 is not done; resource type is the Microsoft365DSC/UTCM name expected to cover this object, not verified"
     },
     "verified": "not verified: GET returned 403 on the test tenant (2026-11-21); the app needs DeviceManagementServiceConfig.Read.All or .ReadWrite.All. Property names confirmed in the Graph beta $metadata",
-    "notes": "Windows decides \"personal\" from the enrolment path: Entra join through Autopilot, a device enrolment manager or bulk enrolment counts as corporate; a user adding a work account to a personal PC is blocked. A newer per-platform object (#microsoft.graph.deviceEnrollmentPlatformRestrictionConfiguration, platformType windows, platformRestriction.personalDeviceEnrollmentBlocked) exists too; the default object is used so a second run finds the same one."
+    "notes": "Windows decides \"personal\" from the enrolment path: Entra join through Autopilot, a device enrolment manager or bulk enrolment counts as corporate; a user adding a work account to a personal PC is blocked. A newer per-platform object (#microsoft.graph.deviceEnrollmentPlatformRestrictionConfiguration, platformType windows, platformRestriction.personalDeviceEnrollmentBlocked) exists too; the default object is used so a second run finds the same one. The default restriction PATCH is refused app-only on the test tenant (403 'Tenant is not Global Admin or Intune Service Admin', 2026-11-21, same as MOB-001); it is held until the enforce stage, where a signed-in administrator must set it (a gate like G-11; not changed by this task)."
   },
   "WIN-041": {
     "status": "resolved",

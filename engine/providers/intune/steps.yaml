@@ -39,3 +39,7 @@ steps:
     module: devices
     depends_on: [identity.groups]
     reads: ["@policy", ai_policy]
+  - id: intune.gate-g11
+    title: Phone enrolment restrictions set in the Intune admin centre (gate G-11, MOB-001)
+    check_only: true
+    reads: []

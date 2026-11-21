@@ -24,6 +24,29 @@ Describe 'placeholders' {
     Resolve-ImValue ([ordered]@{ a = '{text:escrow}'; b = '{config:devices.android.minimum_version}'; c = 'base64(script)'; d = 'decision needed: x' }) $In $m | Out-Null
     $m.Count | Should -Be 4
   }
+  It 'takes an empty list a choice supplies as an answer, and an absent one as missing' {
+    $in2 = @{ config = @{ values = @{ allow = ''; names = 'a.example, b.example' } } }
+    $m = [System.Collections.Generic.List[string]]::new()
+    $item = { param($v) [ordered]@{ '@odata.type' = '#microsoft.graph.deviceManagementConfigurationStringSettingValue'; value = $v } }
+    $r = Resolve-ImValue ([ordered]@{ empty = @((& $item '{list:allow}')); two = @((& $item '{list:names}')); absent = @((& $item '{list:other}')) }) $in2 $m
+    @($r.empty).Count | Should -Be 0
+    @($r.two | ForEach-Object { $_.value }) | Should -Be @('a.example', 'b.example')
+    $m | Should -Be @('{list:other}')
+  }
+  It 'fills a text value worked out at run time' {
+    $script:ImRuntimeValues = @{ '{text:edge_signin_pattern}' = (Get-ImSigninPattern @('B.example', 'a.example')) }
+    $m = [System.Collections.Generic.List[string]]::new()
+    Resolve-ImValue '{text:edge_signin_pattern}' @{ config = @{} } $m | Should -Be '.*@(a\.example|b\.example)$'
+    $m.Count | Should -Be 0
+    $script:ImRuntimeValues = @{}
+  }
+  It 'leaves out a setting whose value list is empty' {
+    $empty = [ordered]@{ settingInstance = [ordered]@{ '@odata.type' = '#microsoft.graph.deviceManagementConfigurationSimpleSettingCollectionInstance'; settingDefinitionId = 'x_allow'; simpleSettingCollectionValue = @() } }
+    $kept = ConvertTo-ImSetting (choice 'x_on' 'x_on_true')
+    $r = Remove-ImEmptySettings @($empty, $kept)
+    @($r).Count | Should -Be 1
+    $r[0].settingInstance.settingDefinitionId | Should -Be 'x_on'
+  }
   It 'collects group names from a payload' {
     Get-ImPayloadGroups ([ordered]@{ assignments = @(@{ target = @{ groupId = '{group:grp-staff}' } }) }) | Should -Be @('grp-staff')
   }

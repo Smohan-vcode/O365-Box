@@ -1255,3 +1255,37 @@ mode enforce, requirements IAM-01, IAM-02):
 
 When approved: add the ENT entry and mapping, remove `registration_campaign`
 from `baseline/identity.yaml`, and let `policy.entra` own the object.
+
+## SC-28  Gate G-11: phone enrolment restrictions (proposed 2026-11-21, T14-07)
+
+**Why.** MOB-001 blocks personal enrolment of iOS and Android work profile
+devices and blocks Android device administrator. Intune refuses every
+app-only write to `deviceEnrollmentConfigurations`: creating a per-platform
+`deviceEnrollmentPlatformRestrictionConfiguration` and patching the default
+restriction both answer 403 "Tenant is not Global Admin or Intune Service
+Admin. Operation is restricted." with the Intune Administrator role assigned
+to the pipeline app at tenant scope and
+`DeviceManagementServiceConfig.ReadWrite.All` granted (test tenant,
+2026-11-21, beta and v1.0; v1.0 rejects the per-platform type and the
+single-policy form is "no longer supported"). Reading works app-only. By
+SPEC §22 a portal-only step is a gate with a guide and a check.
+
+**Proposed §22 row.**
+
+| Gate | Guide | Check |
+| --- | --- | --- |
+| G-11 Phone enrolment restrictions | In the Intune admin centre, create iOS/iPadOS and Android restrictions that block personally owned devices and block Android device administrator; assign them to the pilot group, then to all users at enforce (T14-07) | iOS and Android work profile personal enrolment blocked and Android device administrator blocked, in the default restriction or a per-platform restriction assigned to a group (step `intune.gate-g11`, read-only) |
+
+Applied ahead of approval in `engine/gates.yaml` (G-11, check
+`intune.gate-g11`) so `policy.intune-mobile` keeps passing; the step reports
+the gate state and creates nothing. Remove or renumber when the §22 table is
+updated.
+
+**Also noted.**
+1. `engine/gates.yaml` numbers G-07 to G-10 differently from the §22 table
+   (§22: G-07 Apple push certificate, G-08 data loss prevention review;
+   gates.yaml: G-07 Cloud Sync agent, G-08 Azure subscription, G-09
+   registrar lock, G-10 Power Platform registration). One numbering should
+   win.
+2. WIN-040 (default Windows enrolment restriction, held until the enforce
+   stage) hits the same refusal; at enforce it needs the same kind of gate.

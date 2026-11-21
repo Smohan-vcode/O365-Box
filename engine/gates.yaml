@@ -60,3 +60,14 @@ gates:
     guide: In the Power Platform admin centre, register the setup app as a management application (a two-minute step).
     expected: The pipeline app is listed as a Power Platform management application
     check_task: T0-07
+  - id: G-11
+    title: Phone enrolment restrictions set
+    guide: >-
+      In the Intune admin centre, under Devices > Enrollment > Device platform restriction,
+      create an iOS/iPadOS restriction and an Android restriction that allow the platform but
+      block personally owned devices, and block Android device administrator. Assign them to
+      the pilot group first; assign them to all users when the owner enforces device policies.
+      Intune does not let the setup app make these (MOB-001).
+    expected: iOS and Android work profile restrictions block personal enrolment and Android device administrator is blocked (default restriction, or a per-platform restriction assigned to a group)
+    check: intune.gate-g11
+    check_task: T14-07

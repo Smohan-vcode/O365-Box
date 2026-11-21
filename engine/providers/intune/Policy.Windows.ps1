@@ -12,6 +12,10 @@
 $script:WinMappingFile = Join-Path $PSScriptRoot '..' '..' '..' 'expected-state' 'setting-ids' 'intune-windows.json'
 $script:WinDescription = 'Managed by box (T14-05). Changes made here are overwritten on the next run.'
 $script:WinNotificationName = 'Box - Non-compliant device'
+# Autopilot profile names and descriptions take letters, digits, spaces,
+# '.' and '_' only: Graph answers a bare BadRequest for '-' or '(' (test
+# tenant, 2026-11-21).
+$script:WinAutopilotDescription = 'Managed by box. Changes made here are overwritten on the next run.'
 $script:DeviceLocalAdminRole = '9f06204d-73c1-4d4c-880a-6edb90606fd8'   # Microsoft Entra Joined Device Local Administrator (template id)
 
 # ---------- placeholders (pure part tested by Pester) ----------
@@ -211,19 +215,29 @@ function Assert-WinDefenderConnector {
 }
 
 function Get-WinNotificationTemplateId([switch] $Apply, [ref] $Changes) {
+  # The template carries no locale on create: Graph answers a bare
+  # BadRequest when defaultLocale is sent (on POST and PATCH). Posting the
+  # default localized message sets defaultLocale. Plan reports the create
+  # and returns '' (no id yet).
   $t = Find-IntuneObject -Collection 'notificationMessageTemplates' -Name $script:WinNotificationName
-  if ($t) { return [string]$t.id }
-  # Missing: plan reports it as not applied (verify drift) rather than as a
-  # change, because Graph has refused to create it on the test tenant
-  # (bare BadRequest); apply tries again.
-  if (-not $Apply) { return $null }
-  $Changes.Value += New-BoxChange create "notification message template $script:WinNotificationName"
-  $t = Invoke-BoxGraph -Method POST -Uri "$script:IntuneBeta/notificationMessageTemplates" -Body @{
-    displayName = $script:WinNotificationName; defaultLocale = 'en-us'; roleScopeTagIds = @('0')
-    brandingOptions = 'includeCompanyLogo,includeCompanyName,includeContactInformation' }
-  Invoke-BoxGraph -Method POST -Uri "$script:IntuneBeta/notificationMessageTemplates/$($t.id)/localizedNotificationMessages" -Body @{
-    locale = 'en-us'; isDefault = $true; subject = 'Your device does not meet the company security policy'
-    messageTemplate = 'Your device no longer meets the company security policy and will lose access to company data in 3 days. Open the Company Portal app to see what to fix.' } | Out-Null
+  $created = -not $t
+  if ($created) {
+    $Changes.Value += New-BoxChange create "notification message template $script:WinNotificationName" 'e-mail to the user when a device is not compliant (WIN-011)'
+    if (-not $Apply) { return '' }
+    $t = Invoke-BoxGraph -Method POST -Uri "$script:IntuneBeta/notificationMessageTemplates" -Body @{
+      displayName = $script:WinNotificationName; roleScopeTagIds = @('0')
+      brandingOptions = 'includeCompanyLogo,includeCompanyName,includeContactInformation' }
+  }
+  # A new template (plan) has no id yet: the default message comes with it.
+  $msgs = if ($t.id) { @((Invoke-BoxGraph -Uri "$script:IntuneBeta/notificationMessageTemplates/$($t.id)?`$expand=localizedNotificationMessages").localizedNotificationMessages | Where-Object { $_ }) } else { @() }
+  if ($t.id -and -not @($msgs | Where-Object { $_.isDefault }).Count) {
+    if (-not $created) { $Changes.Value += New-BoxChange update "notification message template $script:WinNotificationName" 'default message (en-us) missing' }
+    if ($Apply) {
+      Invoke-BoxGraph -Method POST -Uri "$script:IntuneBeta/notificationMessageTemplates/$($t.id)/localizedNotificationMessages" -Body @{
+        locale = 'en-us'; isDefault = $true; subject = 'Your device does not meet the company security policy'
+        messageTemplate = 'Your device no longer meets the company security policy and will lose access to company data in 3 days. Open the Company Portal app to see what to fix.' } | Out-Null
+    }
+  }
   return [string]$t.id
 }
 
@@ -238,13 +252,8 @@ function Sync-WinCompliance($m, [switch] $Apply) {
     if ($json -match '\{notificationTemplate:') {
       try {
         $tid = Get-WinNotificationTemplateId -Apply:$Apply -Changes ([ref]$changes)
-        if ($null -eq $tid) {
-          $script:WinBlocked += "WIN-011 notification message template $($script:WinNotificationName): not present (apply creates it; Graph answered BadRequest without a reason on the test tenant); the e-mail action for non-compliance is left out"
-          Write-Warning "WIN-011: notification message template $($script:WinNotificationName) is not present; the e-mail action is left out"
-          $tid = ''; $noTemplate = $true
-        }
       } catch {
-        # The notification service answers a bare BadRequest; keep the block action and report.
+        # Keep the block action and report the refusal.
         $script:WinBlocked += "WIN-011 notification message template $($script:WinNotificationName): refused ($(("$_" -split "`n")[0].Substring(0, [Math]::Min(120, ("$_" -split "`n")[0].Length)))); the e-mail action for non-compliance is left out"
         Write-Warning "WIN-011: notification message template could not be created: $(("$_" -split "`n")[0])"
         $tid = ''; $noTemplate = $true
@@ -335,12 +344,13 @@ function Sync-WinAutopilot($m, [switch] $Apply) {
   $p = $m.autopilot.props
   $changes = @()
   $name = [string]$p.displayName
+  if ($name -notmatch '^[A-Za-z0-9 ._]+$') { throw "Autopilot profile name '$name' has a character Autopilot refuses (letters, digits, spaces, '.' and '_' only)" }
   $cur = Find-IntuneObject -Collection 'windowsAutopilotDeploymentProfiles' -Name $name
   $want = [ordered]@{}; foreach ($k in $p.Keys) { if ($k -ne 'displayName') { $want[$k] = $p[$k] } }
   if (-not $cur) {
     $changes += New-BoxChange create $name 'user account type standard'
     if (-not $Apply) { return $changes }
-    $body = [ordered]@{}; foreach ($k in $p.Keys) { $body[$k] = $p[$k] }; $body.description = $script:WinDescription
+    $body = [ordered]@{}; foreach ($k in $p.Keys) { $body[$k] = $p[$k] }; $body.description = $script:WinAutopilotDescription
     $cur = Invoke-BoxGraph -Method POST -Uri "$script:IntuneBeta/windowsAutopilotDeploymentProfiles" -Body $body
   } else {
     $diff = @(Compare-IntuneProps $want (Invoke-BoxGraph -Uri "$script:IntuneBeta/windowsAutopilotDeploymentProfiles/$($cur.id)"))

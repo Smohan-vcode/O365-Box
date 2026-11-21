@@ -18,7 +18,6 @@ $script:ImKinds = @{
   catalog               = @{ uri = 'deviceManagement/configurationPolicies'; name = 'name'; update = 'PUT'; assign = 'assignments'; exclude = $true; createOnly = @() }
   iosAppProtection      = @{ uri = 'deviceAppManagement/iosManagedAppProtections'; name = 'displayName'; update = 'PATCH'; assign = 'assignments'; exclude = $true; createOnly = @() }
   androidAppProtection  = @{ uri = 'deviceAppManagement/androidManagedAppProtections'; name = 'displayName'; update = 'PATCH'; assign = 'assignments'; exclude = $true; createOnly = @() }
-  enrollmentRestriction = @{ uri = 'deviceManagement/deviceEnrollmentConfigurations'; name = 'displayName'; update = 'PATCH'; assign = 'enrollmentConfigurationAssignments'; exclude = $false; createOnly = @('platformType') }
   shellScript           = @{ uri = 'deviceManagement/deviceShellScripts'; name = 'displayName'; update = 'PATCH'; assign = 'deviceManagementScriptAssignments'; exclude = $false; createOnly = @(); expandAssign = $true }
 }
 # Properties never compared: identity, create-only and read-only fields.
@@ -62,11 +61,45 @@ function Get-ImConfigValue($In, [string] $Path) {
   return $cur
 }
 
+# Values the step works out at run time from the tenant (Invoke-ImStepOp
+# fills them; placeholder -> value) for {text:x} placeholders no choice
+# supplies, such as the Edge sign-in pattern from the verified domains.
+$script:ImRuntimeValues = @{}
+
+function Get-ImChoiceValue($In, [string] $Kind, [string] $Key) {
+  # The value of {text:x} or {list:x}: @{ found; value }. A key the
+  # company's choices supply is an answer even when empty ("" for a list
+  # means none: "only approved extensions, none at first"); an absent key
+  # is missing.
+  $cur = Get-ImProp $In 'config'
+  $found = $true
+  foreach ($part in @('values') + $Key.Split('.')) {
+    if ($null -eq $cur -or $part -notmatch '^[A-Za-z0-9_-]+$') { $found = $false; break }
+    $has = if ($cur -is [System.Collections.IDictionary]) { $cur.Contains($part) } else { $null -ne $cur.PSObject.Properties[$part] }
+    if (-not $has) { $found = $false; break }
+    $cur = Get-ImProp $cur $part
+  }
+  if ($found) { return @{ found = $true; value = $cur } }
+  $rk = "{${Kind}:$Key}"
+  if ($script:ImRuntimeValues.ContainsKey($rk)) { return @{ found = $true; value = $script:ImRuntimeValues[$rk] } }
+  return @{ found = $false; value = $null }
+}
+
+function ConvertTo-ImList($v) {
+  # A list answer: an array, or text with one entry per comma or line.
+  if ($null -eq $v) { return , @() }
+  if ($v -is [string]) { return , @($v -split '[,\r\n]+' | ForEach-Object { $_.Trim() } | Where-Object { $_ }) }
+  if ($v -is [System.Collections.IEnumerable]) { return , @($v | ForEach-Object { "$_".Trim() } | Where-Object { $_ }) }
+  return , @([string]$v)
+}
+
 function Resolve-ImValue($o, $In, [System.Collections.Generic.List[string]] $Missing) {
-  # Fills {tenant:id} and {config:a.b} placeholders. A value that cannot be
-  # filled ({text:..}, {list:..}, {file:..}, an empty configuration key, a
-  # described value such as 'base64(...)' or 'decision needed') goes to
-  # $Missing and stays as it is.
+  # Fills {tenant:id}, {config:a.b}, {text:x} and {list:x} placeholders. A
+  # value that cannot be filled ({file:..}, an empty configuration key, a
+  # {text:}/{list:} key no choice supplies, a described value such as
+  # 'base64(...)' or 'decision needed') goes to $Missing and stays as it is.
+  # In a list, an item that is (or whose 'value' is) exactly {list:x}
+  # becomes one item per entry of the answer: none for an empty answer.
   if ($null -eq $o) { return $null }
   if ($o -is [string]) {
     if ($o -match '^base64\(' -or $o -match 'decision needed') { $Missing.Add($o); return $o }
@@ -75,14 +108,15 @@ function Resolve-ImValue($o, $In, [System.Collections.Generic.List[string]] $Mis
         param($m)
         $kind = $m.Groups[1].Value; $key = $m.Groups[2].Value
         if ($kind -eq 'tenant' -and $key -eq 'id' -and $tenantId) { return $tenantId }
-        if ($kind -in 'config', 'text', 'list') {
-          # {text:x} and {list:x} are filled from the values the company's
-          # choices supply (configuration values.x), never invented here.
-          $path = if ($kind -eq 'config') { $key } else { "values.$key" }
-          $v = Get-ImConfigValue $In $path
-          if ($null -ne $v -and $v -isnot [System.Collections.IEnumerable] -or $v -is [string]) {
-            if ("$v" -ne '') { return "$v" }
-          }
+        if ($kind -eq 'config') {
+          $v = Get-ImConfigValue $In $key
+          if ($null -ne $v -and ($v -is [string] -or $v -isnot [System.Collections.IEnumerable]) -and "$v" -ne '') { return "$v" }
+        }
+        if ($kind -in 'text', 'list') {
+          # Filled from the values the company's choices supply (configuration
+          # values.x) or from the tenant at run time, never invented here.
+          $c = Get-ImChoiceValue $In $kind $key
+          if ($c.found) { if ($kind -eq 'list') { return ((ConvertTo-ImList $c.value) -join ',') }; return [string]$c.value }
         }
         $Missing.Add($m.Value); return $m.Value
       })
@@ -93,10 +127,35 @@ function Resolve-ImValue($o, $In, [System.Collections.Generic.List[string]] $Mis
   }
   if ($o -is [System.Collections.IEnumerable]) {
     $l = [System.Collections.Generic.List[object]]::new()
-    foreach ($x in $o) { $l.Add((Resolve-ImValue $x $In $Missing)) }
+    foreach ($x in $o) {
+      $inner = if ($x -is [string]) { $x } elseif ($x -is [System.Collections.IDictionary] -and $x['value'] -is [string]) { $x['value'] } else { $null }
+      if ($inner -and $inner -match '^\{list:([^}]*)\}$') {
+        $c = Get-ImChoiceValue $In 'list' $Matches[1]
+        if ($c.found) {
+          foreach ($item in (ConvertTo-ImList $c.value)) {
+            if ($x -is [string]) { $l.Add($item) } else { $copy = ConvertTo-ImPlain $x; $copy['value'] = $item; $l.Add($copy) }
+          }
+          continue
+        }
+      }
+      $l.Add((Resolve-ImValue $x $In $Missing))
+    }
     return , $l.ToArray()
   }
   return $o
+}
+
+function Remove-ImEmptySettings($Settings) {
+  # Leaves out settings whose value list is empty (an empty allow list): no
+  # list and an empty list mean the same on the device, and Intune keeps no
+  # empty collection to compare with.
+  return , @(@($Settings) | Where-Object {
+      $i = Get-ImProp $_ 'settingInstance'; if ($null -eq $i) { $i = $_ }
+      $t = [string](Get-ImProp $i '@odata.type')
+      $simple = $t -like '*SimpleSettingCollectionInstance' -and @(Get-ImProp $i 'simpleSettingCollectionValue' | Where-Object { $null -ne $_ }).Count -eq 0
+      $choice = $t -like '*ChoiceSettingCollectionInstance' -and @(Get-ImProp $i 'choiceSettingCollectionValue' | Where-Object { $null -ne $_ }).Count -eq 0
+      -not ($simple -or $choice)
+    })
 }
 
 function Get-ImPayloadGroups($o) {
@@ -528,7 +587,7 @@ function Add-ImCatalog($Objects, [string] $Name, [string] $Platforms, [string] $
   }
   $o = $Objects[$Name]
   if ($Template) { $o.body.templateReference = [ordered]@{ templateId = $Template } }
-  $o.lists.Add(@($Settings))
+  $o.lists.Add((Remove-ImEmptySettings $Settings))
   Add-ImUse $o $Id $Groups
 }
 
@@ -559,9 +618,27 @@ function Test-ImInput($In) {
   return @{ ok = $true }
 }
 
+function Get-ImSigninPattern([string[]] $Domains) {
+  # Edge RestrictSigninToPattern: work accounts of the verified domains
+  # (same form as the Windows step's {pattern:company-accounts}).
+  $alt = @($Domains | Where-Object { $_ } | ForEach-Object { $_.ToLowerInvariant() } | Sort-Object -Unique | ForEach-Object { [regex]::Escape($_) }) -join '|'
+  return ".*@($alt)$"
+}
+
+function Set-ImRuntimeValues($In) {
+  # Values worked out from the tenant for the placeholders the settings use.
+  $script:ImRuntimeValues = @{}
+  $json = (@(Get-ImSettings $In) | ForEach-Object { $_.payload } | ConvertTo-Json -Depth 64 -Compress)
+  if ($json -match '\{text:edge_signin_pattern\}') {
+    $d = @(Get-BoxGraphAll '/domains?$select=id,isVerified' | Where-Object { $_.isVerified } | ForEach-Object { [string]$_.id })
+    if ($d.Count) { $script:ImRuntimeValues['{text:edge_signin_pattern}'] = Get-ImSigninPattern $d }
+  }
+}
+
 function Invoke-ImStepOp($In, [string] $Builder, [string] $Operation, [string] $Kind) {
   # plan, apply, verify or evidence for a builder function that returns
   # @{ objects; skipped }. Handlers in Policy.*.ps1 call this.
+  Set-ImRuntimeValues $In
   $b = & $Builder $In
   if ($Operation -eq 'evidence') {
     $skip = @($b.skipped | ForEach-Object { $_.id })

@@ -94,6 +94,16 @@ enums:
   - business_standard
   - business_premium
   - none
+  req_status:
+  - enforced
+  - enforced with procedure
+  - procedure
+  - needs add-on
+  - not selected
+  - exception
+  policy_tier:
+  - core
+  - enhanced
 lists:
   People:
     purpose: Desired state for everyone added after bootstrap. The pipeline applies it hourly.
@@ -894,3 +904,94 @@ lists:
     - name: acknowledged_at
       type: datetime
       required: true
+  Frameworks:
+    purpose: Tick-box view of the configuration's policy.frameworks (SPEC section 23). A change is saved by the pipeline app as a new configuration version with one Events item; it is applied only when the owner runs the plan.
+    columns:
+    - name: framework_id
+      type: text
+      key: true
+    - name: title
+      type: text
+      required: true
+    - name: selected
+      type: bool
+    - name: controls_total
+      type: number
+    - name: controls_enforced
+      type: number
+    - name: controls_by_procedure
+      type: number
+    - name: controls_needing_addon
+      type: number
+    - name: report_url
+      type: url
+  Requirements:
+    purpose: Loaded by the pipeline from policy/requirements.yaml with the resolved status for this tenant. Read-only.
+    columns:
+    - name: requirement_id
+      type: text
+      key: true
+    - name: domain
+      type: text
+    - name: statement
+      type: long
+      required: true
+    - name: tier
+      type: text
+    - name: status
+      type: enum
+      enum: req_status
+    - name: frameworks
+      type: long
+    - name: evidence_source
+      type: text
+    - name: last_evidence_at
+      type: datetime
+  PolicySettings:
+    purpose: Written by the policy apply steps from the resolved settings. Read-only. One item per applied setting with its live state.
+    columns:
+    - name: setting_id
+      type: text
+      key: true
+    - name: admin_centre
+      type: text
+    - name: platform
+      type: text
+    - name: name
+      type: text
+      required: true
+    - name: value
+      type: long
+    - name: mode
+      type: text
+    - name: requirements
+      type: text
+    - name: live_state
+      type: text
+      note: applied, drifted, failed, not applied
+    - name: checked_at
+      type: datetime
+  Exceptions:
+    purpose: Departures from a requirement. Approved items are copied by the pipeline app to the configuration's policy.exceptions as a new version with one Events item.
+    columns:
+    - name: exception_id
+      type: id
+      key: true
+    - name: requirement_id
+      type: ref(Requirements)
+      required: true
+    - name: scope
+      type: text
+      note: user, group, device or whole tenant
+    - name: reason
+      type: long
+      required: true
+    - name: compensating_control
+      type: long
+    - name: approved_by
+      type: ref(People)
+    - name: expires_on
+      type: date
+      required: true
+    - name: state
+      type: text

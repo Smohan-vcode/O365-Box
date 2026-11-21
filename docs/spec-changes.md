@@ -1,7 +1,8 @@
 # Proposed specification changes: guided onboarding engine
 
-Status: APPROVED 2026-11-21 and applied to `docs/SPEC.md` v1.1. This file
-is kept as the record of why the specification changed.
+Status: SC-01 to SC-16 APPROVED 2026-11-21 and applied to `docs/SPEC.md`
+v1.1; SC-19 APPROVED 2026-11-21 and applied to v1.2. This file is kept as
+the record of why the specification changed.
 
 Decisions already taken by the owner:
 
@@ -544,6 +545,9 @@ admin centre is reported as drift.
 
 ## SC-08  Hardening presets with per-setting overrides
 
+*Superseded by SC-19 (SPEC v1.2): presets and overrides are replaced by
+the policy tier and dated exceptions.*
+
 **Change.** `baseline/*.yaml` becomes three engine presets and a
 settings catalogue. Each company's choice is stored in its configuration.
 
@@ -806,6 +810,77 @@ Approved by the owner on 2026-11-21 and added to
 `expected-state/app-permissions.yaml`; granted by re-running `box bootstrap`
 and applied by the step `identity.directory-settings`.
 
+## SC-19  Policy sets (v1.1 package merge, 2026-11-21)
+
+**Source.** An updated upstream package ("policy sets v1.1") added a
+master policy catalogue to the v1.0 specification as its §18 "Policy
+sets", with tasks T13-01 to T13-16, four register lists, a Python
+resolver and generated per-company `baseline/` files. The owner asked for
+it to be merged into this specification and backlog.
+
+**What was merged.**
+
+- SPEC new §23 "Policy sets": the catalogue in `policy/` (90 requirements
+  in 14 domains; 333 settings across 12 admin areas; five frameworks: NIST
+  CSF 2.0, NIS2 Article 21, ISO/IEC 27001:2022 Annex A, SOC 2, CIS
+  Controls v8), staged rollout with audit first, add-on settings never
+  applied, standards rendered from requirements, and the six
+  data-protection settings groups in their order.
+- `engine/register/lists.yaml`: lists `Frameworks`, `Requirements`,
+  `PolicySettings`, `Exceptions` and enums `req_status`, `policy_tier`,
+  with the source's columns. Purpose texts now describe this engine's
+  flow (configuration in the tenant) instead of pull requests to
+  `company.yaml`.
+- Backlog: a new track **T14 Policy sets**, T14-01 to T14-16.
+
+**Adapted to this design.**
+
+| Upstream | Here |
+| --- | --- |
+| Selection in `company.yaml > policy`; the `Frameworks` list writes back by pull request | Selection in the configuration document's `policy` section (§9.1), edited in the TUI Security step or on the `Frameworks` list; a list change is saved as a new configuration version with one `Events` item and applied only when the owner runs the plan |
+| `engine/policy/resolve.py` (Python) | `engine/internal/policy` (Go); `box policy validate`, `resolve`, `coverage`; `box policy check` became `validate` |
+| Generated `baseline/` committed per company | Resolved at plan time, never committed; recorded in the tenant (`PolicySettings`, `Requirements`, coverage report in the Compliance site). The engine's own `baseline/` files are read until T14-04 moves each area, then removed |
+| `box policy apply <centre>`, `box policy verify` | Provider steps `policy.<area>` run by the orchestrator with the pipeline app (§14): `box apply policy.<area>`, `box check policy.<area>` |
+| Human steps "Apple push certificate", "review DLP matches" | Gates G-07 and G-08 (§22) |
+| `expected-state/service-plans.yaml` | Service plans per capability key added to `engine/capabilities.yaml` (one plan map, R11) |
+| Standards written to `content/policies/standards/` | Rendered to the Compliance site's `Policies` library |
+
+**Hardening presets replaced by the policy tier.** The v1.1 presets
+(`essential`, `recommended`, `strict`) and `baseline: {preset, overrides}`
+(SC-08) are withdrawn. The configuration holds `policy: {frameworks, tier:
+core|enhanced, rollout: {stage, audit_days, pilot_group}, exceptions:
+[{id, reason, reference, ends}]}`. An override with a reason becomes an
+exception with a reference and an end date; an expired exception fails
+validation. The fixed rules (§20.2) and capabilities (§20.3) stay;
+add-on settings are listed as not applied. The upstream schema spelled the
+default tier `baseline` and the exception fields `requirement, reference,
+expires`; this specification uses `core` (as the upstream README and
+`requirements.yaml` do) and the fields above. The optional
+`consumer_mail_domains` and `company_marker_terms` lists are kept for
+data loss prevention (T14-11).
+
+**Renumbering.** Upstream T13 clashes with this backlog's T13 (Onboarding
+TUI). Upstream T13-01 to T13-16 become T14-01 to T14-16, same order and
+titles. Dependencies mapped: upstream T0-01 to T0-01; upstream T0-03
+(pipeline identity) to T0-04 (sign-in, discovery and bootstrap, which
+creates the pipeline app); upstream T13-xx to T14-xx; T1-04, T2-02,
+T3-01, T3-02, T3-03, T9-01, T10-01 and S-02 unchanged. T1-05 and T2-02
+gain T14-03, as upstream; T1-04 gains T14-03 too, because it reads the
+resolved device settings. T13-04 (Security screen) now offers frameworks,
+tier, rollout and exceptions, and depends on T14-01.
+
+**Not imported.** The package's `company.yaml`, `directory/`, `content/`
+and `sharepoint/` hold a real company's data, and its coverage report was
+generated for that company. None of it was copied (R1). The Python
+resolver is replaced by the Go port.
+
+**Open (not decided here).** An exception scoped to a user, group or
+device, applied as an exclusion group, needs a `scope` field in
+`policy.exceptions`; T14-14 stops for a proposal. T14-03 is expected to
+need permissions or Entra roles not in `expected-state/app-permissions.yaml`
+(for example for Purview, Defender for Office and Intune app protection);
+each is proposed when found, not granted.
+
 ## Exceptions on the test tenant (2026-11-21)
 
 - **No FIDO2 keys** for the break-glass accounts this round (owner's
@@ -821,3 +896,4 @@ and applied by the step `identity.directory-settings`.
 | Change | Decision | Date | By |
 | --- | --- | --- | --- |
 | SC-01 to SC-16 | APPROVED, applied to SPEC v1.1 | 2026-11-21 | Owner |
+| SC-19 Policy sets (v1.1 package merge) | APPROVED (owner asked for it), applied to SPEC v1.2 | 2026-11-21 | Owner |

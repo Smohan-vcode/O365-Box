@@ -1,8 +1,9 @@
-# Company-in-a-Box Specification, Microsoft 365 engine, v1.1
+# Company-in-a-Box Specification, Microsoft 365 engine, v1.2
 
-Status: build-ready for tracks T0 to T3 and T13. T4 starts after spike
-S-01, T1-05 after S-02, T5 after S-03 and S-04. This file governs this
-package. v1.1 applies the changes SC-01 to SC-16 recorded in
+Status: build-ready for tracks T0 to T3, T13 and T14. T4 starts after
+spike S-01, T1-05 and T14-03 after S-02, T5 after S-03 and S-04. This
+file governs this package. v1.1 applied the changes SC-01 to SC-16; v1.2
+applies SC-19 (policy sets, §23). Both are recorded in
 `docs/spec-changes.md`.
 
 This package implements the same model as the Google Workspace package:
@@ -34,9 +35,11 @@ fictional company under `examples/`.
 - **No custom application at run time.** After setup, Microsoft's admin
   centres and SharePoint lists, forms and views are the console for
   business records. The TUI is the console for setup and change.
-- **Settings as code.** Tenant settings are declared in a configuration
-  document, applied by the orchestrator and monitored for drift. The
-  document is versioned in the tenant.
+- **Settings as code.** Tenant settings are resolved from the engine's
+  policy catalogue in `policy/` for the frameworks and tier the company
+  selects in its configuration document (§23), applied by the
+  orchestrator and monitored for drift. The document is versioned in the
+  tenant.
 - **Templates are built, not reviewed at run time.** Bracket decisions are
   confirmed once, in the `Bindings` list. The engine converts each Word
   template once.
@@ -45,8 +48,9 @@ fictional company under `examples/`.
 
 - Onboarding: sign-in or sign-up guidance, discovery, guided questions,
   plan review, build, later changes.
-- Tenant baseline: identity, mail, sharing, meetings, devices, as
-  hardening presets with recorded overrides.
+- Tenant baseline: identity, mail, sharing, meetings, devices, data
+  protection, resolved from the policy catalogue for a selected tier and
+  frameworks, with dated exceptions (§20, §23).
 - Users, groups, shared mailboxes, distribution lists, aliases, DNS.
 - Jurisdiction-driven disclosures: email disclaimers, document footers,
   notices.
@@ -100,7 +104,8 @@ fictional company under `examples/`.
 | Sign-in for onboarding | Microsoft Graph Command Line Tools public client; browser sign-in with PKCE on `localhost`, device code as fallback; scopes in `expected-state/bootstrap-scopes.yaml` |
 | Pipeline identity | One Entra app registration per tenant, created by bootstrap; GitHub federated credential and a local certificate; no client secret; permissions in `expected-state/app-permissions.yaml` |
 | DNS | Adapters: `cloudflare` (Terraform), `route53`, `azure`, `godaddy`, `manual` |
-| Baseline | Presets in `baseline/presets/`, applied and monitored through the Tenant Configuration Management APIs where S-02 shows they can write; otherwise through the providers |
+| Baseline | Policy catalogue in `policy/`, resolved for the configuration's `policy` section (§20.1, §23); applied and monitored through the Tenant Configuration Management APIs where S-02 shows they can write; otherwise through the providers |
+| Policy resolver | Go package `engine/internal/policy`; `box policy validate`, `box policy resolve`, `box policy coverage`; no network access |
 | Configuration store | `box-config.yaml` in the Admin site's `Configuration` library (§9) |
 | Records | SharePoint Online: one hub; the recommended structure has nine sites |
 | Register | SharePoint lists in the Admin site |
@@ -117,7 +122,8 @@ fictional company under `examples/`.
 ```
 engine/
   cmd/box/                main package
-  internal/               auth, config, plan, run, state, events, gates, tui, providers
+  internal/               auth, config, plan, run, state, events, gates, tui, providers,
+                          policy (resolver, validation, coverage)
   providers/              identity, exchange, sharepoint, teams, intune, powerplatform, dns
   terraform/dns/          Cloudflare adapter
   register/lists.yaml     register lists and columns
@@ -127,7 +133,10 @@ schema/                   JSON schema for box-config.yaml
 defaults/                 roles, structure, controls, stages, checklists, retention,
                           policy index and texts
 defaults/jurisdictions/   rules per jurisdiction
-baseline/                 presets/ and catalogue.yaml
+policy/                   policy catalogue (§23): requirements.yaml, settings/<area>.yaml,
+                          frameworks/<id>.yaml, capabilities.yaml, README.md
+baseline/                 per-area settings read by the providers until T14-04 moves
+                          each area onto resolved settings; then removed
 flows/                    catalogue.yaml and solution source
 expected-state/           app permissions, bootstrap scopes, connector allow-list
 examples/acme/            fictional configuration for tests and the CI dry run
@@ -136,6 +145,9 @@ runbooks/                 gate guides (generated from gate definitions)
 tasks/, spikes/           development backlog for the engine
 docs/                     this specification and change records
 ```
+
+The resolved settings for a tenant are never written to the repository:
+they are computed at plan time and recorded in that tenant (§23).
 
 `tasks/` and `spikes/` are the engine's development backlog. Each file's
 front matter carries `status` (`TODO`, `DONE`, `BLOCKED`). Per-tenant
@@ -149,7 +161,7 @@ run that step and its plan or verify only.
 | Track | Delivers | Priority | Size | Depends on |
 | --- | --- | --- | --- | --- |
 | T0 Foundation | Configuration schema and checks, orchestrator, provider runner, sign-in and bootstrap, pipeline, configuration store | P0 | M | none |
-| T13 Onboarding TUI | Shell, start and discovery, company, addresses, people, security, jurisdictions and disclosures, structure, review, run view and home | P0 | L | T0 |
+| T13 Onboarding TUI | Shell, start and discovery, company, addresses, people, security (frameworks, tier, rollout, exceptions), jurisdictions and disclosures, structure, review, run view and home | P0 | L | T0, T14-01 |
 | T1 Tenant and identity | Break-glass accounts, users, groups, identity and device baseline | P0 | M | T0 |
 | T2 Mail and DNS | Shared mailboxes, lists, aliases, DNS, mail baseline, disclaimers, probe | P0 | M | T1 |
 | T3 Sites and register | Sites, libraries, folders, permissions, register lists | P0 | M | T1 |
@@ -162,6 +174,7 @@ run that step and its plan or verify only.
 | T10 Compliance | Controls, evidence collectors, recurring tasks | P1 | M | T1, T9 |
 | T11 Upgrades | Paid capabilities, each a replaceable step | P2 | S each | T5 |
 | T12 Product packaging | Second-company dry run in CI, installer guide | P2 | M | all P0 and P1 |
+| T14 Policy sets | Resolver, validation and coverage; capability check; setting resolution; apply per admin area in audit then enforce; sensitivity labels; data loss prevention; audit and alerts; Frameworks list; exceptions; evidence per requirement; standards rendered from requirements | P0 | L | T0, T1, T2, T3, S-02 |
 
 Each provider step is usable headless before its TUI screen exists.
 
@@ -273,7 +286,7 @@ A document can be sent only when every constant and note it uses is
 `box-config.yaml`, validated by `schema/box-config.schema.json`, holds:
 `tenant`, `company`, `jurisdictions`, `modules`, `dns`, `mail`, `users`,
 `groups`, `structure` (hub, sites, libraries, folders, access),
-`baseline`, `disclosures`, `legal`, `integrations`, `compliance`,
+`policy` (frameworks, tier, rollout, exceptions; §20.1), `disclosures`, `legal`, `integrations`, `compliance`,
 `retention`, `authority`, `secrets` (references only) and `ids`.
 
 It is stored in the Admin site, library `Configuration`, with major
@@ -398,7 +411,7 @@ passes, and continues from the first incomplete step.
 ### 14.4 Drift
 
 `box drift` runs `plan` on every step and applies nothing. Configuration
-monitors cover the declared baseline where S-02 shows they can.
+monitors cover the resolved settings (§23) where S-02 shows they can.
 
 ## 15. Sales, policies, compliance
 
@@ -409,7 +422,8 @@ As in the model, with these mechanisms:
 - Policies: Markdown templates in `defaults/policies/` rendered with
   company values to PDF in the Compliance site's `Policies` library;
   acknowledgement is a list item created by a flow from an approval-style
-  request to each person.
+  request to each person. Policies cite requirement ids; the standards
+  beneath them are rendered from `policy/requirements.yaml` (§23).
 - Evidence collectors: pipeline jobs reading Graph; one `Evidence` item
   per artefact. Recurring control tasks: a scheduled flow.
 
@@ -418,7 +432,7 @@ As in the model, with these mechanisms:
 | ID | Question | Gates |
 | --- | --- | --- |
 | S-01 | Can brackets be converted to content controls bound to library columns, and do properties set by a flow appear in the document, in body, tables, headers and footers? | T4 |
-| S-02 | Which baseline settings can the Tenant Configuration Management APIs write, and which only monitor? | T1-05, T7-02 |
+| S-02 | Which baseline settings can the Tenant Configuration Management APIs write, and which only monitor? | T1-05, T7-02, T14-03 |
 | S-03 | Can the flow solution be deployed from source to the default environment under the included licence? | T5 |
 | S-04 | Is every action in `flows/catalogue.yaml` a standard connector, and are daily limits adequate? | T5 |
 | S-05 | Can the Go orchestrator drive Graph, Exchange, PnP and Teams providers in separate pwsh processes over JSON lines, passing tokens or certificates safely, with start-up under 5 s per provider? | T0-02 |
@@ -456,8 +470,8 @@ starts the wizard; otherwise it opens the home screen (§18.6).
   place.
 - Input is validated live: formats, DNS lookups, licence counts, name
   clashes, permission guardrails.
-- Turning off a recommended setting requires a one-line reason, stored as
-  a documented exception.
+- Turning off a setting the selected tier applies requires an exception
+  with a reason, a reference and an end date (§20.1).
 
 ### 18.2 Sign-in and sign-up
 
@@ -503,7 +517,7 @@ band throughout.
 | 1 | Start | Sign-in or sign-up, discovery confirmation, test or real | `tenant` |
 | 2 | Company | Legal and trading name, entity wording, registered address, registration and tax numbers, telephone, domains; place of registration and operating jurisdictions (§19); disclosures | `company`, `jurisdictions`, `disclosures`; Dictionary |
 | 3 | Addresses | Founder's address; shared mailboxes, aliases, lists, auto-replies, access groups; DMARC report address; sending subdomains; DNS provider and token | `mail`, `dns`; token to the keychain |
-| 4 | Security | Hardening preset and overrides with reasons (§20); break-glass account names; device rules if available | `baseline`, `tenant.break_glass_accounts` |
+| 4 | Security | Frameworks to report against; policy tier (core or enhanced); rollout stage, audit days and pilot group; exceptions with reason, reference and end date (§20, §23); break-glass account names; device rules if available | `policy`, `tenant.break_glass_accounts` |
 | 5 | Structure | Modules; sites, libraries, folders; groups; access grid (§7); legal pack upload | `modules`, `structure`, `groups`; Legal `Templates/Source` |
 | 6 | People | Initial team with plan, roles and access groups; existing users for adoption; seat counts; how each person receives their first sign-in pass (§18.9) | `users` |
 | 7 | Review | Full plan as a tree with counts; licence use; gates ahead; estimated time; exceptions. Confirmation by typing the primary domain | — |
@@ -563,6 +577,7 @@ box plan | up | status | drift        --tenant <domain or id>, --only <step>, --
 box apply <step> | check <step>
 box gate <id> [--check]
 box config show | export | import <file> | validate [--for <task>]
+box policy validate | resolve | coverage
 box evidence | doctor | handoff
 box check-literals | check-connectors
 ```
@@ -657,25 +672,43 @@ provider's plan, so changes made in the admin centre show as drift.
 
 ## 20. Hardening
 
-### 20.1 Presets
+### 20.1 Policy tier, rollout and exceptions
 
-`baseline/presets/` holds `essential`, `recommended` (default) and
-`strict`. `baseline/catalogue.yaml` describes every setting: id,
-plain-language title, what it protects against, what users notice,
-required capability, and the SOC 2 criterion it supports.
-
-The configuration stores the choice:
+The tenant's settings are resolved from the policy catalogue (§23). The
+configuration stores the selection:
 
 ```yaml
-baseline:
-  preset: recommended
-  overrides:
-    - {id: teams.meetings.anonymous_join, value: off, reason: "Board meetings only"}
+policy:
+  frameworks: [nist_csf_2, nis2, iso27001_2022, soc2, cis_v8]
+  tier: core                    # core | enhanced
+  rollout:
+    stage: audit                # audit | enforce
+    audit_days: 14
+    pilot_group: grp-admins
+  consumer_mail_domains: []     # optional; data loss prevention (T14-11)
+  company_marker_terms: []      # optional; data loss prevention (T14-11)
+  exceptions:
+    - {id: TMS-004, reason: "Board meeting guests skip the lobby", reference: EXC-0001, ends: 2027-05-31}
 ```
 
-The effective baseline is the preset with the overrides applied.
-Weakening a setting relative to `recommended` requires a reason; every
-exception appears on the Review screen and in evidence.
+- `frameworks` chooses what is reported, collected and scheduled. The
+  technical settings are the same whichever frameworks are ticked.
+- `tier: core` (default) applies every `core` setting. `enhanced` adds the
+  stricter settings that cost users some convenience. `addon` settings are
+  never applied (§20.3).
+- `rollout`: settings whose mode is `staged` start in audit or report-only
+  on the pilot group for `audit_days`, then move to enforce when `stage`
+  changes to `enforce`. That change is a configuration save like any other.
+- `exceptions`: every departure from the selected tier. `id` names a
+  setting, or a requirement to except all of its settings; `reason` is
+  plain language; `reference` is the `Exceptions` list item (§23); `ends`
+  is a date. An exception without all four fields, naming an unknown id,
+  or whose end date has passed fails `box policy validate` and `box config
+  validate`; when it expires the setting returns on the next apply.
+
+The resolved settings are the tier's settings available on the plan,
+minus the exceptions. Every exception appears on the Review screen and in
+evidence. These replace the v1.1 hardening presets and overrides (SC-19).
 
 ### 20.2 Fixed rules
 
@@ -691,7 +724,9 @@ Discovery maps subscribed plans to capabilities in
 `defender_office_p1`, `power_automate_standard`). A step whose capability
 is missing uses its declared fallback (Conditional Access falls back to
 Security Defaults) or is skipped and listed on the Review screen with the
-upgrade that would enable it. Paid licences are never assigned unless the
+upgrade that would enable it. A policy setting whose capability is an
+add-on is never applied; it is listed as not applied in the coverage
+report (§23). Paid licences are never assigned unless the
 configuration names them, and never beyond the seats available.
 
 ## 21. Secrets and local data
@@ -723,5 +758,79 @@ moves an unfinished draft to another machine as an encrypted file.
 | G-04 Public forms created | Create the NDA and demo request forms from `flows/forms/` | Each pasted form link is reachable; its ID is stored in configuration `ids` |
 | G-05 Founder's standing admin role removed | Remove the role after T1 passes | The founder holds no directory role |
 | G-06 Manual DNS records | The records table for `dns.provider: manual` | Records resolve to the expected values |
+| G-07 Apple push certificate | Create the Apple MDM push certificate with the company's Apple account and upload it in the Intune admin centre (T14-06) | Intune reports a valid certificate and its expiry date |
+| G-08 Data loss prevention review | Review each policy's matches from the audit period with the owner before enforcement (T14-11) | Each policy's match report is stored as evidence and the owner's confirmation is an `Events` item |
 
 `runbooks/00-bootstrap.md` is generated from these definitions.
+
+## 23. Policy sets
+
+The engine's policy catalogue is in `policy/`. `policy/README.md`
+describes the mechanism; `box policy coverage` reports the current result
+for a selection and a plan.
+
+| File | Holds |
+| --- | --- |
+| `policy/requirements.yaml` | 90 requirements in 14 domains. Each has a plain statement, a tier (`core`, `enhanced`, `addon`), a type (technical, procedural, mixed), the settings that enforce it, its evidence source, and references to the five frameworks. |
+| `policy/settings/<area>.yaml` | 333 settings across 12 admin areas. Each names the requirements it serves, the capability it needs, its tier, and its mode (`enforce`, `staged`, `report`). Values are stated in words; T14-03 resolves each to the exact API setting. |
+| `policy/frameworks/<id>.yaml` | Each framework's controls and the requirements that answer them. |
+| `policy/capabilities.yaml` | Which capabilities the base plans include and which need an add-on; reconciled with `engine/capabilities.yaml` (T14-02). |
+
+- Five frameworks are mapped: NIST CSF 2.0, NIS2 Article 21, ISO/IEC
+  27001:2022 Annex A, SOC 2, CIS Controls v8. Framework references are a
+  working mapping, to be validated against the source texts before an
+  audit relies on them.
+- **Selection** is the configuration's `policy` section (§9.1, §20.1):
+  frameworks, tier, rollout stage, exceptions. It is edited in the
+  onboarding TUI's Security step (§18.4, step 4) or on the home screen.
+  The `Frameworks` list in the Admin site is the tick-box view of the same
+  selection: a change there is saved by the pipeline app as a new version
+  of the configuration document with one `Events` item, and is applied
+  only when the owner runs the resulting plan. Nothing is changed through
+  pull requests.
+- **Resolution**: `box policy resolve` keeps a setting when the plan has
+  its capability, its tier is selected and no exception removes it. It
+  produces the settings to apply per area, the settings not applied with
+  the reason, and coverage per framework. It runs at plan time. Its output
+  is never committed to the repository: the applied state is recorded in
+  the tenant as `PolicySettings` and `Requirements` items, and the
+  coverage report and the not-applied list are stored in the Compliance
+  site.
+- **Validation**: `box policy validate` fails when a setting names no
+  existing requirement or an unknown capability, a technical requirement
+  has no setting, a framework control names an unknown requirement, an id
+  is repeated, or an exception is incomplete, unknown or expired.
+- **Apply**: each admin area is a provider step (§14) run by the
+  orchestrator with the pipeline app. Staged settings go out in audit
+  first, on the rollout pilot group for `rollout.audit_days`, and move to
+  enforce when `rollout.stage` changes. Every setting the product allows
+  excludes `grp-break-glass` (§20.2).
+- **Add-on settings are never applied.** A setting whose capability needs
+  a paid add-on is listed as not applied in the coverage report, with the
+  add-on that would enable it.
+- **Ticking a framework** switches on its coverage report control by
+  control, its procedural requirements as recurring tasks, its evidence
+  schedule and its incident reporting deadlines. It does not change the
+  technical settings.
+- **Standards are rendered from requirements**: one written standard per
+  domain, from `policy/requirements.yaml`, so a document and the tenant
+  cannot disagree. Policies (§15) cite requirement ids instead of
+  repeating rules.
+- **Register lists** added in `engine/register/lists.yaml`: `Frameworks`,
+  `Requirements`, `PolicySettings`, `Exceptions`. An approved
+  `Exceptions` item becomes a `policy.exceptions` entry: `id` from
+  `requirement_id`, `reason`, `reference` from `exception_id`, `ends` from
+  `expires_on`.
+
+Data protection for a small company rests on six settings groups, applied
+in this order:
+
+1. block automatic forwarding;
+2. label with a default;
+3. block Restricted from leaving;
+4. restrict sharing from the record sites;
+5. detect mail to personal accounts;
+6. limit automation connectors.
+
+Development of this section is track T14 (`tasks/T14-01.md` to
+`tasks/T14-16.md`).

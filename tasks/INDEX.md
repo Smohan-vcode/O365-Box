@@ -23,7 +23,7 @@ CI runs `box backlog check`.
 | T13-01 | TUI shell | P0 | S | T0-02 |  | DONE |
 | T13-02 | Start, sign-in and discovery screen | P0 | M | T13-01, T0-04, S-08 |  | TODO |
 | T13-03 | Company, addresses and people screens | P0 | M | T13-02 |  | TODO |
-| T13-04 | Security screen and hardening presets | P0 | M | T13-02 |  | TODO |
+| T13-04 | Security screen: frameworks, tier, rollout and exceptions | P0 | M | T13-02, T14-01 |  | TODO |
 | T13-05 | Jurisdictions and disclosures | P0 | M | T13-03, S-07 |  | TODO |
 | T13-06 | Structure, modules and permissions screen | P0 | M | T13-02 |  | TODO |
 | T13-07 | Review and confirmation screen | P0 | S | T13-03, T13-04, T13-05, T13-06 |  | TODO |
@@ -31,10 +31,10 @@ CI runs `box backlog check`.
 | T1-01 | Break-glass accounts and exclusion group | P0 | S | T0-04 | yes | BLOCKED |
 | T1-02 | Users and licences | P0 | S | T1-01 |  | TODO |
 | T1-03 | Groups and role groups | P0 | S | T1-02 |  | TODO |
-| T1-04 | Device baseline | P1 | S | T1-03 |  | TODO |
-| T1-05 | Identity baseline | P0 | M | T1-03, S-02 | yes | BLOCKED |
+| T1-04 | Device enrolment prerequisites | P1 | S | T1-03, T14-03 |  | TODO |
+| T1-05 | Identity baseline | P0 | M | T1-03, S-02, T14-03 | yes | BLOCKED |
 | T2-01 | Shared mailboxes, lists and aliases | P0 | S | T1-03 |  | TODO |
-| T2-02 | Mail baseline | P0 | S | T2-01, S-02 |  | TODO |
+| T2-02 | Mail baseline | P0 | S | T2-01, S-02, T14-03 |  | TODO |
 | T2-03 | DNS records and DKIM | P0 | S | T2-01 |  | TODO |
 | T2-04 | Probe test and DMARC staging | P0 | S | T2-02, T2-03 |  | TODO |
 | T3-01 | Hub and sites | P0 | S | T1-03 |  | TODO |
@@ -73,3 +73,19 @@ CI runs `box backlog check`.
 | T11-05 | Upgrade: assistants | P2 | S | T5-09, T9-02 | yes | TODO |
 | T12-01 | Second-company dry run | P2 | M | T5-08, T7-02, T9-02 |  | TODO |
 | T12-02 | Installer guide | P2 | S | T12-01 |  | TODO |
+| T14-01 | Resolver, validation and coverage | P0 | S | T0-01 |  | TODO |
+| T14-02 | Capability check against tenant licences | P0 | S | T14-01, T0-04 |  | TODO |
+| T14-03 | Setting resolution | P0 | L | T14-02, S-02 | yes | TODO |
+| T14-04 | Apply engine with audit and enforce modes | P0 | M | T14-03 |  | TODO |
+| T14-05 | Apply: Windows devices and Office apps | P0 | M | T14-04, T1-04 |  | TODO |
+| T14-06 | Apply: macOS devices | P0 | M | T14-04, T1-04 | yes | TODO |
+| T14-07 | Apply: Phones and tablets | P0 | M | T14-04 |  | TODO |
+| T14-08 | Apply: Endpoint and mail protection | P0 | M | T14-04, T2-02 |  | TODO |
+| T14-09 | Apply: Sharing, meetings, organisation and automation settings | P0 | M | T14-04, T3-01 |  | TODO |
+| T14-10 | Sensitivity labels | P0 | M | T14-04, T3-02 |  | TODO |
+| T14-11 | Data loss prevention policies | P0 | L | T14-10, T2-02 | yes | TODO |
+| T14-12 | Audit, alert policies and log export | P0 | S | T14-04 |  | TODO |
+| T14-13 | Frameworks list and selection by tick-box | P1 | S | T14-01, T3-03 |  | TODO |
+| T14-14 | Exceptions | P1 | S | T14-13 |  | TODO |
+| T14-15 | Evidence per requirement and monthly coverage | P1 | M | T14-04, T10-01 |  | TODO |
+| T14-16 | Standards rendered from requirements | P1 | S | T14-01, T9-01 |  | TODO |

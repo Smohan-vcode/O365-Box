@@ -39,9 +39,14 @@ type RequirementStatus struct {
 	Checks      []Check        `json:"checks,omitempty"`
 	Procedures  []string       `json:"procedures,omitempty"`
 	NeedsDoc    bool           `json:"document_needed"`
-	Gap         string         `json:"gap,omitempty"`
-	Fix         string         `json:"fix,omitempty"`
-	Risk        int            `json:"risk"`
+	// Document is the written procedure's state when the policy library
+	// was read (DocInPlace, DocDraft, ...); Documents names the documents.
+	Document  string      `json:"document,omitempty"`
+	Documents string      `json:"documents,omitempty"`
+	Records   []RecordRef `json:"records,omitempty"`
+	Gap       string      `json:"gap,omitempty"`
+	Fix       string      `json:"fix,omitempty"`
+	Risk      int         `json:"risk"`
 }
 
 // ControlStatus is one framework control's row in the pack.
@@ -76,6 +81,13 @@ func collectorOf(ev string) string {
 // Assess gives every control of the framework a status from its
 // requirements' setting reads and inventories.
 func Assess(cat *policy.Catalogue, fw *policy.Framework, settings map[string]*SettingRead, inventories []*Inventory) *Assessment {
+	return AssessWith(cat, fw, settings, inventories, nil)
+}
+
+// AssessWith is Assess with the company's policy documents and control
+// task records read from the tenant (ReadPolicies). nil leaves every
+// requirement that needs a written procedure as "document needed".
+func AssessWith(cat *policy.Catalogue, fw *policy.Framework, settings map[string]*SettingRead, inventories []*Inventory, recs *Records) *Assessment {
 	byCollector := map[string][]*Inventory{}
 	for _, inv := range inventories {
 		for _, c := range inv.Collectors {
@@ -94,6 +106,9 @@ func Assess(cat *policy.Catalogue, fw *policy.Framework, settings map[string]*Se
 			return rs
 		}
 		rs := assessRequirement(r, settings, byCollector[collectorOf(r.Evidence)])
+		if recs != nil && rs.NeedsDoc {
+			recs.applyDocuments(rs, r)
+		}
 		a.Requirements[id] = rs
 		return rs
 	}
@@ -255,7 +270,7 @@ func controlStatus(cs *ControlStatus) {
 		if r.NeedsDoc {
 			cs.Documents = append(cs.Documents, r.ID)
 		}
-		if r.Type == policy.TypeProcedural {
+		if r.Type == policy.TypeProcedural && r.Status == DocumentNeeded {
 			continue
 		}
 		tech = append(tech, r.Status)
@@ -271,6 +286,11 @@ func controlStatus(cs *ControlStatus) {
 	case len(tech) == 0:
 		cs.Status = DocumentNeeded
 		cs.Gap = "procedures only: " + strings.Join(cs.Documents, ", ") + " need a written, approved procedure"
+		for _, r := range cs.Requirements {
+			if r.Document != "" && r.Document != DocNone {
+				cs.Gap += "; " + r.ID + ": " + r.Gap
+			}
+		}
 		return
 	case count[NotRead] == len(tech):
 		cs.Status = NotRead
@@ -282,6 +302,10 @@ func controlStatus(cs *ControlStatus) {
 		cs.Status = PartlyMet
 	}
 	if len(cs.Documents) > 0 {
+		// Met needs the written procedures too.
+		if cs.Status == Met {
+			cs.Status = PartlyMet
+		}
 		gaps = append(gaps, "documents needed: "+strings.Join(cs.Documents, ", "))
 	}
 	cs.Gap = strings.Join(gaps, " | ")

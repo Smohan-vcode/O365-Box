@@ -18,6 +18,8 @@ import (
 
 	"github.com/Smohan-vcode/O365-Box/engine/internal/audit"
 	"github.com/Smohan-vcode/O365-Box/engine/internal/auth"
+	"github.com/Smohan-vcode/O365-Box/engine/internal/config"
+	"github.com/Smohan-vcode/O365-Box/engine/internal/docs"
 	"github.com/Smohan-vcode/O365-Box/engine/internal/events"
 	"github.com/Smohan-vcode/O365-Box/engine/internal/graph"
 	"github.com/Smohan-vcode/O365-Box/engine/internal/plan"
@@ -229,6 +231,9 @@ func runAudit(ctx context.Context, g *globals, f *auditFlags, env *auditEnv, out
 		Progress: func(id, title string) { fmt.Fprintf(out, "  … %s\n", title) }}
 	fmt.Fprintf(out, "Reading inventories for %s…\n", period)
 	invs := rd.ReadAll(ctx)
+	fmt.Fprintln(out, "  … Policy documents and control task records (Compliance and Admin sites)")
+	recs, pinvs := rd.ReadPolicies(ctx, policyLocation(root, rd.InitialDomain(), &notes))
+	invs = append(invs, pinvs...)
 
 	bySteps := audit.AuditSelection(cat, maps)
 	outcomes := map[string]audit.StepOutcome{}
@@ -261,7 +266,7 @@ func runAudit(ctx context.Context, g *globals, f *auditFlags, env *auditEnv, out
 	settings := audit.ReadSettings(cat, maps, bySteps, outcomes)
 	notes = append(notes, notReadNote(settings)...)
 
-	a := audit.Assess(cat, fw, settings, invs)
+	a := audit.AssessWith(cat, fw, settings, invs, recs)
 	pack := &audit.Pack{Tenant: sess.Tenant, Organisation: rd.OrganisationName(), Subject: sess.Subject, ReadBy: "box audit " + Version,
 		Period: period, ReadAt: now().UTC(), Framework: fw, Assessment: a, Inventories: invs, Settings: settings, Steps: outcomes, Notes: notes}
 	tok.Access, gc = "", nil
@@ -427,4 +432,33 @@ func runAuditSteps(ctx context.Context, root string, f *auditFlags, out io.Write
 		}
 	}
 	return outcomes
+}
+
+// policyLocation is where the box keeps the policy documents and the
+// register: the sites of defaults/structure.yaml holding the Policies
+// library and the register lists, and the templates' recurring records.
+func policyLocation(root, initialDomain string, notes *[]string) audit.PolicyLocation {
+	loc := audit.PolicyLocation{Library: PoliciesLibrary, PoliciesSite: "compliance", AdminSite: "admin"}
+	if name, _, _ := strings.Cut(strings.ToLower(initialDomain), "."); name != "" {
+		loc.Host = name + ".sharepoint.com"
+	}
+	var st config.Structure
+	if err := readYAMLFile(filepath.Join(root, "defaults", "structure.yaml"), &st); err == nil {
+		for _, s := range st.Sites {
+			if s.Name == "Admin" {
+				loc.AdminSite = s.URL
+			}
+			for _, l := range s.Libraries {
+				if l.Name == PoliciesLibrary {
+					loc.PoliciesSite = s.URL
+				}
+			}
+		}
+	}
+	if ds, err := loadDocs(root); err != nil {
+		*notes = append(*notes, "Policy templates not loaded ("+err.Error()+"); recurring records come from the catalogue only.")
+	} else {
+		loc.Records = docs.RecordsByRequirement(ds)
+	}
+	return loc
 }

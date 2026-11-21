@@ -81,6 +81,11 @@ type session struct {
 	dir        string // the tenant's proposal and approvals
 	areas      *approval.Areas
 	approvals  *approval.File
+	// graphToken gives a Graph token from the pipeline app, once bootstrapped.
+	graphToken  func(context.Context) (string, error)
+	policiesMu  sync.Mutex
+	policiesIn  map[string]any // the sharepoint.policies step's input, rendered once
+	policiesErr error
 }
 
 func (g *globals) open(f *runFlags, out io.Writer, exact bool) (*session, error) {
@@ -207,6 +212,14 @@ func (s *session) appCredentials() error {
 	resources := map[string]string{
 		"identity": "https://graph.microsoft.com", "intune": "https://graph.microsoft.com", "teams": "https://graph.microsoft.com",
 		"exchange": "https://outlook.office365.com", "sharepoint": "https://" + name + ".sharepoint.com",
+	}
+	s.graphToken = func(ctx context.Context) (string, error) {
+		tok, err := cred.Token(ctx, "https://graph.microsoft.com")
+		if err != nil {
+			return "", err
+		}
+		s.red.AddSecret(tok.Access)
+		return tok.Access, nil
 	}
 	s.pool.CredsFunc = func(ctx context.Context, provider string) (map[string]any, error) {
 		res, ok := resources[provider]
@@ -408,6 +421,15 @@ func (s *session) input(step *plan.Step) any {
 			}
 		case "@dictionary":
 			in["dictionary"] = s.dictionary
+		case "@policies":
+			// The policy documents, rendered on this machine (T9-01, T9-02).
+			ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+			if p, err := s.policiesInput(ctx); err == nil {
+				in["policies"] = p
+			} else {
+				in["policies_error"] = err.Error()
+			}
+			cancel()
 		case "@policy":
 			if p, err := s.policyInput(); err == nil {
 				// A policy.<area> step sees only its own settings (T14-04).

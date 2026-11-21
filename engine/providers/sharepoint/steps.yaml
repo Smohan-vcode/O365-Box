@@ -42,3 +42,10 @@ steps:
     task: T14-09
     depends_on: [sharepoint.tenant, sharepoint.sites]
     reads: ["@policy", tenant, structure]
+  - id: sharepoint.policies
+    title: Policy documents in the Compliance site (drafts, owner approval, PDF publication)
+    track: T9
+    task: T9-01
+    module: policies
+    depends_on: [sharepoint.libraries, sharepoint.register]
+    reads: ["@policies", tenant, structure]

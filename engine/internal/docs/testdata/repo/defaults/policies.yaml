@@ -1,0 +1,4 @@
+# Test fixture: a two-document policy index (engine/internal/docs tests).
+policies:
+  - {id: POL-T1, title: Identity and access, file: defaults/policies/POL-T1.md, requirements: [IAM-01, IAM-13], kind: policy}
+  - {id: POL-T2, title: Access review, file: defaults/policies/POL-T2.md, requirements: [IAM-13], kind: procedure}

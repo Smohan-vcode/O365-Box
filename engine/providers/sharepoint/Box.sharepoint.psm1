@@ -1,5 +1,5 @@
 # Provider: sharepoint. Tenant sharing, hub and sites, libraries, register
-# lists and the configuration store (T3, T0-06). Connects with PnP using the
+# lists, the configuration store and the policy documents (T3, T0-06, T9). Connects with PnP using the
 # pipeline app's token for the tenant's SharePoint host.
 Import-Module (Join-Path $PSScriptRoot '..' 'common' 'BoxProvider.psm1') -Force
 Import-Module (Join-Path $PSScriptRoot '..' 'common' 'BoxGraph.psm1') -Force
@@ -596,6 +596,219 @@ function Get-SpPolicyFindings($In) {
   return $out
 }
 
+# ---------- sharepoint.policies (T9-01, T9-02) ----------
+# Saves the policy documents rendered by the engine (input "policies") in
+# the Compliance site's Policies library. A document goes up as a Draft;
+# publishing it (Approved, with who and when, and a PDF copy) is a separate
+# planned change that the owner approves (SPEC §25.1). A file edited in
+# SharePoint after the box wrote it is never overwritten: it is reported
+# as a conflict. A document with values still to be completed stays a
+# draft, and each missing Dictionary value is created empty for the owner.
+$PolicyColumns = [ordered]@{
+  PolicyId      = @{ Display = 'Policy id'; Type = 'Text' }
+  PolicyVersion = @{ Display = 'Policy version'; Type = 'Text' }
+  PolicyStatus  = @{ Display = 'Policy status'; Type = 'Choice'; Choices = @('Draft', 'Approved') }
+  Requirements  = @{ Display = 'Requirements'; Type = 'Note' }
+  ReviewDue     = @{ Display = 'Review due'; Type = 'DateTime' }
+  ApprovedBy    = @{ Display = 'Approved by'; Type = 'Text' }
+  ApprovedOn    = @{ Display = 'Approved on'; Type = 'DateTime' }
+  BoxHash       = @{ Display = 'Box hash'; Type = 'Text' }
+  BoxSource     = @{ Display = 'Box source'; Type = 'Text' }
+}
+
+function Get-PoliciesSite($In) {
+  $lib = [string]$In.policies.library
+  $s = @($In.config.structure.sites | Where-Object { @($_.libraries | Where-Object { $_ -and ([string]$_.name) -eq $lib }).Count -gt 0 })
+  if ($s.Count -ne 1) { throw "the configuration's structure has no single site with a '$lib' library" }
+  return $s[0]
+}
+
+function Get-BoxBytesHash([byte[]] $Bytes) { return [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($Bytes)).ToLower() }
+
+# The hash of a .docx file's text parts, as engine/internal/docs TextHash
+# computes it: SharePoint may write column values into the property parts.
+function Get-DocxTextHash([byte[]] $Bytes) {
+  Add-Type -AssemblyName System.IO.Compression
+  $zip = [IO.Compression.ZipArchive]::new([IO.MemoryStream]::new($Bytes), [IO.Compression.ZipArchiveMode]::Read)
+  try {
+    $buf = [IO.MemoryStream]::new()
+    foreach ($n in 'word/document.xml', 'word/footer1.xml', 'word/header1.xml') {
+      $nb = [Text.Encoding]::UTF8.GetBytes($n)
+      $buf.Write($nb, 0, $nb.Length); $buf.WriteByte(0)
+      $e = $zip.GetEntry($n)
+      if ($e) { $st = $e.Open(); try { $st.CopyTo($buf) } finally { $st.Dispose() } }
+      $buf.WriteByte(0)
+    }
+    return Get-BoxBytesHash $buf.ToArray()
+  } finally { $zip.Dispose() }
+}
+
+function Get-PolicyFileHash([string] $Name, [byte[]] $Bytes) {
+  if ($Name -like '*.docx') { try { return Get-DocxTextHash $Bytes } catch { return 'unreadable' } }
+  return Get-BoxBytesHash $Bytes
+}
+
+# A file in the library: its fields, and whether it is still what the box wrote.
+function Get-PolicyFile($sc, [string] $LibUrl, [string] $Name) {
+  $url = "$LibUrl/$Name"
+  $item = Get-PnPFile -Url $url -AsListItem -Connection $sc -ErrorAction SilentlyContinue
+  if (-not $item) { return $null }
+  $ms = Get-PnPFile -Url $url -AsMemoryStream -Connection $sc -ErrorAction Stop
+  $f = $item.FieldValues
+  $cur = Get-PolicyFileHash $Name $ms.ToArray()
+  return @{ Hash = $cur; Stored = [string]$f['BoxHash']; Source = [string]$f['BoxSource']; Status = [string]$f['PolicyStatus']
+    Version = [string]$f['PolicyVersion']; ApprovedBy = [string]$f['ApprovedBy']; ApprovedOn = $f['ApprovedOn']; ReviewDue = $f['ReviewDue']
+    Conflict = ($cur -ne [string]$f['BoxHash']) }
+}
+
+function Save-PolicyFile($sc, [string] $Folder, [string] $Name, [byte[]] $Bytes, [hashtable] $Values) {
+  $ms = [IO.MemoryStream]::new($Bytes)
+  Add-PnPFile -Folder $Folder -FileName $Name -Stream $ms -Values $Values -Connection $sc -ErrorAction Stop | Out-Null
+}
+
+# Word converts the approved document to PDF through Graph (?format=pdf).
+function Get-PolicyPdf($In, $Site, [string] $Lib, [string] $Name) {
+  $h = ([uri](Get-Root $In)).Host
+  $s = Invoke-BoxGraph -Uri "/sites/$($h):/sites/$($Site.url)?`$select=id"
+  $d = Invoke-BoxGraph -Uri "/sites/$($s.id)/lists/$([uri]::EscapeDataString($Lib))/drive?`$select=id"
+  $it = Invoke-BoxGraph -Uri "/drives/$($d.id)/root:/$([uri]::EscapeDataString($Name))?`$select=id"
+  $tmp = [IO.Path]::GetTempFileName()
+  try {
+    # The redirect to the converted file carries its own authorisation; PowerShell drops the header on it.
+    Invoke-WebRequest -Uri "https://graph.microsoft.com/v1.0/drives/$($d.id)/items/$($it.id)/content?format=pdf" `
+      -Headers @{ Authorization = 'Bearer ' + (Get-BoxAuth 'graph').access_token } -OutFile $tmp -ErrorAction Stop | Out-Null
+    return [IO.File]::ReadAllBytes($tmp)
+  } finally { Remove-Item $tmp -Force -ErrorAction SilentlyContinue }
+}
+
+function Add-PolicyEvent($In, [string] $Id, [string] $Action, [string] $To) {
+  $ac = Connect-Site (Get-AdminSiteUrl $In)
+  Add-PnPListItem -List 'Events' -Values @{ Title = "policy $Id $Action"; event_id = [guid]::NewGuid().ToString(); at = (Get-Date).ToUniversalTime().ToString('o')
+    actor = 'box pipeline'; entity = 'policy'; entity_id = $Id; action = $Action; to_state = $To } -Connection $ac -ErrorAction Stop | Out-Null
+}
+
+function Get-PolicyChanges($In, [switch] $Apply, [switch] $Verify) {
+  if ($In.policies_error) { throw "policy documents not rendered: $($In.policies_error)" }
+  $p = $In.policies
+  $lib = [string]$p.library
+  $site = Get-PoliciesSite $In
+  $sc = Connect-Site (Get-SiteUrl $In $site.url)
+  $changes = @()
+  if (-not (Get-PnPList -Identity $lib -Connection $sc -ErrorAction SilentlyContinue)) {
+    if ($Apply) { throw "the $lib library does not exist (run sharepoint.libraries)" }
+    return @(New-BoxChange create "documents in $($site.name)/$lib" 'after the library exists')
+  }
+  $have = @{}
+  foreach ($f in @(Get-PnPField -List $lib -Connection $sc)) { $have[[string]$f.InternalName] = $true }
+  foreach ($c in $PolicyColumns.Keys) {
+    if ($have.ContainsKey($c)) { continue }
+    $def = $PolicyColumns[$c]
+    $changes += New-BoxChange create "column $($site.name)/$lib.$c" $def.Type
+    if ($Apply) {
+      $a = @{ List = $lib; DisplayName = $def.Display; InternalName = $c; Type = $def.Type; Connection = $sc; ErrorAction = 'Stop' }
+      if ($def.Choices) { $a.Choices = $def.Choices }
+      Add-PnPField @a | Out-Null
+    }
+  }
+  # Values the owner must supply: an empty Dictionary entry each (status EMPTY).
+  $needed = @($p.dictionary_needed | Where-Object { $_ })
+  if ($needed.Count) {
+    $ac = Connect-Site (Get-AdminSiteUrl $In)
+    if (Get-PnPList -Identity 'Dictionary' -Connection $ac -ErrorAction SilentlyContinue) {
+      $keys = @{}
+      foreach ($i in @(Get-PnPListItem -List 'Dictionary' -PageSize 500 -Connection $ac)) { $keys[[string]$i['key']] = $true }
+      foreach ($n in $needed) {
+        if ($keys.ContainsKey([string]$n.key)) { continue }
+        $label = [string]$n.label
+        if ($label.Length -gt 250) { $label = $label.Substring(0, 250) }
+        $changes += New-BoxChange create "Dictionary $($n.key)" "empty, for the owner to fill: $label"
+        if ($Apply) {
+          Add-PnPListItem -List 'Dictionary' -Values @{ Title = [string]$n.key; key = [string]$n.key; label = $label; question = [string]$n.label; status = 'EMPTY' } -Connection $ac -ErrorAction Stop | Out-Null
+        }
+      }
+    }
+  }
+  $folder = Get-LibUrl $lib
+  $web = Get-PnPWeb -Connection $sc
+  $libUrl = "$(([string]$web.ServerRelativeUrl).TrimEnd('/'))/$folder"
+  foreach ($d in @($p.documents | Where-Object { $_ })) {
+    $id, $ver, $src = [string]$d.id, [string]$d.version, [string]$d.source
+    $todo = @($d.missing | Where-Object { $_ })
+    $vals = @{ PolicyId = $id; PolicyVersion = $ver; Requirements = [string]$d.requirements; BoxSource = $src }
+    $draftVals = $vals + @{ PolicyStatus = 'Draft'; BoxHash = [string]$d.draft.hash; ApprovedBy = $null; ApprovedOn = $null; ReviewDue = $null }
+    $note = if ($todo.Count) { "; $($todo.Count) value(s) to be completed: $(($todo | ForEach-Object { $_.key }) -join ', ')" } else { '' }
+    $doc = Get-PolicyFile $sc $libUrl ([string]$d.file)
+    if ($null -eq $doc) {
+      $changes += New-BoxChange create "document $id v$ver" "draft (content $($src.Substring(0, 12)))$note"
+      if ($Apply) {
+        Save-PolicyFile $sc $folder ([string]$d.file) ([Convert]::FromBase64String([string]$d.draft.content)) $draftVals
+        Add-PolicyEvent $In $id 'draft' "v$ver Draft"
+      }
+      continue
+    }
+    if ($doc.Conflict) {
+      Write-Warning "conflict: $($site.name)/$lib/$($d.file) was edited in SharePoint after the box wrote it; the box does not overwrite it. Carry the edit into the template with a new version, or remove the file so the box writes it again."
+      continue
+    }
+    if ($doc.Source -ne $src) {
+      $changes += New-BoxChange update "document $id v$ver" "new draft (content $($src.Substring(0, 12))), replaces v$($doc.Version) ($($doc.Status)); the published PDF stays until the owner approves$note"
+      if ($Apply) {
+        Save-PolicyFile $sc $folder ([string]$d.file) ([Convert]::FromBase64String([string]$d.draft.content)) $draftVals
+        Add-PolicyEvent $In $id 'draft' "v$ver Draft"
+      }
+      continue
+    }
+    if ($todo.Count) {
+      Write-Warning "$id v$ver stays a draft until these values are supplied: $(($todo | ForEach-Object { "$($_.key) ($($_.what))" }) -join '; ')"
+      continue
+    }
+    $pdf = Get-PolicyFile $sc $libUrl ([string]$d.pdf)
+    if ($pdf -and $pdf.Conflict) {
+      Write-Warning "conflict: $($site.name)/$lib/$($d.pdf) was changed in SharePoint after the box wrote it; the box does not overwrite it."
+      continue
+    }
+    if ($doc.Status -eq 'Approved') {
+      if (-not $pdf -or $pdf.Source -ne $src -or $pdf.Status -ne 'Approved') {
+        $changes += New-BoxChange update "publication $id v$ver" 'PDF copy of the approved document'
+        if ($Apply) {
+          $pv = $vals + @{ PolicyStatus = 'Approved'; ApprovedBy = $doc.ApprovedBy; ApprovedOn = $doc.ApprovedOn; ReviewDue = $doc.ReviewDue }
+          $bytes = Get-PolicyPdf $In $site $lib ([string]$d.file)
+          Save-PolicyFile $sc $folder ([string]$d.pdf) $bytes ($pv + @{ BoxHash = (Get-BoxBytesHash $bytes) })
+        }
+      }
+      continue
+    }
+    # A current, complete draft: publishing waits for the owner's approval.
+    # Waiting for the owner is not drift, so verify leaves it out.
+    if ($Verify) { continue }
+    $changes += New-BoxChange ([string]$d.approve.action) ([string]$d.approve.target) ([string]$d.approve.detail)
+    if ($Apply) {
+      $a = $d.approval
+      if (-not $a) { throw "$id v$ver is published only once the owner approves '$($d.approve.target): $($d.approve.detail)' (box plan --proposal, box approve)" }
+      $av = $vals + @{ PolicyStatus = 'Approved'; ApprovedBy = [string]$a.by; ApprovedOn = [string]$a.on; ReviewDue = [string]$a.review_due }
+      Save-PolicyFile $sc $folder ([string]$d.file) ([Convert]::FromBase64String([string]$a.content)) ($av + @{ BoxHash = [string]$a.hash })
+      $bytes = Get-PolicyPdf $In $site $lib ([string]$d.file)
+      Save-PolicyFile $sc $folder ([string]$d.pdf) $bytes ($av + @{ BoxHash = (Get-BoxBytesHash $bytes) })
+      Add-PolicyEvent $In $id 'approve' "v$ver Approved"
+    }
+  }
+  return $changes
+}
+
+function Get-PolicyEvidence($In) {
+  $p = $In.policies
+  $site = Get-PoliciesSite $In
+  $sc = Connect-Site (Get-SiteUrl $In $site.url)
+  $web = Get-PnPWeb -Connection $sc
+  $libUrl = "$(([string]$web.ServerRelativeUrl).TrimEnd('/'))/$(Get-LibUrl ([string]$p.library))"
+  $n = @{ Approved = 0; Draft = 0; conflict = 0; missing = 0 }
+  foreach ($d in @($p.documents | Where-Object { $_ })) {
+    $f = Get-PolicyFile $sc $libUrl ([string]$d.file)
+    if ($null -eq $f) { $n.missing++ } elseif ($f.Conflict) { $n.conflict++ } elseif ($f.Status -eq 'Approved') { $n.Approved++ } else { $n.Draft++ }
+  }
+  return New-Evidence 'policies' "$($site.name)/$($p.library): $($n.Approved) approved, $($n.Draft) draft, $($n.conflict) conflict(s), $($n.missing) not saved"
+}
+
 function Result-Changes($c) { return @{ changes = @($c | Where-Object { $null -ne $_ }) } }
 function New-Evidence([string] $Kind, [string] $Summary) { return @{ items = @(@{ kind = $Kind; ref = "tenant:$Kind"; summary = $Summary }) } }
 $ok = { param($In) @{ ok = $true } }
@@ -634,6 +847,13 @@ $script:Steps = [ordered]@{
     apply = { param($In) Result-Changes (Get-StoreChanges $In -Apply) }
     verify = { param($In) $c = @(Get-StoreChanges $In | Where-Object { $_ }); @{ ok = ($c.Count -eq 0); drift = $c } }
     evidence = { param($In) New-Evidence 'configuration-store' 'declared state verified' }
+  }
+  'sharepoint.policies' = @{
+    test = { param($In) if ($In.policies_error) { @{ ok = $false; reason = "policy documents not rendered: $($In.policies_error)" } } else { @{ ok = $true } } }
+    plan = { param($In) Result-Changes (Get-PolicyChanges $In) }
+    apply = { param($In) Result-Changes (Get-PolicyChanges $In -Apply) }
+    verify = { param($In) $c = @(Get-PolicyChanges $In -Verify | Where-Object { $_ }); @{ ok = ($c.Count -eq 0); drift = $c } }
+    evidence = { param($In) Get-PolicyEvidence $In }
   }
   'policy.sharepoint' = @{
     test = $ok

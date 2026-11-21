@@ -1,0 +1,47 @@
+# DRAFT jurisdiction rules (SPEC §19.1). Not reviewed by counsel; not legal
+# advice. Rules only: no company values. Confirm every rule with counsel
+# before relying on it.
+#
+# United Arab Emirates. Financial free zones have their own data protection
+# laws: DIFC and ADGM entries apply only to companies established there.
+code: ae
+name: United Arab Emirates
+extends: null
+status: DRAFT
+reviewed_on: null
+sources:
+  - Federal Decree-Law No. 45 of 2021 on the Protection of Personal Data (PDPL); UAE Data Office
+  - DIFC Data Protection Law No. 5 of 2020; DIFC Commissioner of Data Protection
+  - ADGM Data Protection Regulations 2021; ADGM Office of Data Protection
+  - Federal Decree-Law No. 8 of 2017 on Value Added Tax and its executive regulation; Federal Tax Authority
+  - Federal Decree-Law No. 47 of 2022 on Corporate Tax
+correspondence:
+  required: [legal_name]
+  conditional:
+    tax_number: the document is a tax invoice (Tax Registration Number, TRN)
+  notes: Use the name as on the trade licence. Check with counsel whether the emirate or free zone requires the licence number or other details on letterhead and emails.
+privacy:
+  regime: Federal PDPL (onshore); DIFC Data Protection Law or ADGM Data Protection Regulations in those free zones
+  regulator: UAE Data Office; DIFC Commissioner of Data Protection; ADGM Office of Data Protection
+  representative_required_if_outside: false
+  notes: Parts of the federal PDPL depend on executive regulations; check with counsel which obligations are in force.
+notices: [PS-PRIV]
+retention_hints:
+  vat_records: "5y (VAT law; longer for real estate)"
+  corporate_tax_records: "7y after the end of the tax period (Corporate Tax law)"
+incident_notifications:
+  - regime: Federal PDPL (Decree-Law 45 of 2021)
+    what: Breach or infringement of personal data that would prejudice the privacy, confidentiality and security of data subjects
+    to: UAE Data Office; affected data subjects
+    deadline: immediately upon becoming aware, within the timeframes set by the executive regulations; check with counsel
+    applies_when: Controller processing personal data under the federal PDPL (outside DIFC and ADGM)
+  - regime: DIFC Data Protection Law 2020
+    what: Personal data breach that compromises data subjects' confidentiality, security or privacy
+    to: DIFC Commissioner of Data Protection; affected data subjects where high risk
+    deadline: as soon as practicable in the circumstances (check with counsel)
+    applies_when: Controller established in the DIFC
+  - regime: ADGM Data Protection Regulations 2021
+    what: Personal data breach, unless unlikely to result in a risk to data subjects
+    to: ADGM Commissioner of Data Protection; affected data subjects where high risk
+    deadline: without undue delay and, where feasible, not later than 72 hours after becoming aware
+    applies_when: Controller established in ADGM

@@ -1,0 +1,41 @@
+# DRAFT jurisdiction rules (SPEC §19.1). Not reviewed by counsel; not legal
+# advice. Rules only: no company values. Confirm every rule with counsel
+# before relying on it.
+#
+# Germany. Extends eu: GDPR, NIS2, DORA and Cyber Resilience Act duties are
+# in eu.yaml; this file adds the national rules.
+code: de
+name: Germany
+extends: eu
+status: DRAFT
+reviewed_on: null
+sources:
+  - GmbH-Gesetz § 35a (business letters of a GmbH); Aktiengesetz § 80 (AG); Handelsgesetzbuch § 37a (registered traders) and § 125a (partnerships)
+  - Digitale-Dienste-Gesetz § 5 (Impressum; replaced Telemediengesetz § 5 in 2024)
+  - Bundesdatenschutzgesetz (BDSG); data protection authorities of the Länder; Federal Commissioner for Data Protection (BfDI)
+  - BSI-Gesetz as amended by the NIS2 Implementation Act (NIS2UmsuCG); Federal Office for Information Security (BSI)
+  - Abgabenordnung § 147 and Handelsgesetzbuch § 257 (retention)
+correspondence:
+  required: [legal_name, legal_form, registered_office, register_name, registration_number, managing_directors]
+  conditional:
+    supervisory_board_chair: the company has a supervisory board with a chair
+    share_capital: share capital is mentioned at all (state outstanding contributions)
+    liquidation_status: the company is being wound up
+  website: [legal_name, legal_form, postal_address, managing_directors, contact_email, register_name, registration_number, vat_number]
+  notes: "Business letters to a named recipient, emails included, of a GmbH state the legal form, the seat, the register court and registration number, every managing director with surname and at least one full first name and, if there is a supervisory board with a chair, the chair (GmbHG § 35a; AG: AktG § 80 with the management board). Share capital, if mentioned, is stated with any outstanding contributions. The Impressum on a website names the provider, address, legal form, authorised representatives, fast electronic contact (email), register and number, and VAT identification number (DDG § 5)."
+privacy:
+  regime: GDPR and Bundesdatenschutzgesetz (BDSG); TDDDG for cookies
+  regulator: data protection authority of the Land where the company is established; BfDI for telecommunications and postal services
+  representative_required_if_outside: true
+  notes: A data protection officer is required where, as a rule, at least 20 people are constantly involved in automated processing of personal data, or for high-risk processing (BDSG § 38).
+notices: [PS-PRIV, PS-COOKIES, PS-IMPRINT]
+retention_hints:
+  accounting_records: "10y for books, inventories, annual accounts and management reports (AO § 147, HGB § 257)"
+  accounting_vouchers: "8y for accounting vouchers from 2025 (previously 10y; Bürokratieentlastungsgesetz IV); check with counsel"
+  business_correspondence: "6y for commercial and business letters received and sent (AO § 147, HGB § 257)"
+incident_notifications:
+  - regime: BSI-Gesetz (NIS2 implementation)
+    what: Significant security incident
+    to: Federal Office for Information Security (BSI) reporting portal
+    deadline: "early warning within 24 hours of becoming aware; notification within 72 hours of becoming aware; final report within one month after the notification (check with counsel for registration and scope)"
+    applies_when: Particularly important or important entity under the BSI-Gesetz (NIS2), or operator of critical facilities

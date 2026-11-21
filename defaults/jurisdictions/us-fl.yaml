@@ -1,0 +1,38 @@
+# DRAFT jurisdiction rules (SPEC §19.1). Not reviewed by counsel; not legal
+# advice. Rules only: no company values. Confirm every rule with counsel
+# before relying on it.
+code: us-fl
+name: United States, Florida
+extends: us
+status: DRAFT
+reviewed_on: null
+sources:
+  - Florida Information Protection Act (Florida Statutes 501.171)
+  - Florida Digital Bill of Rights (Florida Statutes Chapter 501, Part V)
+  - Florida Department of Legal Affairs (Attorney General)
+correspondence:
+  required: []
+  notes: No state rule on company details in business letters or emails.
+privacy:
+  regime: Florida Digital Bill of Rights (very large controllers only); Florida Information Protection Act data security duties
+  regulator: Florida Department of Legal Affairs
+  representative_required_if_outside: false
+  notes: The Digital Bill of Rights applies only to controllers above a very high revenue threshold with specified business lines; check with counsel.
+notices: [PS-PRIV]
+retention_hints: {}
+incident_notifications:
+  - regime: Florida Information Protection Act (501.171)
+    what: Breach of security involving personal information of Florida residents
+    to: Affected individuals
+    deadline: as expeditiously as practicable and without unreasonable delay, and no later than 30 days after determining a breach occurred or having reason to believe one occurred
+    applies_when: Covered entity holding personal information of Florida residents
+  - regime: Florida Information Protection Act (501.171)
+    what: Breach affecting 500 or more individuals in Florida
+    to: Florida Department of Legal Affairs
+    deadline: as expeditiously as practicable and no later than 30 days after determining the breach occurred
+    applies_when: 500 or more Florida residents are affected
+  - regime: Florida Information Protection Act (501.171)
+    what: Breach requiring notice to more than 1,000 individuals at one time
+    to: Nationwide consumer reporting agencies
+    deadline: without unreasonable delay
+    applies_when: More than 1,000 individuals are notified

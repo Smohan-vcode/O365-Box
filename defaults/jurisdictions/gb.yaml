@@ -1,0 +1,59 @@
+# DRAFT jurisdiction rules (SPEC §19.1). Not reviewed by counsel; not legal
+# advice. Rules only: no company values. Confirm every rule with counsel
+# before relying on it.
+code: gb
+name: United Kingdom
+extends: null
+status: DRAFT
+reviewed_on: null
+sources:
+  - Companies Act 2006 (Part 5, trading disclosures)
+  - Company, Limited Liability Partnership and Business (Names and Trading Disclosures) Regulations 2015
+  - UK GDPR and Data Protection Act 2018
+  - Privacy and Electronic Communications Regulations 2003 (PECR)
+  - Network and Information Systems Regulations 2018
+  - Information Commissioner's Office (ICO)
+  - Companies Act 2006 s. 388 (accounting records); HMRC record keeping
+correspondence:
+  required: [legal_name, place_of_registration, registration_number, registered_office]
+  conditional:
+    share_capital: share capital is mentioned at all (state paid-up capital)
+    directors: any director is named other than in the text or as signatory (name all directors)
+  website: [legal_name, place_of_registration, registration_number, registered_office]
+  notes: Business letters, order forms and websites, in paper or electronic form (emails included), show the registered name, the part of the UK where the company is registered (England and Wales, Scotland or Northern Ireland), the registered number and the registered office address. Share capital, if mentioned, must be paid-up capital. Directors' names, if any are given other than in the text or as signatory, must all be given. VAT invoices carry the VAT number.
+privacy:
+  regime: UK GDPR, Data Protection Act 2018 and PECR
+  regulator: Information Commissioner's Office
+  representative_required_if_outside: true
+  notes: A controller or processor outside the UK that offers goods or services to, or monitors, people in the UK appoints a UK representative (UK GDPR Art. 27). Most controllers pay the ICO data protection fee.
+notices: [PS-PRIV, PS-COOKIES]
+retention_hints:
+  tax: "6y (HMRC, company records)"
+  accounting_records: "3y for a private company, 6y for a public company (Companies Act 2006 s. 388)"
+  payroll: "3y after the end of the tax year they relate to (HMRC)"
+incident_notifications:
+  - regime: UK GDPR Art. 33
+    what: Personal data breach likely to result in a risk to people's rights and freedoms
+    to: Information Commissioner's Office
+    deadline: without undue delay and, where feasible, not later than 72 hours after becoming aware
+    applies_when: Controller of personal data subject to UK GDPR
+  - regime: UK GDPR Art. 34
+    what: Personal data breach likely to result in a high risk to people's rights and freedoms
+    to: Affected data subjects
+    deadline: without undue delay
+    applies_when: Controller of personal data subject to UK GDPR
+  - regime: UK GDPR Art. 33(2)
+    what: Personal data breach at a processor
+    to: The controller
+    deadline: without undue delay after becoming aware
+    applies_when: The company processes personal data on behalf of a controller
+  - regime: NIS Regulations 2018
+    what: Incident with a significant impact on the continuity of an essential service, or a substantial impact on a digital service
+    to: The competent authority for the sector (the ICO for relevant digital service providers)
+    deadline: without undue delay and no later than 72 hours after becoming aware
+    applies_when: Operator of essential services or relevant digital service provider
+  - regime: PECR regulation 5A
+    what: Personal data breach at a public electronic communications service provider
+    to: Information Commissioner's Office
+    deadline: within 24 hours of detection (initial notification); full details within 3 days
+    applies_when: Provider of a public electronic communications service

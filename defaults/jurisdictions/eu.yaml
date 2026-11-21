@@ -1,0 +1,67 @@
+# DRAFT jurisdiction rules (SPEC §19.1). Not reviewed by counsel; not legal
+# advice. Rules only: no company values. Confirm every rule with counsel
+# before relying on it.
+#
+# European Union and EEA, common rules. Each member state file extends this
+# one and adds only its national rules; EU-wide duties are not repeated
+# there.
+code: eu
+name: European Union (common rules)
+extends: null
+status: DRAFT
+reviewed_on: null
+sources:
+  - General Data Protection Regulation (EU) 2016/679 (GDPR); national supervisory authorities; European Data Protection Board
+  - ePrivacy Directive 2002/58/EC (cookies and electronic marketing)
+  - Directive (EU) 2017/1132 relating to certain aspects of company law (Art. 26, letters and order forms)
+  - E-Commerce Directive 2000/31/EC (Art. 5, information to be provided)
+  - VAT Directive 2006/112/EC (Art. 226, invoice details)
+  - NIS2 Directive (EU) 2022/2555 (Art. 23, reporting obligations), as transposed by each member state
+  - Digital Operational Resilience Act, Regulation (EU) 2022/2554 (DORA), and its technical standards
+  - Cyber Resilience Act, Regulation (EU) 2024/2847 (Art. 14, reporting obligations)
+correspondence:
+  required: [legal_name, legal_form, registered_office, register_name, registration_number]
+  conditional:
+    liquidation_status: the company is being wound up
+    share_capital: capital is mentioned at all (state subscribed and paid-up capital)
+  website: [legal_name, postal_address, contact_email, register_name, registration_number, vat_number]
+  notes: Letters and order forms, in paper or any other medium, and the company's website state the register in which the file is kept and the registration number, the company's name, legal form and registered office, and, where applicable, that it is being wound up; capital, if mentioned, is the subscribed and paid-up capital (Directive 2017/1132 Art. 26). Member state files add national details.
+privacy:
+  regime: GDPR and national ePrivacy rules
+  regulator: the supervisory authority of the member state of the main establishment (lead authority); each national authority for local matters
+  representative_required_if_outside: true
+  notes: A controller or processor not established in the EU that offers goods or services to, or monitors, people in the EU designates a representative in a member state where those people are (GDPR Art. 27). A data protection officer is required for core activities of large-scale monitoring or special-category data (Art. 37); national law may add more.
+notices: [PS-PRIV, PS-COOKIES]
+retention_hints:
+  invoices: "member state law sets the period (VAT Directive Art. 247); see the member state file"
+incident_notifications:
+  - regime: GDPR Art. 33
+    what: Personal data breach, unless unlikely to result in a risk to people's rights and freedoms
+    to: Competent supervisory authority (lead authority where there is a main establishment)
+    deadline: without undue delay and, where feasible, not later than 72 hours after becoming aware
+    applies_when: Controller of personal data subject to GDPR
+  - regime: GDPR Art. 34
+    what: Personal data breach likely to result in a high risk to people's rights and freedoms
+    to: Affected data subjects
+    deadline: without undue delay
+    applies_when: Controller of personal data subject to GDPR
+  - regime: GDPR Art. 33(2)
+    what: Personal data breach at a processor
+    to: The controller
+    deadline: without undue delay after becoming aware
+    applies_when: The company processes personal data on behalf of a controller
+  - regime: NIS2 Art. 23
+    what: Significant incident (severe operational disruption or financial loss, or considerable damage to others)
+    to: National CSIRT or competent authority; recipients of the service where they are likely to be affected
+    deadline: "early warning within 24 hours of becoming aware; incident notification within 72 hours of becoming aware; final report within one month after the incident notification (progress report if the incident is ongoing); recipients without undue delay"
+    applies_when: NIS2 essential or important entity under the member state's transposing law
+  - regime: DORA Art. 19
+    what: Major ICT-related incident
+    to: Competent financial supervisory authority
+    deadline: "initial notification within 4 hours of classifying the incident as major and no later than 24 hours after becoming aware; intermediate report within 72 hours of the initial notification; final report within one month of the latest intermediate report (check with counsel)"
+    applies_when: DORA financial entity (bank, investment firm, insurer, payment or e-money institution, crypto-asset service provider and others)
+  - regime: Cyber Resilience Act Art. 14
+    what: Actively exploited vulnerability or severe incident affecting a product with digital elements
+    to: CSIRT coordinator, through the ENISA single reporting platform; users of the product
+    deadline: "early warning within 24 hours of becoming aware; notification within 72 hours; final report within 14 days after a corrective measure is available (vulnerability) or within one month (severe incident); applies from 11 September 2026"
+    applies_when: Manufacturer placing products with digital elements on the EU market

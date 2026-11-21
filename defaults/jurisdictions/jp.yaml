@@ -1,0 +1,43 @@
+# DRAFT jurisdiction rules (SPEC §19.1). Not reviewed by counsel; not legal
+# advice. Rules only: no company values. Confirm every rule with counsel
+# before relying on it.
+code: jp
+name: Japan
+extends: null
+status: DRAFT
+reviewed_on: null
+sources:
+  - Act on the Protection of Personal Information (APPI) and its Enforcement Rules; Personal Information Protection Commission (PPC)
+  - Act on Specified Commercial Transactions (seller information for distance selling)
+  - Act on Regulation of Transmission of Specified Electronic Mail
+  - Companies Act, article 432 (accounting books); Corporation Tax Act (record keeping)
+correspondence:
+  required: []
+  commercial_email: [legal_name, postal_address, contact_email, unsubscribe]
+  website: [legal_name, postal_address, telephone, representative_name]
+  notes: No statutory list of company details for business letters. Distance-selling websites display the seller's name, address, telephone number and the name of a representative or responsible person (Act on Specified Commercial Transactions). Marketing email needs prior opt-in consent and shows the sender's name, address and opt-out contact.
+privacy:
+  regime: Act on the Protection of Personal Information (APPI)
+  regulator: Personal Information Protection Commission (PPC)
+  representative_required_if_outside: false
+  notes: Applies to foreign businesses that handle personal information of people in Japan in connection with supplying goods or services to them.
+notices: [PS-PRIV, PS-COMMERCE-DISCLOSURE]
+retention_hints:
+  tax: "7y (10y where losses are carried forward) under the Corporation Tax Act"
+  accounting_books: "10y from closing the books (Companies Act art. 432)"
+incident_notifications:
+  - regime: APPI article 26 (preliminary report)
+    what: Leak, loss or damage of personal data involving sensitive data, risk of financial loss, a wrongful purpose, or more than 1,000 people
+    to: Personal Information Protection Commission (or the delegated ministry)
+    deadline: promptly after becoming aware (PPC guidelines say about 3 to 5 days)
+    applies_when: Business handling personal information subject to the APPI
+  - regime: APPI article 26 (final report)
+    what: Same reportable incidents as the preliminary report
+    to: Personal Information Protection Commission (or the delegated ministry)
+    deadline: within 30 days of becoming aware; within 60 days where the incident involves a wrongful purpose (for example unauthorised access)
+    applies_when: Business handling personal information subject to the APPI
+  - regime: APPI article 26(2)
+    what: Same reportable incidents
+    to: Affected individuals
+    deadline: promptly, according to the circumstances
+    applies_when: Business handling personal information subject to the APPI

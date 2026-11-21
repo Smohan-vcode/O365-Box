@@ -1,0 +1,29 @@
+# DRAFT jurisdiction rules (SPEC §19.1). Not reviewed by counsel; not legal
+# advice. Rules only: no company values. Confirm every rule with counsel
+# before relying on it.
+code: us-de
+name: United States, Delaware
+extends: us
+status: DRAFT
+reviewed_on: null
+sources:
+  - Delaware General Corporation Law (Title 8)
+  - Delaware Personal Data Privacy Act (Title 6, Chapter 12D)
+  - Delaware breach notification law (Title 6, Chapter 12B)
+  - Delaware Department of Justice
+correspondence:
+  required: []
+  notes: Delaware law does not list company details for business letters or emails. Use the exact corporate name including its designator (Inc., LLC) on contracts.
+privacy:
+  regime: Delaware Personal Data Privacy Act
+  regulator: Delaware Department of Justice
+  representative_required_if_outside: false
+  notes: Applies to controllers that meet its volume thresholds for Delaware residents; check with counsel.
+notices: [PS-PRIV]
+retention_hints: {}
+incident_notifications:
+  - regime: Delaware breach notification law (6 Del. C. 12B-102)
+    what: Breach of security of computerised personal information of Delaware residents
+    to: Affected Delaware residents; Attorney General when more than 500 residents are notified
+    deadline: without unreasonable delay and no later than 60 days after determining the breach
+    applies_when: Processes personal information of Delaware residents

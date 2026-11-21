@@ -1,0 +1,35 @@
+# DRAFT jurisdiction rules (SPEC §19.1). Not reviewed by counsel; not legal
+# advice. Rules only: no company values. Confirm every rule with counsel
+# before relying on it.
+code: us-ca
+name: United States, California
+extends: us
+status: DRAFT
+reviewed_on: null
+sources:
+  - California Consumer Privacy Act as amended by the California Privacy Rights Act (Civil Code 1798.100 et seq.)
+  - California Privacy Protection Agency; California Attorney General
+  - California breach notification law (Civil Code 1798.82)
+  - California Online Privacy Protection Act (Business and Professions Code 22575)
+correspondence:
+  required: []
+  notes: No state rule on company details in business letters or emails.
+privacy:
+  regime: CCPA as amended by the CPRA
+  regulator: California Privacy Protection Agency and the Attorney General
+  representative_required_if_outside: false
+  notes: Applies to businesses that meet a CCPA threshold (annual revenue, number of consumers, or share of revenue from selling or sharing personal information), wherever they are established. CalOPPA requires a privacy policy on any commercial website that collects personal information from California residents.
+notices: [PS-PRIV, PS-PRIV-CA-COLLECTION, PS-DO-NOT-SELL-SHARE]
+retention_hints:
+  privacy_request: "24 months for records of consumer requests (CCPA regulations)"
+incident_notifications:
+  - regime: California breach notification law (Civil Code 1798.82)
+    what: Breach of security of unencrypted personal information of California residents
+    to: Affected California residents
+    deadline: "in the most expedient time possible and without unreasonable delay; from 1 January 2026, within 30 calendar days of discovery (check with counsel)"
+    applies_when: Owns or licenses computerised personal information of California residents
+  - regime: California breach notification law (Civil Code 1798.82)
+    what: Breach requiring notice to more than 500 California residents
+    to: California Attorney General (sample copy of the notice)
+    deadline: "with or after the notice to residents; from 1 January 2026, within 15 calendar days of notifying residents (check with counsel)"
+    applies_when: More than 500 California residents are notified of a single breach

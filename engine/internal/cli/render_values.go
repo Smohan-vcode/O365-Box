@@ -9,7 +9,6 @@ package cli
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 	"slices"
 	"sort"
@@ -18,6 +17,7 @@ import (
 	"github.com/Smohan-vcode/O365-Box/engine/internal/choices"
 	"github.com/Smohan-vcode/O365-Box/engine/internal/config"
 	"github.com/Smohan-vcode/O365-Box/engine/internal/docs"
+	"github.com/Smohan-vcode/O365-Box/engine/internal/jurisdictions"
 	"github.com/Smohan-vcode/O365-Box/engine/internal/policy"
 )
 
@@ -232,33 +232,11 @@ func approvedAI(root string, cfg *config.Config, sel policy.Selection) (string, 
 	return strings.Join(lines, "\n"), "", nil
 }
 
-// jurisdictionRules is the part of defaults/jurisdictions/<code>.yaml the
-// policies read (SPEC §19.1).
-type jurisdictionRules struct {
-	Name                  string `yaml:"name"`
-	Status                string `yaml:"status"`
-	IncidentNotifications []struct {
-		Regime   string `yaml:"regime"`
-		What     string `yaml:"what"`
-		To       string `yaml:"to"`
-		Deadline string `yaml:"deadline"`
-	} `yaml:"incident_notifications"`
-}
-
-func loadJurisdiction(root, code string) (*jurisdictionRules, error) {
-	p := filepath.Join(root, "defaults", "jurisdictions", code+".yaml")
-	if _, err := os.Stat(p); err != nil {
-		return nil, err
-	}
-	var j jurisdictionRules
-	return &j, readYAMLFile(p, &j)
-}
-
 // jurisdictionValues fills jurisdictions.* from the rules files the
 // configuration selects; a missing file leaves the value to be supplied.
 func jurisdictionValues(root string, cfg *config.Config, values, pending map[string]string) {
-	name := func(code string) (string, *jurisdictionRules) {
-		j, err := loadJurisdiction(root, code)
+	name := func(code string) (string, *jurisdictions.Rules) {
+		j, err := jurisdictions.Load(root, code)
 		if err != nil || strings.TrimSpace(j.Name) == "" {
 			return "", nil
 		}
@@ -295,7 +273,7 @@ func jurisdictionValues(root string, cfg *config.Config, values, pending map[str
 			ops = append(ops, n)
 		}
 		for _, x := range j.IncidentNotifications {
-			rows = append(rows, fmt.Sprintf("| %s | %s | %s | %s | %s |", j.Name, x.Regime, x.What, x.To, x.Deadline))
+			rows = append(rows, fmt.Sprintf("| %s | %s | %s | %s | %s | %s |", j.Name, x.Regime, x.What, x.To, x.Deadline, x.AppliesWhen))
 		}
 	}
 	files := func() string {
@@ -313,7 +291,7 @@ func jurisdictionValues(root string, cfg *config.Config, values, pending map[str
 		pending["jurisdictions.operating"] = "where the company has customers, staff or data (jurisdictions.operating in the configuration)"
 	}
 	if len(missing) == 0 && len(rows) > 0 {
-		values["jurisdictions.notification_deadlines"] = "| Jurisdiction | Regime | What | To whom | Deadline |\n| --- | --- | --- | --- | --- |\n" + strings.Join(rows, "\n")
+		values["jurisdictions.notification_deadlines"] = "| Jurisdiction | Regime | What | To whom | Deadline | Applies when |\n| --- | --- | --- | --- | --- | --- |\n" + strings.Join(rows, "\n")
 	} else {
 		what := "incident notification entries in the jurisdiction rules files"
 		if len(missing) > 0 {

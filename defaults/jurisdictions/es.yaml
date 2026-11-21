@@ -1,0 +1,35 @@
+# DRAFT jurisdiction rules (SPEC §19.1). Not reviewed by counsel; not legal
+# advice. Rules only: no company values. Confirm every rule with counsel
+# before relying on it.
+#
+# Spain. Extends eu: GDPR, NIS2, DORA and Cyber Resilience Act duties are in
+# eu.yaml; this file adds the national rules.
+code: es
+name: Spain
+extends: eu
+status: DRAFT
+reviewed_on: null
+sources:
+  - Reglamento del Registro Mercantil, article 24 (registration data on documents and correspondence)
+  - Ley 34/2002 de servicios de la sociedad de la información (LSSI), article 10 (website information)
+  - Ley Orgánica 3/2018 de Protección de Datos (LOPDGDD) and GDPR; Agencia Española de Protección de Datos (AEPD)
+  - Real Decreto-ley 12/2018 (NIS1) and its NIS2 successor; Instituto Nacional de Ciberseguridad (INCIBE-CERT), CCN-CERT
+  - Código de Comercio, article 30 (records)
+correspondence:
+  required: [legal_name, registered_office, register_name, registration_number, tax_number]
+  website: [legal_name, postal_address, contact_email, register_name, registration_number, tax_number]
+  notes: Documents, correspondence, order notes and invoices state the registered office and the Mercantile Register entry (volume, sheet, page). Websites give the name, address, email, register entry and tax identification number (NIF) (LSSI art. 10). Check with counsel for the exact form.
+privacy:
+  regime: GDPR and LOPDGDD
+  regulator: Agencia Española de Protección de Datos (AEPD)
+  representative_required_if_outside: true
+notices: [PS-PRIV, PS-COOKIES, PS-IMPRINT]
+retention_hints:
+  accounting_records: "6y for books, correspondence, documents and vouchers (Código de Comercio art. 30)"
+  tax: "4y limitation period; check with counsel for longer periods"
+incident_notifications:
+  - regime: NIS2 (Spanish transposition)
+    what: Significant incident
+    to: Reference CSIRT (INCIBE-CERT or CCN-CERT) or the competent authority
+    deadline: "24 hours early warning, 72 hours notification and one month final report under NIS2 Art. 23; check with counsel whether the Spanish transposing law is in force (RD-ley 12/2018 applies until then)"
+    applies_when: Essential or important entity under the Spanish NIS2 law

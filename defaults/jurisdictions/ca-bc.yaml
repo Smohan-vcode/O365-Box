@@ -1,0 +1,28 @@
+# DRAFT jurisdiction rules (SPEC §19.1). Not reviewed by counsel; not legal
+# advice. Rules only: no company values. Confirm every rule with counsel
+# before relying on it.
+code: ca-bc
+name: Canada, British Columbia
+extends: ca
+status: DRAFT
+reviewed_on: null
+sources:
+  - British Columbia Business Corporations Act
+  - British Columbia Personal Information Protection Act (PIPA)
+  - Office of the Information and Privacy Commissioner for British Columbia
+correspondence:
+  required: [legal_name]
+  notes: Use the exact company name on contracts, invoices and orders; check with counsel for any further display duty under the Business Corporations Act.
+privacy:
+  regime: British Columbia PIPA for activity within the province (PIPEDA for activity across borders)
+  regulator: Office of the Information and Privacy Commissioner for British Columbia
+  representative_required_if_outside: false
+notices: [PS-PRIV]
+retention_hints:
+  decision_records: "at least 1y after using personal information to make a decision that directly affects the individual (PIPA s. 35)"
+incident_notifications:
+  - regime: British Columbia PIPA
+    what: Privacy breach involving personal information
+    to: Office of the Information and Privacy Commissioner (voluntary); affected individuals where harm is likely
+    deadline: no mandatory private-sector breach notification under PIPA at the time of drafting; check with counsel (PIPEDA applies to interprovincial activity)
+    applies_when: Private-sector organisation subject to British Columbia PIPA

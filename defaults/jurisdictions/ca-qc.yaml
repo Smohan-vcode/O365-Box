@@ -1,0 +1,28 @@
+# DRAFT jurisdiction rules (SPEC §19.1). Not reviewed by counsel; not legal
+# advice. Rules only: no company values. Confirm every rule with counsel
+# before relying on it.
+code: ca-qc
+name: Canada, Quebec
+extends: ca
+status: DRAFT
+reviewed_on: null
+sources:
+  - Act respecting the protection of personal information in the private sector, as amended by Law 25 (Bill 64)
+  - Commission d'accès à l'information du Québec
+  - Charter of the French language, as amended by Bill 96
+correspondence:
+  required: [legal_name]
+  notes: Commercial documents (catalogues, invoices, order forms, contracts of adhesion) and public signs must be in French; another language may be added. A company name used in Quebec must have a French version. Check with counsel for the exact wording on letterhead and email.
+privacy:
+  regime: Quebec private sector privacy act (Law 25)
+  regulator: Commission d'accès à l'information du Québec
+  representative_required_if_outside: false
+  notes: The person exercising the highest authority is responsible for personal information unless the role is delegated; the title and contact details of the person in charge are published on the website. A privacy impact assessment is needed before communicating personal information outside Quebec.
+notices: [PS-PRIV, PS-PRIV-FR]
+retention_hints: {}
+incident_notifications:
+  - regime: Quebec private sector privacy act (Law 25)
+    what: Confidentiality incident involving personal information that presents a risk of serious injury
+    to: Commission d'accès à l'information; affected persons; anyone who can reduce the risk
+    deadline: promptly; every incident, serious or not, is entered in the register of confidentiality incidents
+    applies_when: Carries on an enterprise in Quebec and holds personal information

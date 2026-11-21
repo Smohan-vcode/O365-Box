@@ -1,0 +1,27 @@
+# DRAFT jurisdiction rules (SPEC §19.1). Not reviewed by counsel; not legal
+# advice. Rules only: no company values. Confirm every rule with counsel
+# before relying on it.
+code: ca-on
+name: Canada, Ontario
+extends: ca
+status: DRAFT
+reviewed_on: null
+sources:
+  - Ontario Business Corporations Act (section 10)
+  - Personal Health Information Protection Act, 2004 (PHIPA)
+  - Information and Privacy Commissioner of Ontario
+correspondence:
+  required: [legal_name]
+  notes: An Ontario corporation sets out its name in legible characters on all contracts, invoices, negotiable instruments and orders for goods or services issued or made by it (OBCA s. 10).
+privacy:
+  regime: PIPEDA for private-sector commercial activity; PHIPA for health information custodians
+  regulator: Office of the Privacy Commissioner of Canada; Information and Privacy Commissioner of Ontario for PHIPA
+  representative_required_if_outside: false
+notices: [PS-PRIV]
+retention_hints: {}
+incident_notifications:
+  - regime: PHIPA
+    what: Personal health information stolen, lost, or used or disclosed without authority
+    to: Affected individuals; Information and Privacy Commissioner of Ontario in the circumstances the regulations prescribe
+    deadline: at the first reasonable opportunity; annual statistical report to the Commissioner (check with counsel)
+    applies_when: Health information custodian in Ontario

@@ -12,7 +12,16 @@ import (
 type PoolSpec struct {
 	Provider string   // path to the provider module
 	Modules  []string // Microsoft module to import (at most one, per S-05)
+	// ReadOnly starts the worker in read-only mode (box audit, SPEC §26):
+	// it runs only test, verify and evidence, and refuses every module
+	// cmdlet whose verb could change the tenant and every Graph call that
+	// is not a GET (BoxWorker.ps1).
+	ReadOnly bool
 }
+
+// ReadOnlyEnv is the environment variable that puts a worker in read-only
+// mode.
+const ReadOnlyEnv = "BOX_READ_ONLY=1"
 
 // Pool starts one worker per provider on first use, reuses it, and
 // restarts it after it exits. It implements run.Invoker.
@@ -101,8 +110,12 @@ func (p *Pool) worker(ctx context.Context, provider string) (*Worker, error) {
 	if !ok {
 		return nil, fmt.Errorf("no provider %q", provider)
 	}
+	var env []string
+	if spec.ReadOnly {
+		env = append(env, ReadOnlyEnv)
+	}
 	w, err := Start(ctx, Spec{Name: provider, Pwsh: p.Pwsh, Script: p.Script, Provider: spec.Provider,
-		Modules: spec.Modules, ModulePath: p.ModulePath,
+		Modules: spec.Modules, ModulePath: p.ModulePath, Env: env,
 		OnRaw: func(l string) {
 			if p.OnRaw != nil {
 				p.OnRaw(provider, l)

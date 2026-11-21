@@ -26,6 +26,17 @@ type Token struct {
 	Access    string
 	ExpiresAt time.Time
 	Claims    map[string]any
+	// Refresh is the refresh token, returned when the sign-in asked for
+	// offline_access. It stays in memory and is only ever sent back to the
+	// token endpoint (Redeem); never logged or written (R12).
+	Refresh string
+}
+
+// Drop clears the token's secrets.
+func (t *Token) Drop() {
+	if t != nil {
+		t.Access, t.Refresh = "", ""
+	}
 }
 
 // TenantID returns the token's tid claim.
@@ -119,8 +130,9 @@ func SignInDeviceCode(ctx context.Context, hc *http.Client, tenant, clientID str
 }
 
 type tokenResponse struct {
-	AccessToken string `json:"access_token"`
-	ExpiresIn   int    `json:"expires_in"`
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+	ExpiresIn    int    `json:"expires_in"`
 }
 
 func (t tokenResponse) token() (*Token, error) {
@@ -128,7 +140,37 @@ func (t tokenResponse) token() (*Token, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Token{Access: t.AccessToken, ExpiresAt: time.Now().Add(time.Duration(t.ExpiresIn) * time.Second), Claims: claims}, nil
+	return &Token{Access: t.AccessToken, Refresh: t.RefreshToken, ExpiresAt: time.Now().Add(time.Duration(t.ExpiresIn) * time.Second), Claims: claims}, nil
+}
+
+// Redeem exchanges the refresh token of a delegated sign-in for an access
+// token to another resource (scopes such as
+// "https://outlook.office365.com/.default"), for the same person and the
+// same public client. Entra refuses when that client has no consent or
+// pre-authorisation for the resource. The returned token carries the
+// rotated refresh token. Nothing is stored.
+func Redeem(ctx context.Context, hc *http.Client, tenant, clientID, refresh string, scopes []string) (*Token, error) {
+	if refresh == "" {
+		return nil, errors.New("the sign-in returned no refresh token (offline_access was not granted)")
+	}
+	if hc == nil {
+		hc = http.DefaultClient
+	}
+	var tr tokenResponse
+	err := postForm(ctx, hc, Authority+"/"+url.PathEscape(tenant)+"/oauth2/v2.0/token", url.Values{
+		"grant_type": {"refresh_token"}, "client_id": {clientID}, "refresh_token": {refresh}, "scope": {strings.Join(scopes, " ")},
+	}, &tr)
+	if err != nil {
+		return nil, err
+	}
+	t, err := tr.token()
+	if err != nil {
+		return nil, err
+	}
+	if t.Refresh == "" {
+		t.Refresh = refresh
+	}
+	return t, nil
 }
 
 // OAuthError is an error response from the token endpoints.

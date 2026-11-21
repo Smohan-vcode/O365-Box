@@ -23,6 +23,9 @@ const ScopesFile = "expected-state/audit-scopes.yaml"
 type Scopes struct {
 	Client    string   `yaml:"client"`
 	Delegated []string `yaml:"delegated"`
+	// Resources are the workloads read with their own delegated token
+	// (T16-06); see tokens.go.
+	Resources []Resource `yaml:"resources"`
 }
 
 // LoadScopes reads the scope file and refuses any scope that is not
@@ -39,6 +42,9 @@ func LoadScopes(path string) (*Scopes, error) {
 		return nil, fmt.Errorf("%s: %w", path, err)
 	}
 	if err := CheckScopes(s.Delegated); err != nil {
+		return nil, fmt.Errorf("%s: %w", path, err)
+	}
+	if err := CheckResources(s.Resources); err != nil {
 		return nil, fmt.Errorf("%s: %w", path, err)
 	}
 	return &s, nil
@@ -113,6 +119,7 @@ var readerRoles = map[string]string{
 type Session struct {
 	Tenant       string
 	Subject      string
+	Object       string   // the person's object id (oid)
 	Scopes       []string // granted (scp)
 	WriteScopes  []string // granted scopes that are not read-only
 	Roles        []string // directory role template ids (wids)
@@ -123,6 +130,7 @@ type Session struct {
 // NewSession reads the claims the audit relies on.
 func NewSession(tenant, subject string, scopes []string, claims map[string]any) Session {
 	s := Session{Tenant: tenant, Subject: subject, Scopes: scopes, WriteScopes: WriteScopes(scopes)}
+	s.Object, _ = claims["oid"].(string)
 	if w, ok := claims["wids"].([]any); ok {
 		for _, v := range w {
 			id, _ := v.(string)
@@ -150,6 +158,50 @@ func (s Session) ProvidersAllowed() (bool, string) {
 	}
 	return false, fmt.Sprintf("the sign-in token carries write scopes consented earlier for the client (%s) and the person holds a role that can change the tenant: sign in as Global Reader to read these settings",
 		strings.Join(s.WriteScopes, ", "))
+}
+
+// ResourcesAllowed reports whether the audit may ask for, and hand provider
+// workers, tokens for Exchange Online, Security & Compliance, SharePoint and
+// Teams. Their scopes (Exchange.Manage, AllSites.FullControl,
+// user_impersonation) do not limit them to reads, so the person's roles must:
+// every directory role the sign-in holds can only read, and it holds at
+// least one (an empty wids claim proves nothing).
+func (s Session) ResourcesAllowed() (bool, string) {
+	switch {
+	case s.WriterRole:
+		return false, "the person who signed in holds a role that can change the tenant (" + RoleNames(s.Roles) +
+			"); Exchange, Purview, SharePoint and Teams tokens are only requested for a reader-only account"
+	case len(s.Roles) == 0:
+		return false, "the sign-in token lists no directory role, so the audit cannot show the account only reads; sign in as Global Reader"
+	}
+	return true, ""
+}
+
+// SameReader checks that a token for another resource was issued to the
+// person of this session, in the same tenant, and holds no role that can
+// write. A device-code page can be completed by any account, so every token
+// is checked, not only the first.
+func (s Session) SameReader(claims map[string]any) error {
+	tid, _ := claims["tid"].(string)
+	oid, _ := claims["oid"].(string)
+	if tid == "" || !strings.EqualFold(tid, s.Tenant) {
+		return fmt.Errorf("the token is for tenant %q, not the audited tenant %s", tid, s.Tenant)
+	}
+	if s.Object == "" || !strings.EqualFold(oid, s.Object) {
+		other := NewSession(tid, "", nil, claims)
+		who := other.Object
+		for _, k := range []string{"upn", "preferred_username", "unique_name"} {
+			if v, _ := claims[k].(string); v != "" {
+				who = v
+				break
+			}
+		}
+		return fmt.Errorf("the token was issued to another account (%s), not the one that signed in first; sign in as the same reader", who)
+	}
+	if other := NewSession(tid, "", nil, claims); other.WriterRole {
+		return fmt.Errorf("the token holds a role that can change the tenant (%s)", RoleNames(other.Roles))
+	}
+	return nil
 }
 
 // roleNames are display names of common directory roles, for messages.

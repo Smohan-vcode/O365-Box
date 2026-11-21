@@ -1,9 +1,12 @@
 # Provider: teams. Meeting, external access, guest and app policies (T1-05,
-# T13-05, T14-09). Connects with MicrosoftTeams app-only: a Graph token and a
-# token for the Teams administration resource (engine/internal/cli/orchestrate.go).
+# T13-05, T14-09). Connects with MicrosoftTeams: a Graph token and a token for
+# the Teams administration resource, app-only from the pipeline app
+# (engine/internal/cli/orchestrate.go) or, for box audit, delegated as a
+# reader-only account (engine/internal/cli/audit.go, T16-06).
 Import-Module (Join-Path $PSScriptRoot '..' 'common' 'BoxProvider.psm1') -Force
 
 $script:Connected = $null
+$script:AuditSkipped = @()
 
 function Connect-Teams {
   $t = (Get-BoxAuth 'teams').access_token
@@ -50,6 +53,7 @@ function Resolve-TeamsPayload {
   param($Settings, [string] $Tier = 'core', $Config = $null)
   $out = [ordered]@{}
   $from = @{}
+  $placeholders = @{}
   $skipped = @()
   foreach ($s in @($Settings)) {
     $payload = $s.payload
@@ -61,19 +65,23 @@ function Resolve-TeamsPayload {
       if (-not $out.Contains($part.Name)) { $out[$part.Name] = [ordered]@{} }
       foreach ($q in Get-BoxProps $part.Value) {
         $v = $q.Value
+        $key = "$($part.Name) $($q.Name)"
         if ($v -is [string] -and $v -match '^\{config:([A-Za-z0-9_.]+)\}$') {
+          $placeholders[$key] = $Matches[1]
           $v = @(Get-BoxProp (Get-BoxProp $Config 'policy') $Matches[1] | Where-Object { $_ })
         }
-        $key = "$($part.Name) $($q.Name)"
         if ($out[$part.Name].Contains($q.Name) -and (ConvertTo-BoxComparable $out[$part.Name][$q.Name]) -ne (ConvertTo-BoxComparable $v)) {
           throw "$($s.id) and $($from[$key]) want different values for $key"
         }
         $out[$part.Name][$q.Name] = $v
-        $from[$key] = $s.id
+        # Every setting that wants the value, so a difference names each one.
+        $from[$key] = if ($from.ContainsKey($key) -and $from[$key] -notmatch "\b$($s.id)\b") { "$($from[$key]), $($s.id)" } else { [string]$s.id }
       }
     }
   }
-  return @{ cmdlets = $out; skipped = $skipped }
+  # from: "<cmdlet> <parameter>" -> setting id; placeholders: the same key ->
+  # the configuration value it was filled from.
+  return @{ cmdlets = $out; skipped = $skipped; from = $from; placeholders = $placeholders }
 }
 
 # Differences between an object read from Teams and the wanted parameters
@@ -111,10 +119,23 @@ function Get-TeamsPolicyChanges($In, [switch] $Apply) {
   if (-not $tier) { $tier = 'core' }
   $r = Resolve-TeamsPayload $enf $tier $In.config
   foreach ($k in $r.skipped) { Write-Warning "$k is written by another area's step; not here" }
+  # box audit (SPEC §26) reads a tenant the box did not build: a value the
+  # company's configuration supplies (an approved list) cannot be judged and
+  # is reported not read, never compared with an empty list.
+  $audit = ([string]$In.environment -eq 'audit')
+  $script:AuditSkipped = @()
   Connect-Teams
   $changes = @()
   foreach ($cmd in $r.cmdlets.Keys) {
     $want = $r.cmdlets[$cmd]
+    if ($audit) {
+      foreach ($k in @($want.Keys)) {
+        $key = "$cmd $k"
+        if (-not $r.placeholders.ContainsKey($key)) { continue }
+        foreach ($id in ($r.from[$key] -split ', ')) { $script:AuditSkipped += @{ id = $id; reason = "$key is the company's own list (configuration policy.$($r.placeholders[$key])), which an audit does not have; not compared" } }
+        $want.Remove($k)
+      }
+    }
     if ($want.Contains('AllowedDomainsAsAList') -and @($want['AllowedDomainsAsAList']).Count -eq 0) {
       # An empty allow list would block every organisation: wait for the list.
       Write-Warning "$cmd AllowedDomainsAsAList: no domains configured; not written"
@@ -126,7 +147,7 @@ function Get-TeamsPolicyChanges($In, [switch] $Apply) {
     $cur = & $get @gp
     $diff = @(Compare-TeamsValues $cur $want)
     if (-not $diff.Count) { continue }
-    foreach ($d in $diff) { $changes += New-BoxChange update "$cmd $($d.name)" "$($d.current) -> $($d.want)" }
+    foreach ($d in $diff) { $changes += New-BoxChange update "$cmd $($d.name)" "$($d.current) -> $($d.want) ($($r.from["$cmd $($d.name)"]))" }
     if ($Apply) {
       $sp = @{ ErrorAction = 'Stop' }
       if ($want.Contains('Identity')) { $sp.Identity = $want['Identity'] }
@@ -147,7 +168,7 @@ $script:Steps = [ordered]@{
     test = $ok
     plan = { param($In) Result-Changes (Get-TeamsPolicyChanges $In) }
     apply = { param($In) Result-Changes (Get-TeamsPolicyChanges $In -Apply) }
-    verify = { param($In) $c = @(Get-TeamsPolicyChanges $In | Where-Object { $_ }); @{ ok = ($c.Count -eq 0); drift = $c } }
+    verify = { param($In) $c = @(Get-TeamsPolicyChanges $In | Where-Object { $_ }); @{ ok = ($c.Count -eq 0); drift = $c; skipped = @($script:AuditSkipped) } }
     evidence = { param($In) New-Evidence 'policy-teams' "resolved teams settings verified: $((@($In.policy.settings | ForEach-Object { $_.id })) -join ', ')" }
   }
 }

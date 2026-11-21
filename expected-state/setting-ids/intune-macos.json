@@ -671,6 +671,14 @@
                       "@odata.type": "#microsoft.graph.deviceManagementConfigurationIntegerSettingValue",
                       "value": 900
                     }
+                  },
+                  {
+                    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance",
+                    "settingDefinitionId": "com.apple.screensaver_modulename",
+                    "simpleSettingValue": {
+                      "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue",
+                      "value": "Computer Name"
+                    }
                   }
                 ]
               }
@@ -691,6 +699,14 @@
                     "simpleSettingValue": {
                       "@odata.type": "#microsoft.graph.deviceManagementConfigurationIntegerSettingValue",
                       "value": 900
+                    }
+                  },
+                  {
+                    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance",
+                    "settingDefinitionId": "com.apple.screensaver.user_modulename",
+                    "simpleSettingValue": {
+                      "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue",
+                      "value": "Computer Name"
                     }
                   }
                 ]
@@ -718,7 +734,7 @@
       "resource": null,
       "note": "S-02 not done; Microsoft365DSC equivalent: IntuneSettingCatalogCustomPolicy (macOS)"
     },
-    "verified": "settings catalogue definition id GET /beta/deviceManagement/configurationSettings/{id} returned 200 on the test tenant (2026-11-21); option ids recorded from the definition",
+    "verified": "settings catalogue definition id GET /beta/deviceManagement/configurationSettings/{id} returned 200 on the test tenant (2026-11-21); option ids recorded from the definition T14-06 apply (2026-11-21): com.apple.screensaver_modulename and com.apple.screensaver.user_modulename are required dependents of their groups (definition dependedOnBy required: true); the built-in 'Computer Name' module is set.",
     "notes": "Idle time is in seconds: 900 core, 300 enhanced. com.apple.screensaver_idletime (system scope) does not exist (404); idle time is the user-scope definition com.apple.screensaver.user_idletime, so the policy carries user-channel settings. DDM passcode_maximuminactivityinminutes (0-15) is an alternative lock timer."
   },
   "MAC-013": {
@@ -902,36 +918,56 @@
               {
                 "children": [
                   {
-                    "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
-                    "settingDefinitionId": "softwareupdate_automaticactions_download",
-                    "choiceSettingValue": {
-                      "value": "softwareupdate_automaticactions_download_1",
-                      "children": []
-                    }
+                    "@odata.type": "#microsoft.graph.deviceManagementConfigurationGroupSettingCollectionInstance",
+                    "settingDefinitionId": "softwareupdate_automaticactions",
+                    "groupSettingCollectionValue": [
+                      {
+                        "children": [
+                          {
+                            "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+                            "settingDefinitionId": "softwareupdate_automaticactions_download",
+                            "choiceSettingValue": {
+                              "value": "softwareupdate_automaticactions_download_1",
+                              "children": []
+                            }
+                          },
+                          {
+                            "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+                            "settingDefinitionId": "softwareupdate_automaticactions_installosupdates",
+                            "choiceSettingValue": {
+                              "value": "softwareupdate_automaticactions_installosupdates_1",
+                              "children": []
+                            }
+                          },
+                          {
+                            "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+                            "settingDefinitionId": "softwareupdate_automaticactions_installsecurityupdate",
+                            "choiceSettingValue": {
+                              "value": "softwareupdate_automaticactions_installsecurityupdate_1",
+                              "children": []
+                            }
+                          }
+                        ]
+                      }
+                    ]
                   },
                   {
-                    "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
-                    "settingDefinitionId": "softwareupdate_automaticactions_installosupdates",
-                    "choiceSettingValue": {
-                      "value": "softwareupdate_automaticactions_installosupdates_1",
-                      "children": []
-                    }
-                  },
-                  {
-                    "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
-                    "settingDefinitionId": "softwareupdate_automaticactions_installsecurityupdate",
-                    "choiceSettingValue": {
-                      "value": "softwareupdate_automaticactions_installsecurityupdate_1",
-                      "children": []
-                    }
-                  },
-                  {
-                    "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
-                    "settingDefinitionId": "softwareupdate_rapidsecurityresponse_enable",
-                    "choiceSettingValue": {
-                      "value": "softwareupdate_rapidsecurityresponse_enable_true",
-                      "children": []
-                    }
+                    "@odata.type": "#microsoft.graph.deviceManagementConfigurationGroupSettingCollectionInstance",
+                    "settingDefinitionId": "softwareupdate_rapidsecurityresponse",
+                    "groupSettingCollectionValue": [
+                      {
+                        "children": [
+                          {
+                            "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+                            "settingDefinitionId": "softwareupdate_rapidsecurityresponse_enable",
+                            "choiceSettingValue": {
+                              "value": "softwareupdate_rapidsecurityresponse_enable_true",
+                              "children": []
+                            }
+                          }
+                        ]
+                      }
+                    ]
                   }
                 ]
               }
@@ -958,7 +994,7 @@
       "resource": null,
       "note": "S-02 not done; Microsoft365DSC equivalent: IntuneSettingCatalogCustomPolicy (macOS)"
     },
-    "verified": "settings catalogue definition id GET /beta/deviceManagement/configurationSettings/{id} returned 200 on the test tenant (2026-11-21); option ids recorded from the definition",
+    "verified": "settings catalogue definition id GET /beta/deviceManagement/configurationSettings/{id} returned 200 on the test tenant (2026-11-21); option ids recorded from the definition T14-06 apply (2026-11-21): the service requires softwareupdate_automaticactions and softwareupdate_rapidsecurityresponse as group collections inside softwareupdate_softwareupdate (definition childIds); payload restructured.",
     "notes": "DDM declaration com.apple.configuration.softwareupdate.settings (macOS 14+). The MDM com.apple.softwareupdate_* definitions are marked deprecated. 'Rapid security response' is shown as 'Background Security Improvement Settings'. The settings group child structure (automaticactions / rapidsecurityresponse sub-groups) must be built from the definitions' childIds at apply time."
   },
   "MAC-017": {
@@ -1599,7 +1635,7 @@
     "payload": {
       "name": "Box macOS Defender antivirus",
       "platforms": "macOS",
-      "technologies": "mdm,appleRemoteManagement",
+      "technologies": "mdm,microsoftSense",
       "settings": [
         {
           "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
@@ -1646,7 +1682,7 @@
       "resource": null,
       "note": "S-02 not done; Microsoft365DSC equivalent: IntuneAntivirusPolicyMacOS (not certain it exists)"
     },
-    "verified": "settings catalogue definition id GET /beta/deviceManagement/configurationSettings/{id} returned 200 on the test tenant (2026-11-21); option ids recorded from the definition",
+    "verified": "settings catalogue definition id GET /beta/deviceManagement/configurationSettings/{id} returned 200 on the test tenant (2026-11-21); option ids recorded from the definition T14-06 apply (2026-11-21): the service refused the template with technologies mdm,appleRemoteManagement; it requires 'mdm,microsoftSense'.",
     "notes": "Endpoint security antivirus policy, template 'Microsoft Defender Antivirus' (macOS) 2d345ec2-c817-49e5-9156-3ed416dc972a_1; templateFamily endpointSecurityAntivirus. com.apple.managedclient.preferences_enabled is the Defender cloud-delivered protection key (description verified). The deprecated enablerealtimeprotection is not used. MAC-026..MAC-029 are one policy."
   },
   "MAC-027": {
@@ -1658,7 +1694,7 @@
     "payload": {
       "name": "Box macOS Defender antivirus",
       "platforms": "macOS",
-      "technologies": "mdm,appleRemoteManagement",
+      "technologies": "mdm,microsoftSense",
       "settings": [
         {
           "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
@@ -1724,7 +1760,7 @@
     "payload": {
       "name": "Box macOS Defender antivirus",
       "platforms": "macOS",
-      "technologies": "mdm,appleRemoteManagement",
+      "technologies": "mdm,microsoftSense",
       "settings": [
         {
           "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
@@ -1772,7 +1808,7 @@
     "payload": {
       "name": "Box macOS Defender antivirus",
       "platforms": "macOS",
-      "technologies": "mdm,appleRemoteManagement",
+      "technologies": "mdm,microsoftSense",
       "settings": [
         {
           "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",

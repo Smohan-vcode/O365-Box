@@ -3,4 +3,25 @@
 # tasks named above; each needs a handler in Box.intune.psm1.
 provider: intune
 modules: []   # Graph over REST (common/BoxGraph.psm1)
-steps: []
+steps:
+  - id: policy.intune-macos
+    title: macOS device policies from the resolved settings
+    track: T14
+    task: T14-06
+    module: devices
+    depends_on: [identity.groups]
+    reads: ["@policy", devices]
+  - id: policy.intune-mobile
+    title: Phone and tablet compliance, app protection and enrolment restrictions from the resolved settings
+    track: T14
+    task: T14-07
+    module: devices
+    depends_on: [identity.groups]
+    reads: ["@policy", devices]
+  - id: policy.m365-apps
+    title: Office app policies (settings catalogue) from the resolved settings
+    track: T14
+    task: T14-05
+    module: devices
+    depends_on: [identity.groups]
+    reads: ["@policy", ai_policy]

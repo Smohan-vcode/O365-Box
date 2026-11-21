@@ -747,8 +747,8 @@
       },
       "android": {
         "@odata.type": "#microsoft.graph.androidManagedAppProtection",
-        "minimumWarningOsVersion": "{config:devices.ios.minimum_version}",
-        "minimumRequiredOsVersion": "{config:devices.ios.block_below_version}"
+        "minimumWarningOsVersion": "{config:devices.android.minimum_version}",
+        "minimumRequiredOsVersion": "{config:devices.android.block_below_version}"
       }
     },
     "read": "GET /beta/deviceAppManagement/iosManagedAppProtections/{id} ; GET /beta/deviceAppManagement/androidManagedAppProtections/{id}",
@@ -762,7 +762,7 @@
       "note": "S-02 not done; Microsoft365DSC equivalents: IntuneAppProtectionPolicyiOS, IntuneAppProtectionPolicyAndroid"
     },
     "verified": "not verified on the tenant: GET /beta/deviceAppManagement/iosManagedAppProtections returned 403 (needs DeviceManagementApps.Read.All / ReadWrite.All, not granted). Properties and enum values confirmed in the test tenant's beta $metadata (iosManagedAppProtection, androidManagedAppProtection, managedAppProtection).",
-    "notes": "Decided by the owner (2026-11-21, SC-22): operating system only: warn below the configured minimum (minimumWarningOsVersion), block below the one before (minimumRequiredOsVersion); no app version check, because one fixed version string would apply to every app. Versions come from configuration keys proposed in SC-21. Needs DeviceManagementApps.ReadWrite.All (SC-21). Operating system part is exact (minimumWarningOsVersion warn, minimumRequiredOsVersion block, per platform) but only with fixed version strings maintained in configuration. App version part has no relative form: minimumWarningAppVersion / minimumRequiredAppVersion are one fixed version string applied to every app in the policy, so 'current minus one' per app cannot be expressed. Available: OS warn/block with configured versions, and either no app version check or per-app policies with fixed versions. Decision needed. Needs DeviceManagementApps.ReadWrite.All (not granted)."
+    "notes": "Decided by the owner (2026-11-21, SC-22): operating system only: warn below the configured minimum (minimumWarningOsVersion), block below the one before (minimumRequiredOsVersion); no app version check, because one fixed version string would apply to every app. Versions come from configuration keys proposed in SC-21. Needs DeviceManagementApps.ReadWrite.All (SC-21). Operating system part is exact (minimumWarningOsVersion warn, minimumRequiredOsVersion block, per platform) but only with fixed version strings maintained in configuration. App version part has no relative form: minimumWarningAppVersion / minimumRequiredAppVersion are one fixed version string applied to every app in the policy, so 'current minus one' per app cannot be expressed. Available: OS warn/block with configured versions, and either no app version check or per-app policies with fixed versions. Decision needed. Needs DeviceManagementApps.ReadWrite.All (not granted). T14-07 (2026-11-21): the Android part read the iOS configuration keys; corrected to devices.android.*."
   },
   "MOB-023": {
     "status": "resolved",

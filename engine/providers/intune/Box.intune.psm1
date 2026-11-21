@@ -1,8 +1,12 @@
 # Provider: intune. Device enrolment, compliance and app protection (T1-04).
 Import-Module (Join-Path $PSScriptRoot '..' 'common' 'BoxProvider.psm1') -Force
+Import-Module (Join-Path $PSScriptRoot '..' 'common' 'BoxGraph.psm1') -Force
 
 # Step handlers, keyed by step id (see common/BoxProvider.psm1).
 $script:Steps = [ordered]@{}
+
+# policy.intune-macos, policy.intune-mobile, policy.m365-apps (T14-05, T14-06, T14-07).
+foreach ($f in 'IntunePolicy.Mobile.ps1', 'Policy.Mac.ps1', 'Policy.Mobile.ps1', 'Policy.Apps.ps1') { . (Join-Path $PSScriptRoot $f) }
 
 function Invoke-BoxStep {
   param([string] $Step, [string] $Operation, $InputObject)

@@ -19,7 +19,7 @@ $script:ImKinds = @{
   iosAppProtection      = @{ uri = 'deviceAppManagement/iosManagedAppProtections'; name = 'displayName'; update = 'PATCH'; assign = 'assignments'; exclude = $true; createOnly = @() }
   androidAppProtection  = @{ uri = 'deviceAppManagement/androidManagedAppProtections'; name = 'displayName'; update = 'PATCH'; assign = 'assignments'; exclude = $true; createOnly = @() }
   enrollmentRestriction = @{ uri = 'deviceManagement/deviceEnrollmentConfigurations'; name = 'displayName'; update = 'PATCH'; assign = 'enrollmentConfigurationAssignments'; exclude = $false; createOnly = @('platformType') }
-  shellScript           = @{ uri = 'deviceManagement/deviceShellScripts'; name = 'displayName'; update = 'PATCH'; assign = 'deviceManagementScriptAssignments'; exclude = $false; createOnly = @() }
+  shellScript           = @{ uri = 'deviceManagement/deviceShellScripts'; name = 'displayName'; update = 'PATCH'; assign = 'deviceManagementScriptAssignments'; exclude = $false; createOnly = @(); expandAssign = $true }
 }
 # Properties never compared: identity, create-only and read-only fields.
 $script:ImSkipProps = @('@odata.type', 'displayName', 'name', 'description', 'assignments', 'scheduledActionsForRule', 'platformType', 'settings', 'templateReference', 'platforms', 'technologies')
@@ -455,7 +455,10 @@ function Invoke-ImObject($In, $o, $existing, $denied, $changes, [switch] $Apply)
       $changes.Add((New-BoxChange update $target ($diff -join '; ')))
       if ($Apply) { Invoke-BoxGraph -Method $k.update -Uri "$script:ImBeta/$($k.uri)/$id" -Body (Get-ImUpdateBody $o) | Out-Null }
     }
-    $have = @(Get-BoxGraphAll "$script:ImBeta/$($k.uri)/$id/assignments" | ForEach-Object { Get-ImTargetKey $_.target } | Sort-Object)
+    # Shell scripts have no /assignments route; their assignments come with $expand.
+    $rows = if ($k.expandAssign) { @((Invoke-BoxGraph -Uri "$script:ImBeta/$($k.uri)/$id`?`$expand=assignments").assignments) }
+            else { @(Get-BoxGraphAll "$script:ImBeta/$($k.uri)/$id/assignments") }
+    $have = @($rows | Where-Object { $_ } | ForEach-Object { Get-ImTargetKey $_.target } | Sort-Object)
     if (($have -join '|') -eq ($want -join '|')) { return }
     $changes.Add((New-BoxChange update "$target assignments" "$($have -join ', ') -> $($want -join ', ')"))
     if (-not $Apply) { return }

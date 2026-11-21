@@ -155,7 +155,8 @@ function Get-LibraryChanges($In, [switch] $Apply) {
       if (-not $list) {
         $changes += New-BoxChange create "library $($s.name)/$($l.name)"
         if (-not $Apply) { continue }
-        $list = New-PnPList -Title $l.name -Url $url -Template DocumentLibrary -EnableVersioning -Connection $sc -ErrorAction Stop
+        New-PnPList -Title $l.name -Url $url -Template DocumentLibrary -EnableVersioning -Connection $sc -ErrorAction Stop | Out-Null
+        $list = Get-PnPList -Identity $l.name -Connection $sc -ErrorAction Stop
       }
       if (-not $list.EnableVersioning) {
         $changes += New-BoxChange update "versioning on $($s.name)/$($l.name)"
@@ -230,8 +231,10 @@ function Get-RegisterChanges($In, [switch] $Apply) {
         if ($pass -eq 2) { continue }
         $changes += New-BoxChange create "list $name"
         if (-not $Apply) { continue }
-        try { $list = New-PnPList -Title $name -Url "Lists/$name" -Template GenericList -EnableVersioning -Connection $sc -ErrorAction Stop }
+        try { New-PnPList -Title $name -Url "Lists/$name" -Template GenericList -EnableVersioning -Connection $sc -ErrorAction Stop | Out-Null }
         catch { throw "create list '$name': $($_.Exception.Message)" }
+        # New-PnPList does not reliably return the list: read it back.
+        $list = Get-PnPList -Identity "Lists/$name" -Connection $sc -ErrorAction Stop
       }
       $have = @{}
       foreach ($f in @(Get-PnPField -List $list.Id -Connection $sc)) { $have[[string]$f.InternalName] = $f }

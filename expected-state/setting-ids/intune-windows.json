@@ -1805,34 +1805,38 @@
         {
           "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
           "settingInstance": {
-            "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
-            "settingDefinitionId": "device_vendor_msft_passportforwork_{tenantid}_policies_usepassportforwork",
-            "choiceSettingValue": {
-              "value": "device_vendor_msft_passportforwork_{tenantid}_policies_usepassportforwork_true",
-              "children": []
-            }
-          }
-        },
-        {
-          "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
-          "settingInstance": {
-            "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
-            "settingDefinitionId": "device_vendor_msft_passportforwork_{tenantid}_policies_requiresecuritydevice",
-            "choiceSettingValue": {
-              "value": "device_vendor_msft_passportforwork_{tenantid}_policies_requiresecuritydevice_true",
-              "children": []
-            }
-          }
-        },
-        {
-          "@odata.type": "#microsoft.graph.deviceManagementConfigurationSetting",
-          "settingInstance": {
-            "@odata.type": "#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance",
-            "settingDefinitionId": "device_vendor_msft_passportforwork_{tenantid}_policies_pincomplexity_minimumpinlength",
-            "simpleSettingValue": {
-              "@odata.type": "#microsoft.graph.deviceManagementConfigurationIntegerSettingValue",
-              "value": 6
-            }
+            "@odata.type": "#microsoft.graph.deviceManagementConfigurationGroupSettingCollectionInstance",
+            "settingDefinitionId": "device_vendor_msft_passportforwork_{tenantid}",
+            "groupSettingCollectionValue": [
+              {
+                "children": [
+                  {
+                    "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+                    "settingDefinitionId": "device_vendor_msft_passportforwork_{tenantid}_policies_usepassportforwork",
+                    "choiceSettingValue": {
+                      "value": "device_vendor_msft_passportforwork_{tenantid}_policies_usepassportforwork_true",
+                      "children": []
+                    }
+                  },
+                  {
+                    "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance",
+                    "settingDefinitionId": "device_vendor_msft_passportforwork_{tenantid}_policies_requiresecuritydevice",
+                    "choiceSettingValue": {
+                      "value": "device_vendor_msft_passportforwork_{tenantid}_policies_requiresecuritydevice_true",
+                      "children": []
+                    }
+                  },
+                  {
+                    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSimpleSettingInstance",
+                    "settingDefinitionId": "device_vendor_msft_passportforwork_{tenantid}_policies_pincomplexity_minimumpinlength",
+                    "simpleSettingValue": {
+                      "@odata.type": "#microsoft.graph.deviceManagementConfigurationIntegerSettingValue",
+                      "value": 6
+                    }
+                  }
+                ]
+              }
+            ]
           }
         },
         {
@@ -1859,7 +1863,7 @@
       "note": "S-02 is not done; resource type is the Microsoft365DSC/UTCM name expected to cover this object, not verified"
     },
     "verified": "settings-catalogue definition GET /beta/deviceManagement/configurationSettings/<id> returned 200 on the test tenant (2026-11-21); option ids copied from the definition",
-    "notes": "Plain settings-catalogue policy. The definition ids contain the literal \"{tenantid}\"; Intune substitutes the tenant at delivery. A tenant-wide default also exists (deviceEnrollmentConfigurations, #microsoft.graph.deviceEnrollmentWindowsHelloForBusinessConfiguration: state enabled, pinMinimumLength 6, securityDeviceRequired true, unlockWithBiometricsEnabled true) but needs DeviceManagementServiceConfig.ReadWrite.All; the device policy alone delivers the value."
+    "notes": "Plain settings-catalogue policy. The definition ids contain the literal \"{tenantid}\"; Intune substitutes the tenant at delivery. A tenant-wide default also exists (deviceEnrollmentConfigurations, #microsoft.graph.deviceEnrollmentWindowsHelloForBusinessConfiguration: state enabled, pinMinimumLength 6, securityDeviceRequired true, unlockWithBiometricsEnabled true) but needs DeviceManagementServiceConfig.ReadWrite.All; the device policy alone delivers the value. The {tenantid} settings are children of the group setting device_vendor_msft_passportforwork_{tenantid} (a SettingGroupCollection definition, maximum 1); Graph refuses them at the top level (\"Expected parent settings are device_vendor_msft_passportforwork_{tenantid}\", test tenant, 2026-11-21)."
   },
   "WIN-036": {
     "status": "resolved",

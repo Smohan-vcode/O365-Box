@@ -60,7 +60,8 @@ func New(out, errOut io.Writer) *cobra.Command {
 	root.SetErr(errOut)
 	root.PersistentFlags().StringVar(&g.repo, "repo", "", "path inside the engine repository (default: current directory)")
 	root.PersistentFlags().BoolVar(&g.asJSON, "json", false, "print machine-readable JSON")
-	root.AddCommand(newConfigCmd(g), newCheckLiteralsCmd(g), newCheckConnectorsCmd(g))
+	root.AddCommand(newConfigCmd(g), newCheckLiteralsCmd(g), newCheckConnectorsCmd(g), newBacklogCmd(g))
+	root.AddCommand(newRunCommands(g)...)
 	return root
 }
 
@@ -75,6 +76,11 @@ func Run(args []string, out, errOut io.Writer) int {
 	var ee exitError
 	if errors.As(err, &ee) {
 		return ee.code
+	}
+	var ue usageErr
+	if errors.As(err, &ue) {
+		fmt.Fprintln(errOut, "box:", ue.msg)
+		return ExitValidation
 	}
 	fmt.Fprintln(errOut, "box:", err)
 	return ExitFailure

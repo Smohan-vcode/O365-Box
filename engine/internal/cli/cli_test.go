@@ -9,7 +9,7 @@ import (
 	"github.com/Smohan-vcode/O365-Box/engine/internal/report"
 )
 
-func run(t *testing.T, args ...string) (int, string) {
+func box(t *testing.T, args ...string) (int, string) {
 	t.Helper()
 	var out, errOut bytes.Buffer
 	code := Run(args, &out, &errOut)
@@ -23,14 +23,14 @@ func TestRepositoryPassesEveryCheck(t *testing.T) {
 		{"check-literals"},
 		{"check-connectors"},
 	} {
-		if code, out := run(t, args...); code != ExitOK {
+		if code, out := box(t, args...); code != ExitOK {
 			t.Errorf("box %s: exit %d\n%s", strings.Join(args, " "), code, out)
 		}
 	}
 }
 
 func TestConfigValidateFixtureFails(t *testing.T) {
-	code, out := run(t, "config", "validate", "testdata/invalid-config.yaml")
+	code, out := box(t, "config", "validate", "testdata/invalid-config.yaml")
 	if code != ExitValidation {
 		t.Fatalf("exit %d, want %d\n%s", code, ExitValidation, out)
 	}
@@ -47,7 +47,7 @@ func TestConfigValidateFixtureFails(t *testing.T) {
 }
 
 func TestConfigValidateForTask(t *testing.T) {
-	code, out := run(t, "config", "validate", "testdata/invalid-config.yaml", "--for", "T0-04", "--json")
+	code, out := box(t, "config", "validate", "testdata/invalid-config.yaml", "--for", "T0-04", "--json")
 	if code != ExitValidation {
 		t.Fatalf("exit %d\n%s", code, out)
 	}
@@ -58,14 +58,14 @@ func TestConfigValidateForTask(t *testing.T) {
 	if res.OK || len(res.Issues) == 0 {
 		t.Fatal("want issues")
 	}
-	code, out = run(t, "config", "validate", "testdata/invalid-config.yaml", "--for", "T99-99")
+	code, out = box(t, "config", "validate", "testdata/invalid-config.yaml", "--for", "T99-99")
 	if code != ExitFailure || !strings.Contains(out, "no task or spike") {
 		t.Errorf("unknown task: exit %d\n%s", code, out)
 	}
 }
 
 func TestCheckLiteralsFixtureFails(t *testing.T) {
-	code, out := run(t, "check-literals", "--dir", "../checks/testdata/literals/repo",
+	code, out := box(t, "check-literals", "--dir", "../checks/testdata/literals/repo",
 		"--from-file", "../checks/testdata/literals/company.yaml")
 	if code != ExitFailure {
 		t.Fatalf("exit %d\n%s", code, out)
@@ -75,14 +75,14 @@ func TestCheckLiteralsFixtureFails(t *testing.T) {
 			t.Errorf("output lacks %q\n%s", want, out)
 		}
 	}
-	code, out = run(t, "check-literals", "--from-tenant")
+	code, out = box(t, "check-literals", "--from-tenant")
 	if code != ExitFailure || !strings.Contains(out, "T0-06") {
 		t.Errorf("--from-tenant: exit %d\n%s", code, out)
 	}
 }
 
 func TestCheckConnectorsFixtureFails(t *testing.T) {
-	code, out := run(t, "check-connectors",
+	code, out := box(t, "check-connectors",
 		"--allow-list", "engine/internal/checks/testdata/connectors/allow.yaml",
 		"--catalogue", "engine/internal/checks/testdata/connectors/catalogue.yaml",
 		"--solution", "engine/internal/checks/testdata/connectors/solution")

@@ -58,6 +58,12 @@ func baseEnv(spec Spec) []string {
 			env = append(env, k+"="+v)
 		}
 	}
+	// BOX_PROVIDER_* carries non-secret provider settings.
+	for _, kv := range os.Environ() {
+		if strings.HasPrefix(kv, "BOX_PROVIDER_") {
+			env = append(env, kv)
+		}
+	}
 	env = append(env, "POWERSHELL_TELEMETRY_OPTOUT=1", "POWERSHELL_UPDATECHECK=Off", "PNPPOWERSHELL_UPDATECHECK=Off")
 	if spec.ModulePath != "" {
 		env = append(env, "PSModulePath="+spec.ModulePath)

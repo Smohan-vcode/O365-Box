@@ -1,0 +1,3 @@
+gates:
+  - {id: G-T, title: Test gate, guide: Create the gate file, expected: The file exists, check: demo.gate-check}
+  - {id: G-M, title: Manual gate, guide: Confirm by hand, expected: Confirmed}

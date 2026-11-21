@@ -1,0 +1,8 @@
+# Plan to capability map (SPEC §20.3). Discovery (T0-04) reads the tenant's
+# subscribed plans; until then the orchestrator uses tenant.default_plan.
+# Step manifests list the capabilities they need and their fallbacks.
+plans:
+  business_basic: [exchange, sharepoint, teams, onedrive, forms, approvals, power_automate_standard]
+  business_standard: [exchange, sharepoint, teams, onedrive, forms, approvals, power_automate_standard, desktop_apps]
+  business_premium: [exchange, sharepoint, teams, onedrive, forms, approvals, power_automate_standard, desktop_apps,
+    entra_p1, conditional_access, intune, defender_business, defender_office_p1, information_protection]

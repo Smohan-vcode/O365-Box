@@ -1,0 +1,14 @@
+# End-to-end test provider: keeps "tenant" resources in a JSON file.
+provider: demo
+module_file: Box.Demo.psm1
+steps:
+  - {id: demo.groups, title: Groups, track: T1, reads: [groups]}
+  - {id: demo.sites, title: Sites, track: T3, depends_on: [demo.groups], reads: ["structure.sites"]}
+  - {id: demo.gate-check, title: Gate check, check_only: true}
+  - {id: demo.guarded, title: Guarded, track: T1, depends_on: [demo.sites], gate: G-T}
+  - {id: demo.manual, title: Manual, track: T1, depends_on: [demo.groups], gate: G-M}
+  - {id: demo.fragile, title: Fragile, track: T2, depends_on: [demo.groups]}
+  - {id: demo.after-fragile, title: After fragile, track: T2, depends_on: [demo.fragile]}
+  - {id: demo.premium, title: Premium, track: T1, capabilities: [conditional_access], fallback: demo.basic}
+  - {id: demo.basic, title: Basic fallback, track: T1, fallback_only: true}
+  - {id: demo.sales, title: Sales only, track: T8, module: sales}

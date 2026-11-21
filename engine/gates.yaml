@@ -1,0 +1,40 @@
+# Gates: manual steps the orchestrator checks (SPEC §22). `check` names a
+# provider step with check_only: true whose verify operation decides the
+# gate; the task that builds that provider fills it in. A gate without a
+# check passes only when confirmed with `box gate <id> --confirm`.
+gates:
+  - id: G-00
+    title: Microsoft 365 sign-up
+    guide: Sign up for Microsoft 365 for your company (Business Premium recommended), then return and sign in.
+    expected: A tenant you can sign in to as Global Administrator
+    check_task: T0-04
+  - id: G-01
+    title: Licences bought
+    guide: Buy the plans chosen for your team in the Microsoft 365 admin centre, under Billing.
+    expected: Subscribed plans cover every person in step 6
+    check_task: T1-02
+  - id: G-02
+    title: Security keys registered
+    guide: Register two FIDO2 security keys for each break-glass account and seal one set offline.
+    expected: Each break-glass account lists a FIDO2 method
+    check_task: T1-01
+  - id: G-03
+    title: Flow owner connections
+    guide: Signed in as the flow owner, create the connections the solution asks for in Power Automate.
+    expected: One connection per connector in the allow-list
+    check_task: T5-01
+  - id: G-04
+    title: Public forms created
+    guide: Create the NDA request and demo request forms from flows/forms/ and paste each form link.
+    expected: Form links reachable; IDs stored in configuration ids
+    check_task: T8-01
+  - id: G-05
+    title: Founder's standing admin role removed
+    guide: Remove the founder's Global Administrator role after the identity track passes.
+    expected: The founder holds no directory role
+    check_task: T1-05
+  - id: G-06
+    title: Manual DNS records
+    guide: Add the DNS records shown at your DNS host.
+    expected: Records resolve to the expected values
+    check_task: T2-03

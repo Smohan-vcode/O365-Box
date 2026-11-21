@@ -1,0 +1,445 @@
+package cli
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"io"
+	"os"
+	"os/signal"
+	"path/filepath"
+	"sort"
+	"strings"
+	"sync"
+	"time"
+
+	"github.com/spf13/cobra"
+
+	"github.com/Smohan-vcode/O365-Box/engine/internal/config"
+	"github.com/Smohan-vcode/O365-Box/engine/internal/events"
+	"github.com/Smohan-vcode/O365-Box/engine/internal/plan"
+	"github.com/Smohan-vcode/O365-Box/engine/internal/providers"
+	"github.com/Smohan-vcode/O365-Box/engine/internal/run"
+	"github.com/Smohan-vcode/O365-Box/engine/internal/state"
+)
+
+// runFlags are shared by plan, up, drift, apply, check, status and gate.
+type runFlags struct {
+	config       string
+	statePath    string
+	only         []string
+	parallel     int
+	yes          bool
+	live         bool
+	capabilities []string
+	providersDir string
+	gatesFile    string
+	modulePath   string
+	timeout      time.Duration
+}
+
+func (f *runFlags) bind(cmd *cobra.Command, withOnly bool) {
+	cmd.Flags().StringVar(&f.config, "config", "", "configuration document (until T0-06 adds the tenant store)")
+	cmd.Flags().StringVar(&f.statePath, "state", "", "state cache file (default: user cache dir, per tenant)")
+	if withOnly {
+		cmd.Flags().StringSliceVar(&f.only, "only", nil, "run only these steps and their dependencies")
+	}
+	cmd.Flags().IntVar(&f.parallel, "parallel", 4, "steps to run at once")
+	cmd.Flags().BoolVar(&f.yes, "yes", false, "non-interactive: do not wait at gates (exit 3 instead)")
+	cmd.Flags().BoolVar(&f.live, "live", false, "allow changes to a tenant whose environment is live")
+	cmd.Flags().StringSliceVar(&f.capabilities, "capabilities", nil, "tenant capabilities (default: from tenant.default_plan)")
+	cmd.Flags().StringVar(&f.providersDir, "providers", "", "provider directory (default: engine/providers)")
+	cmd.Flags().StringVar(&f.gatesFile, "gates", "", "gate definitions (default: engine/gates.yaml)")
+	cmd.Flags().StringVar(&f.modulePath, "module-path", os.Getenv("BOX_MODULE_PATH"), "PSModulePath for provider workers")
+	cmd.Flags().DurationVar(&f.timeout, "step-timeout", 10*time.Minute, "timeout per step operation")
+	_ = cmd.Flags().MarkHidden("providers")
+	_ = cmd.Flags().MarkHidden("gates")
+}
+
+// session is everything one orchestration command needs.
+type session struct {
+	root    string
+	doc     *config.Document
+	catalog *plan.Catalog
+	graph   *plan.Graph
+	state   *state.File
+	pool    *providers.Pool
+	sink    events.Sink
+	red     *events.Redactor
+	caps    map[string]bool
+}
+
+func (g *globals) open(f *runFlags, out io.Writer, exact bool) (*session, error) {
+	root, err := g.root()
+	if err != nil {
+		return nil, err
+	}
+	if f.config == "" {
+		return nil, usageError("--config is required until the tenant configuration store exists (T0-06)")
+	}
+	doc, err := config.Load(f.config)
+	if err != nil {
+		return nil, err
+	}
+	opt, err := engineOptions(root)
+	if err != nil {
+		return nil, err
+	}
+	issues, err := config.Validate(doc, opt)
+	if err != nil {
+		return nil, err
+	}
+	if len(issues) > 0 {
+		for _, i := range issues {
+			fmt.Fprintln(out, "  ✗ "+i.String())
+		}
+		return nil, validationError(fmt.Sprintf("%d problem(s) in %s; run box config validate", len(issues), doc.File))
+	}
+	s := &session{root: root, doc: doc}
+	pdir := f.providersDir
+	if pdir == "" {
+		pdir = filepath.Join(root, "engine", "providers")
+	}
+	gfile := f.gatesFile
+	if gfile == "" {
+		gfile = filepath.Join(root, "engine", "gates.yaml")
+	}
+	if s.catalog, err = plan.Load(pdir, gfile); err != nil {
+		return nil, err
+	}
+	if s.caps, err = capabilities(root, doc, f.capabilities); err != nil {
+		return nil, err
+	}
+	m := doc.Config.Modules
+	mods := map[string]bool{"records": m.Records, "people": m.People, "legal": m.Legal, "sales": m.Sales,
+		"policies": m.Policies, "compliance": m.Compliance, "devices": m.Devices}
+	if s.graph, err = plan.Build(s.catalog, plan.Options{Modules: mods, Capabilities: s.caps, Only: f.only, Exact: exact}); err != nil {
+		return nil, err
+	}
+	sp := f.statePath
+	if sp == "" {
+		if sp, err = state.DefaultPath(doc.Config.Tenant.TenantID); err != nil {
+			return nil, err
+		}
+	}
+	if s.state, err = state.Open(sp); err != nil {
+		return nil, err
+	}
+	var sink events.Sink = &textSink{w: out}
+	if g.asJSON {
+		sink = events.NewJSONLines(out)
+	}
+	s.red = events.NewRedactor(sink, nil)
+	s.sink = s.red
+	specs := map[string]providers.PoolSpec{}
+	for name, man := range s.catalog.Manifests {
+		specs[name] = providers.PoolSpec{Provider: man.ModuleFile(), Modules: man.Modules}
+	}
+	s.pool = &providers.Pool{
+		Script:     filepath.Join(root, "engine", "providers", "runtime", "BoxWorker.ps1"),
+		ModulePath: f.modulePath,
+		Specs:      specs,
+		OnRaw: func(p, line string) {
+			s.sink.Emit(events.Event{T: time.Now().UTC(), Ev: events.Log, Level: "raw", Msg: p + ": " + line})
+		},
+		OnLog: func(p, step, level, msg string) {
+			s.sink.Emit(events.Event{T: time.Now().UTC(), Ev: events.Log, Step: step, Level: level, Msg: msg})
+		},
+	}
+	return s, nil
+}
+
+// capabilities returns the flag's list, or the plan's from engine/capabilities.yaml.
+func capabilities(root string, doc *config.Document, flag []string) (map[string]bool, error) {
+	caps := map[string]bool{}
+	if len(flag) > 0 {
+		for _, c := range flag {
+			caps[strings.TrimSpace(c)] = true
+		}
+		return caps, nil
+	}
+	var file struct {
+		Plans map[string][]string `yaml:"plans"`
+	}
+	if err := readYAMLFile(filepath.Join(root, "engine", "capabilities.yaml"), &file); err != nil {
+		return nil, err
+	}
+	planName := doc.Config.Tenant.DefaultPlan
+	list, ok := file.Plans[planName]
+	if !ok {
+		return nil, fmt.Errorf("engine/capabilities.yaml has no plan %q", planName)
+	}
+	for _, c := range list {
+		caps[c] = true
+	}
+	return caps, nil
+}
+
+// input gives a step only the configuration sections it declares in reads.
+func (s *session) input(step *plan.Step) any {
+	sub := map[string]any{}
+	for _, r := range step.Reads {
+		top := r
+		if i := strings.IndexAny(top, ".["); i >= 0 {
+			top = top[:i]
+		}
+		if v, ok := s.doc.Raw[top]; ok {
+			sub[top] = v
+		}
+	}
+	return map[string]any{"config": sub, "environment": s.doc.Config.Tenant.Environment}
+}
+
+func (s *session) executor(f *runFlags) *run.Executor {
+	return &run.Executor{Graph: s.graph, Catalog: s.catalog, Invoker: s.pool, Events: s.sink, State: s.state,
+		Input: s.input, Parallel: f.parallel, Retries: 2, Timeout: f.timeout, Interactive: !f.yes}
+}
+
+func signalContext() (context.Context, context.CancelFunc) {
+	return signal.NotifyContext(context.Background(), os.Interrupt)
+}
+
+func runMode(g *globals, f *runFlags, mode run.Mode, exact bool, cmd *cobra.Command) error {
+	out := cmd.OutOrStdout()
+	s, err := g.open(f, out, exact)
+	if err != nil {
+		return err
+	}
+	defer s.pool.Close()
+	if mode == run.ModeApply && s.doc.Config.Tenant.Environment == "live" && !f.live {
+		return usageError("this configuration targets a live tenant: build and verify on test first, then pass --live")
+	}
+	ctx, cancel := signalContext()
+	defer cancel()
+	sum, err := s.executor(f).Run(ctx, mode)
+	if !g.asJSON {
+		printSummary(out, sum, len(s.graph.Order))
+	}
+	if err != nil && !errors.Is(err, context.Canceled) {
+		return err
+	}
+	switch {
+	case len(sum.Failed) > 0 || errors.Is(err, context.Canceled):
+		return exitError{ExitFailure}
+	case len(sum.Waiting) > 0:
+		return exitError{ExitGate}
+	case len(sum.Drifted) > 0:
+		return exitError{ExitFailure}
+	}
+	return nil
+}
+
+func printSummary(w io.Writer, s run.Summary, steps int) {
+	var parts []string
+	keys := make([]string, 0, len(s.Status))
+	for k := range s.Status {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		parts = append(parts, fmt.Sprintf("%d %s", s.Status[k], strings.ToLower(k)))
+	}
+	mark := "✓"
+	if !s.OK() {
+		mark = "✗"
+	}
+	fmt.Fprintf(w, "%s %s: %d step(s), %d change(s); %s (%s)\n", mark, s.Mode, steps, s.Changes,
+		strings.Join(parts, ", "), s.Duration.Round(time.Millisecond))
+	if len(s.Failed) > 0 {
+		fmt.Fprintln(w, "  failed: "+strings.Join(s.Failed, ", "))
+	}
+	if len(s.Waiting) > 0 {
+		fmt.Fprintln(w, "  waiting on: "+strings.Join(s.Waiting, ", ")+" (see box gate <id>)")
+	}
+	if len(s.Drifted) > 0 {
+		fmt.Fprintln(w, "  drifted: "+strings.Join(s.Drifted, ", "))
+	}
+}
+
+// textSink prints a readable line per significant event.
+type textSink struct {
+	mu sync.Mutex
+	w  io.Writer
+}
+
+func (t *textSink) Emit(e events.Event) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	var line string
+	switch e.Ev {
+	case events.StepStarted:
+		line = "▸ " + e.Step
+	case events.StepPlanned:
+		line = "  " + e.Step + ": " + e.Msg
+		if ch, ok := e.Data["changes"].([]any); ok {
+			for _, c := range ch {
+				if m, ok := c.(map[string]any); ok {
+					line += fmt.Sprintf("\n      %v %v", m["action"], m["target"])
+				}
+			}
+		}
+	case events.StepChanged:
+		line = "  ~ " + e.Step + ": " + e.Msg
+	case events.StepProg:
+		if e.Of > 0 {
+			line = fmt.Sprintf("  … %s: %s (%d/%d)", e.Step, e.Msg, e.Done, e.Of)
+		} else {
+			line = "  … " + e.Step + ": " + e.Msg
+		}
+	case events.StepDone:
+		line = "✓ " + e.Step + ": " + e.Msg
+	case events.StepFailed:
+		line = "✗ " + e.Step + ": " + e.Msg
+	case events.StepSkipped:
+		line = "- " + e.Step + ": " + e.Msg
+	case events.GateWaiting:
+		line = fmt.Sprintf("⏸ %s waiting on %s %s: %v", e.Step, e.Gate, e.Msg, e.Data["guide"])
+	case events.GatePassed:
+		line = "✓ gate " + e.Gate + " passed"
+	case events.Log:
+		if e.Level == "warning" || e.Level == "error" || e.Level == "raw" {
+			line = fmt.Sprintf("  ! %s %s", e.Level, e.Msg)
+		}
+	}
+	if line != "" {
+		fmt.Fprintln(t.w, line)
+	}
+}
+
+func newRunCommands(g *globals) []*cobra.Command {
+	mk := func(use, short string, mode run.Mode, withOnly bool) *cobra.Command {
+		f := &runFlags{}
+		c := &cobra.Command{Use: use, Short: short, Args: cobra.NoArgs,
+			RunE: func(cmd *cobra.Command, _ []string) error { return runMode(g, f, mode, false, cmd) }}
+		f.bind(c, withOnly)
+		return c
+	}
+	cmds := []*cobra.Command{
+		mk("plan", "Show what would change, changing nothing", run.ModePlan, true),
+		mk("up", "Build and harden the tenant: run every step in order, resuming where it stopped", run.ModeApply, true),
+		mk("drift", "Report where the tenant differs from the configuration, changing nothing", run.ModeDrift, true),
+	}
+	single := func(use, short string, mode run.Mode) *cobra.Command {
+		f := &runFlags{}
+		c := &cobra.Command{Use: use + " <step>", Short: short, Args: cobra.ExactArgs(1),
+			RunE: func(cmd *cobra.Command, args []string) error {
+				f.only = []string{args[0]}
+				return runMode(g, f, mode, true, cmd)
+			}}
+		f.bind(c, false)
+		return c
+	}
+	cmds = append(cmds,
+		single("apply", "Run one step (its dependencies are assumed done)", run.ModeApply),
+		single("check", "Verify one step against the tenant", run.ModeCheck),
+		newStatusCmd(g), newGateCmd(g))
+	return cmds
+}
+
+func newStatusCmd(g *globals) *cobra.Command {
+	f := &runFlags{}
+	c := &cobra.Command{Use: "status", Short: "Show each step's last result", Args: cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			out := cmd.OutOrStdout()
+			s, err := g.open(f, out, false)
+			if err != nil {
+				return err
+			}
+			type row struct {
+				Step    string `json:"step"`
+				Track   string `json:"track"`
+				Status  string `json:"status"`
+				Changes int    `json:"changes"`
+				At      string `json:"at,omitempty"`
+				Reason  string `json:"reason,omitempty"`
+			}
+			var rows []row
+			for _, id := range s.graph.Order {
+				n := s.graph.Nodes[id]
+				r := row{Step: id, Track: n.Step.Track, Status: "PENDING"}
+				if n.Skip != "" {
+					r.Status, r.Reason = state.Skipped, n.Skip
+				}
+				if rec := s.state.Get(id); rec != nil {
+					r.Status, r.Changes, r.Reason, r.At = rec.Status, rec.Changes, rec.Reason, rec.At.Format(time.RFC3339)
+				}
+				rows = append(rows, r)
+			}
+			if g.asJSON {
+				return writeJSON(out, map[string]any{"command": "status", "steps": rows})
+			}
+			for _, r := range rows {
+				extra := ""
+				if r.Reason != "" {
+					extra = " — " + r.Reason
+				}
+				fmt.Fprintf(out, "%-9s %-40s %-4s %s%s\n", r.Status, r.Step, r.Track, r.At, extra)
+			}
+			fmt.Fprintf(out, "%d step(s)\n", len(rows))
+			return nil
+		}}
+	f.bind(c, true)
+	return c
+}
+
+func newGateCmd(g *globals) *cobra.Command {
+	f := &runFlags{}
+	var check, confirm bool
+	c := &cobra.Command{Use: "gate <id>", Short: "Show a gate's guide, check it, or confirm it", Args: cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			out := cmd.OutOrStdout()
+			s, err := g.open(f, out, false)
+			if err != nil {
+				return err
+			}
+			defer s.pool.Close()
+			gate := s.catalog.Gates[args[0]]
+			if gate == nil {
+				return usageError("no gate " + args[0])
+			}
+			passed := false
+			how := ""
+			switch {
+			case confirm:
+				if gate.Check != "" {
+					return usageError(gate.ID + " is checked automatically; it cannot be confirmed by hand")
+				}
+				if err := s.state.ConfirmGate(gate.ID, "manual", time.Now().UTC()); err != nil {
+					return err
+				}
+				passed, how = true, "confirmed"
+			case check:
+				if gate.Check == "" {
+					r := s.state.GateRecord(gate.ID)
+					passed, how = r != nil && r.Status == state.Done, "confirmation"
+					break
+				}
+				ctx, cancel := signalContext()
+				defer cancel()
+				raw, err := s.pool.Invoke(ctx, s.catalog.Steps[gate.Check].Provider, gate.Check, "verify",
+					s.input(s.catalog.Steps[gate.Check]), nil)
+				if err != nil {
+					return err
+				}
+				passed, how = strings.Contains(strings.ReplaceAll(string(raw), " ", ""), `"ok":true`), "check "+gate.Check
+			}
+			if g.asJSON {
+				return writeJSON(out, map[string]any{"gate": gate.ID, "title": gate.Title, "guide": gate.Guide,
+					"expected": gate.Expected, "checked": check || confirm, "passed": passed})
+			}
+			fmt.Fprintf(out, "%s  %s\n  %s\n  Expected: %s\n", gate.ID, gate.Title, gate.Guide, gate.Expected)
+			if check || confirm {
+				if passed {
+					fmt.Fprintf(out, "✓ passed (%s)\n", how)
+				} else {
+					fmt.Fprintf(out, "⏸ not passed yet (%s)\n", how)
+					return exitError{ExitGate}
+				}
+			}
+			return nil
+		}}
+	f.bind(c, false)
+	c.Flags().BoolVar(&check, "check", false, "run the gate's check now")
+	c.Flags().BoolVar(&confirm, "confirm", false, "record that the gate is done (gates without a check only)")
+	return c
+}

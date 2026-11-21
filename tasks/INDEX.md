@@ -11,9 +11,9 @@ CI runs `box backlog check`.
 | S-03 | Deploying the flow solution from source under the included licence | P0 | S | T0-04, T3-04 | yes | TODO |
 | S-04 | Standard connector check and limits | P0 | S | S-03 |  | TODO |
 | S-05 | Go orchestrator driving PowerShell providers | P0 | S | T0-01 |  | DONE |
-| S-06 | Bootstrap with a delegated Global Administrator session | P0 | S | T0-01 | yes | TODO |
+| S-06 | Bootstrap with a delegated Global Administrator session | P0 | S | T0-01 | yes | DONE |
 | S-07 | Exchange disclaimer rendering | P0 | S | T0-01 | yes | TODO |
-| S-08 | Fresh-tenant discovery and browser sign-in | P0 | S | T0-01 | yes | TODO |
+| S-08 | Fresh-tenant discovery and browser sign-in | P0 | S | T0-01 | yes | DONE |
 | T0-01 | Configuration schema and repository checks | P0 | S | none |  | DONE |
 | T0-02 | Orchestrator: step contract, graph, state and events | P0 | M | T0-01, S-05 |  | DONE |
 | T0-03 | Provider runner and box doctor | P0 | S | T0-02 |  | DONE |

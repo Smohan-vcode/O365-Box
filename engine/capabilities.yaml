@@ -6,3 +6,8 @@ plans:
   business_standard: [exchange, sharepoint, teams, onedrive, forms, approvals, power_automate_standard, desktop_apps]
   business_premium: [exchange, sharepoint, teams, onedrive, forms, approvals, power_automate_standard, desktop_apps,
     entra_p1, conditional_access, intune, defender_business, defender_office_p1, information_protection]
+# Subscribed SKU part numbers (Graph subscribedSkus) mapped to plans (S-08).
+skus:
+  SPB: business_premium
+  O365_BUSINESS_PREMIUM: business_standard
+  O365_BUSINESS_ESSENTIALS: business_basic

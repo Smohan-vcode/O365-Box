@@ -60,3 +60,9 @@ gates:
     guide: In the Power Platform admin centre, register the setup app as a management application (a two-minute step).
     expected: The pipeline app is listed as a Power Platform management application
     check_task: T0-07
+  - id: G-11
+    title: Teams meeting policy set by hand
+    guide: "Microsoft does not let apps change the Teams meeting policy (SC-28). In the Teams admin centre, open Meetings > Meeting policies > Global (Org-wide default) and set: Who can bypass the lobby = People in my org (not guests); People dialing in can bypass the lobby = Off; Anonymous users can start a meeting = Off; Who can present = Organizers, but users can override; External participants can give or request control = Off; Meeting recording = On; Transcription = On; Recordings automatically expire = On, after 365 days. Save, then return: the box checks the values."
+    expected: The Global meeting policy matches TMS-004 to TMS-008 (box check teams.gate-g11)
+    check: teams.gate-g11
+    check_task: T14-09

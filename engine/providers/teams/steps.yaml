@@ -9,3 +9,8 @@ steps:
     track: T14
     task: T14-09
     reads: ["@policy", policy]
+  - id: teams.gate-g11
+    title: Teams meeting and external access policy set in the Teams admin centre
+    check_only: true
+    policy_of: policy.teams
+    reads: ["@policy", policy]

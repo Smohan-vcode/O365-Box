@@ -27,7 +27,10 @@ type Step struct {
 	CheckOnly    bool     `yaml:"check_only"`    // a gate's check: verify only, never in the build
 	Gate         string   `yaml:"gate"`          // gate that must pass before the step
 	Optional     bool     `yaml:"optional"`
-	Provider     string   `yaml:"-"`
+	// PolicyOf names the policy step whose resolved settings this step
+	// receives under @policy (a gate's check reading another step's values).
+	PolicyOf string `yaml:"policy_of"`
+	Provider string `yaml:"-"`
 }
 
 // Manifest is a provider's steps.yaml.

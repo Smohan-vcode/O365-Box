@@ -1256,7 +1256,7 @@ mode enforce, requirements IAM-01, IAM-02):
 When approved: add the ENT entry and mapping, remove `registration_campaign`
 from `baseline/identity.yaml`, and let `policy.entra` own the object.
 
-## SC-28  Teams meeting policy refuses app-only writes (proposed, T14-09)
+## SC-28  Teams meeting policy refuses app-only writes (approved 2026-11-21: option 2, gate G-11; T14-09)
 
 **Finding (test tenant, 2026-11-21, MicrosoftTeams 6.7.0).** The pipeline
 app connects with `Connect-MicrosoftTeams -AccessTokens` (a Graph token and

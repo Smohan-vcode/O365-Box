@@ -119,7 +119,12 @@ function ConvertTo-TeamsParameter([string] $Name, $Value) {
   return $Value
 }
 
-function Get-TeamsPolicyChanges($In, [switch] $Apply) {
+# Policy types Teams refuses to let an app change (SPEC §22 gate G-11, SC-28):
+# the owner sets them in the Teams admin centre; the box only compares them.
+$script:ManualCmdlets = @('Set-CsTeamsMeetingPolicy', 'Set-CsExternalAccessPolicy')
+$script:ManualDrift = @()
+
+function Get-TeamsPolicyChanges($In, [switch] $Apply, [switch] $ManualOnly) {
   if ($In.policy_error) { throw "policy resolution failed: $($In.policy_error)" }
   $all = @($In.policy.settings | Where-Object { $_ })
   foreach ($s in $all | Where-Object { $_.mode -ne 'enforce' }) {
@@ -138,7 +143,10 @@ function Get-TeamsPolicyChanges($In, [switch] $Apply) {
   Connect-Teams
   $changes = @()
   $failed = @()
+  $script:ManualDrift = @()
   foreach ($cmd in $r.cmdlets.Keys) {
+    $manual = $cmd -in $script:ManualCmdlets
+    if ($ManualOnly -and -not $manual) { continue }
     $want = $r.cmdlets[$cmd]
     if ($audit) {
       foreach ($k in @($want.Keys)) {
@@ -159,6 +167,16 @@ function Get-TeamsPolicyChanges($In, [switch] $Apply) {
     $cur = & $get @gp
     $diff = @(Compare-TeamsValues $cur $want)
     if (-not $diff.Count) { continue }
+    if ($manual) {
+      # Not a change the box makes (nothing to approve or apply): a guided
+      # step for the owner, checked here until the values match.
+      foreach ($d in $diff) {
+        $ids = $r.from["$cmd $($d.name)"]
+        $script:ManualDrift += New-BoxChange update "$ids $cmd $($d.name)" "$($d.current) -> $($d.want): set it in the Teams admin centre (gate G-11)"
+        if (-not $ManualOnly) { Write-Warning "gate G-11 ($ids): set $($d.name) to $($d.want) in the Teams admin centre; it is $($d.current)" }
+      }
+      continue
+    }
     foreach ($d in $diff) { $changes += New-BoxChange update "$cmd $($d.name)" "$($d.current) -> $($d.want) ($($r.from["$cmd $($d.name)"]))" }
     if ($Apply) {
       $sp = @{ ErrorAction = 'Stop' }
@@ -191,8 +209,13 @@ $script:Steps = [ordered]@{
     test = $ok
     plan = { param($In) Result-Changes (Get-TeamsPolicyChanges $In) }
     apply = { param($In) Result-Changes (Get-TeamsPolicyChanges $In -Apply) }
-    verify = { param($In) $c = @(Get-TeamsPolicyChanges $In | Where-Object { $_ }); @{ ok = ($c.Count -eq 0); drift = $c; skipped = @($script:AuditSkipped) } }
+    verify = { param($In) $c = @(Get-TeamsPolicyChanges $In | Where-Object { $_ }) + @($script:ManualDrift); @{ ok = ($c.Count -eq 0); drift = $c; skipped = @($script:AuditSkipped) } }
     evidence = { param($In) New-Evidence 'policy-teams' "resolved teams settings verified: $((@($In.policy.settings | ForEach-Object { $_.id })) -join ', ')" }
+  }
+  'teams.gate-g11' = @{
+    test = $ok; plan = { param($In) Result-Changes @() }; apply = { param($In) Result-Changes @() }
+    verify = { param($In) Get-TeamsPolicyChanges $In -ManualOnly | Out-Null; @{ ok = (@($script:ManualDrift).Count -eq 0); drift = @($script:ManualDrift) } }
+    evidence = { param($In) New-Evidence 'gate-g11' 'Teams meeting and external access policy values match the resolved settings' }
   }
 }
 

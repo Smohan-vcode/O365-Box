@@ -439,7 +439,11 @@ func (s *session) input(step *plan.Step) any {
 						q[k] = v
 					}
 				}
-				q["settings"] = p["by_step"].(map[string][]policy.StepSetting)[step.ID]
+				from := step.ID
+				if step.PolicyOf != "" {
+					from = step.PolicyOf
+				}
+				q["settings"] = p["by_step"].(map[string][]policy.StepSetting)[from]
 				in["policy"] = q
 			} else {
 				in["policy_error"] = err.Error()

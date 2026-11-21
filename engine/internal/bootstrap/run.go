@@ -138,7 +138,10 @@ type Options struct {
 	BreakGlass  []BreakGlassUser
 	// AuditReader, when set, is a read-only account for box audit (SPEC
 	// §26): Global Reader, Security Reader and Reports Reader, nothing else.
-	AuditReader   *BreakGlassUser
+	AuditReader *BreakGlassUser
+	// AuditScopes are the read-only delegated scopes consented for the
+	// audit reader alone (expected-state/audit-scopes.yaml).
+	AuditScopes   []string
 	GitHubRepo    string // owner/name of the company's copy; optional
 	PrimaryDomain string
 	Keys          keystore.Store
@@ -273,7 +276,11 @@ func Run(ctx context.Context, c *graph.Client, opt Options) (*Result, error) {
 		say("⏸ gate G-02: register two FIDO2 keys per break-glass account; until then they cannot sign in")
 	}
 	if r := opt.AuditReader; r != nil {
-		if err := ensureAuditReader(ctx, c, *r, initial, say); err != nil {
+		id, err := ensureAuditReader(ctx, c, *r, initial, say)
+		if err != nil {
+			return nil, err
+		}
+		if err := ensureReaderConsent(ctx, c, id, opt.AuditScopes, say); err != nil {
 			return nil, err
 		}
 	}
@@ -594,7 +601,7 @@ var AuditReaderRoles = []string{"Global Reader", "Security Reader", "Reports Rea
 // ensureAuditReader creates the read-only audit account with a random
 // password nobody sees: the owner sets one in the Microsoft 365 admin centre
 // (Users > Reset password), so no sign-in secret passes through the box.
-func ensureAuditReader(ctx context.Context, c *graph.Client, u BreakGlassUser, domain string, say func(string, ...any)) error {
+func ensureAuditReader(ctx context.Context, c *graph.Client, u BreakGlassUser, domain string, say func(string, ...any)) (string, error) {
 	upn := u.Alias + "@" + domain
 	var existing struct{ ID string }
 	err := c.Get(ctx, "/users/"+url.PathEscape(upn)+"?$select=id", &existing)
@@ -609,18 +616,78 @@ func ensureAuditReader(ctx context.Context, c *graph.Client, u BreakGlassUser, d
 			"accountEnabled": true, "displayName": u.DisplayName, "mailNickname": u.Alias, "userPrincipalName": upn,
 			"passwordProfile": map[string]any{"password": "Rd!" + base64.RawURLEncoding.EncodeToString(pw), "forceChangePasswordNextSignIn": true},
 		}, &created); err != nil {
-			return fmt.Errorf("create audit reader %s: %w", upn, err)
+			return "", fmt.Errorf("create audit reader %s: %w", upn, err)
 		}
 		existing.ID = created.ID
 		say("+ audit reader %s created; set its password in the Microsoft 365 admin centre (Users > Reset password)", upn)
 	default:
-		return err
+		return "", err
 	}
 	for _, r := range AuditReaderRoles {
 		if err := ensureRole(ctx, c, existing.ID, r, say, upn); err != nil {
-			return err
+			return "", err
 		}
 	}
 	say("✓ audit reader %s holds only: %s", upn, strings.Join(AuditReaderRoles, ", "))
+	return existing.ID, nil
+}
+
+// GraphCLIAppID is the Microsoft Graph Command Line Tools client the box
+// signs in with (bootstrap and audit).
+const GraphCLIAppID = "14d82eec-204b-4c2f-b7e8-296a70dab67e"
+
+// ensureReaderConsent consents the read-only audit scopes for the audit
+// reader alone (consentType Principal): nobody else gains anything, and
+// the reader needs no admin approval at sign-in.
+func ensureReaderConsent(ctx context.Context, c *graph.Client, readerID string, scopes []string, say func(string, ...any)) error {
+	if len(scopes) == 0 {
+		return nil
+	}
+	for _, sc := range scopes {
+		if strings.Contains(sc, "ReadWrite") || !strings.Contains(sc, ".Read") {
+			return fmt.Errorf("audit scope %q is not read-only", sc)
+		}
+	}
+	cli, err := resourceByAppID(ctx, c, GraphCLIAppID)
+	if err != nil {
+		return err
+	}
+	gr, err := resourceByAppID(ctx, c, Resources["graph"])
+	if err != nil {
+		return err
+	}
+	type grant struct {
+		ID    string `json:"id"`
+		Scope string `json:"scope"`
+	}
+	have, err := graph.List[grant](ctx, c, "/oauth2PermissionGrants?$filter="+url.QueryEscape("clientId eq '"+cli.ID+"' and principalId eq '"+readerID+"' and resourceId eq '"+gr.ID+"'"))
+	if err != nil {
+		return err
+	}
+	want := strings.Join(scopes, " ")
+	if len(have) == 0 {
+		if err := retry(ctx, func() error {
+			return c.Do(ctx, http.MethodPost, "/oauth2PermissionGrants", map[string]any{"clientId": cli.ID, "consentType": "Principal",
+				"principalId": readerID, "resourceId": gr.ID, "scope": want}, nil)
+		}); err != nil {
+			return fmt.Errorf("consent audit scopes for the reader: %w", err)
+		}
+		say("+ %d read-only scope(s) consented for the audit reader only", len(scopes))
+		return nil
+	}
+	cur := map[string]bool{}
+	for _, s := range strings.Fields(have[0].Scope) {
+		cur[s] = true
+	}
+	missing := false
+	for _, s := range scopes {
+		missing = missing || !cur[s]
+	}
+	if missing || len(cur) != len(scopes) {
+		if err := c.Do(ctx, http.MethodPatch, "/oauth2PermissionGrants/"+have[0].ID, map[string]any{"scope": want}, nil); err != nil {
+			return fmt.Errorf("update audit reader consent: %w", err)
+		}
+		say("+ audit reader consent set to %d read-only scope(s)", len(scopes))
+	}
 	return nil
 }

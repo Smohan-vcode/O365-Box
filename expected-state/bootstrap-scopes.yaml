@@ -12,3 +12,4 @@ delegated:
   - Group.ReadWrite.All
   - Directory.Read.All
   - Policy.Read.All          # discovery: security defaults and Conditional Access state (SPEC §18.3)
+  - DelegatedPermissionGrant.ReadWrite.All   # read-only audit scopes consented for the audit reader only (SPEC §26)

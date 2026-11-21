@@ -10,6 +10,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/Smohan-vcode/O365-Box/engine/internal/audit"
 	"github.com/Smohan-vcode/O365-Box/engine/internal/auth"
 	"github.com/Smohan-vcode/O365-Box/engine/internal/bootstrap"
 	"github.com/Smohan-vcode/O365-Box/engine/internal/config"
@@ -119,10 +120,16 @@ func newBootstrapCmd(g *globals) *cobra.Command {
 			}
 			say := func(f string, a ...any) { fmt.Fprintf(out, f+"\n", a...) }
 			var reader *bootstrap.BreakGlassUser
+			var readerScopes []string
 			if auditReader != "" {
 				reader = &bootstrap.BreakGlassUser{Alias: auditReader, DisplayName: "Audit reader (read-only)"}
+				sc, err := audit.LoadScopes(filepath.Join(root, audit.ScopesFile))
+				if err != nil {
+					return err
+				}
+				readerScopes = sc.Delegated
 			}
-			res, err := bootstrap.Run(ctx, admin, bootstrap.Options{Tenant: tenant, Permissions: perms, BreakGlass: bg, AuditReader: reader,
+			res, err := bootstrap.Run(ctx, admin, bootstrap.Options{Tenant: tenant, Permissions: perms, BreakGlass: bg, AuditReader: reader, AuditScopes: readerScopes,
 				GitHubRepo: repo, PrimaryDomain: cfg.Company.PrimaryDomain, Keys: ks, Say: say})
 			// R12: the Global Administrator token is dropped here and never stored.
 			tok.Access, admin = "", nil

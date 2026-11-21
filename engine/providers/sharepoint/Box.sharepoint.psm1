@@ -194,27 +194,47 @@ function Get-LibraryChanges($In, [switch] $Apply) {
 # ---------- sharepoint.register ----------
 $TypeMap = @{ id = 'Text'; text = 'Text'; email = 'Text'; url = 'Text'; long = 'Note'; json = 'Note'; enum = 'Choice'; date = 'DateTime'; datetime = 'DateTime'; number = 'Number'; bool = 'Boolean' }
 function Get-AdminSiteUrl($In) {
-  $a = @($In.config.structure.sites | Where-Object { $_.name -eq 'Admin' })[0]
-  return Get-SiteUrl $In $a.url
+  $a = @($In.config.structure.sites | Where-Object { $_.name -eq 'Admin' })
+  if ($a.Count -ne 1) { throw "the step's input has no Admin site: add 'structure' to its reads" }
+  return Get-SiteUrl $In $a[0].url
 }
 function Get-RegisterChanges($In, [switch] $Apply) {
   $changes = @()
   $sc = Connect-Site (Get-AdminSiteUrl $In)
   $def = $In.defaults.lists
   $lists = $def.lists.PSObject.Properties
+  # A register list's title may be held by a library (the default library
+  # is titled "Documents"): rename the library and remove register columns
+  # a previous run added to it by mistake.
+  foreach ($lp in $lists) {
+    $other = Get-PnPList -Identity $lp.Name -Includes BaseTemplate, RootFolder -Connection $sc -ErrorAction SilentlyContinue
+    if ($other -and $other.BaseTemplate -eq 101) {
+      $changes += New-BoxChange update "rename library '$($lp.Name)' to 'Site documents'" 'its title belongs to a register list'
+      if ($Apply) {
+        Set-PnPList -Identity $other.Id -Title 'Site documents' -Connection $sc -ErrorAction Stop | Out-Null
+        foreach ($col in @($lp.Value.columns)) {
+          if (Get-PnPField -List $other.Id -Identity ([string]$col.name) -Connection $sc -ErrorAction SilentlyContinue) {
+            Remove-PnPField -List $other.Id -Identity ([string]$col.name) -Force -Connection $sc -ErrorAction Stop
+          }
+        }
+      }
+    }
+  }
   # Pass 1: lists and plain columns. Pass 2: lookups (every list exists by then).
+  # Register lists are found by URL (Lists/<name>), never by title alone.
   foreach ($pass in 1, 2) {
     foreach ($lp in $lists) {
       $name = $lp.Name
-      $list = Get-PnPList -Identity $name -Connection $sc -ErrorAction SilentlyContinue
+      $list = Get-PnPList -Identity "Lists/$name" -Connection $sc -ErrorAction SilentlyContinue
       if (-not $list) {
         if ($pass -eq 2) { continue }
         $changes += New-BoxChange create "list $name"
         if (-not $Apply) { continue }
-        $list = New-PnPList -Title $name -Url "Lists/$name" -Template GenericList -EnableVersioning -Connection $sc -ErrorAction Stop
+        try { $list = New-PnPList -Title $name -Url "Lists/$name" -Template GenericList -EnableVersioning -Connection $sc -ErrorAction Stop }
+        catch { throw "create list '$name': $($_.Exception.Message)" }
       }
       $have = @{}
-      foreach ($f in @(Get-PnPField -List $name -Connection $sc)) { $have[[string]$f.InternalName] = $f }
+      foreach ($f in @(Get-PnPField -List $list.Id -Connection $sc)) { $have[[string]$f.InternalName] = $f }
       foreach ($col in @($lp.Value.columns)) {
         $type = [string]$col.type
         $isRef = $type -like 'ref(*'
@@ -224,23 +244,23 @@ function Get-RegisterChanges($In, [switch] $Apply) {
         if (-not $Apply) { continue }
         if ($isRef) {
           $target = $type.Substring(4).TrimEnd(')')
-          $tl = Get-PnPList -Identity $target -Connection $sc -ErrorAction Stop
+          $tl = Get-PnPList -Identity "Lists/$target" -Connection $sc -ErrorAction Stop
           $xml = "<Field Type='Lookup' DisplayName='$($col.name)' Name='$($col.name)' StaticName='$($col.name)' List='{$($tl.Id)}' ShowField='Title' Indexed='TRUE' />"
-          Add-PnPFieldFromXml -List $name -FieldXml $xml -Connection $sc -ErrorAction Stop | Out-Null
+          Add-PnPFieldFromXml -List $list.Id -FieldXml $xml -Connection $sc -ErrorAction Stop | Out-Null
           continue
         }
-        $p = @{ List = $name; DisplayName = [string]$col.name; InternalName = [string]$col.name; Type = $TypeMap[$type]; Connection = $sc; ErrorAction = 'Stop' }
+        $p = @{ List = $list.Id; DisplayName = [string]$col.name; InternalName = [string]$col.name; Type = $TypeMap[$type]; Connection = $sc; ErrorAction = 'Stop' }
         if ($type -eq 'enum') { $p.Choices = @($def.enums.([string]$col.enum)) ; if (-not $p.Choices) { $p.Choices = @('value') } }
         if ($col.required) { $p.Required = $true }
         Add-PnPField @p | Out-Null
         if ($type -eq 'id') {
-          Set-PnPField -List $name -Identity ([string]$col.name) -Values @{ Indexed = $true; EnforceUniqueValues = $true } -Connection $sc -ErrorAction Stop | Out-Null
+          Set-PnPField -List $list.Id -Identity ([string]$col.name) -Values @{ Indexed = $true; EnforceUniqueValues = $true } -Connection $sc -ErrorAction Stop | Out-Null
         }
       }
     }
   }
   # Events: append-only (R10). Owners read; the flow owner may only add.
-  $ev = Get-PnPList -Identity 'Events' -Includes HasUniqueRoleAssignments -Connection $sc -ErrorAction SilentlyContinue
+  $ev = Get-PnPList -Identity 'Lists/Events' -Includes HasUniqueRoleAssignments -Connection $sc -ErrorAction SilentlyContinue
   if ($ev -and -not $ev.HasUniqueRoleAssignments) {
     $changes += New-BoxChange update 'Events append-only permissions'
     if ($Apply) {

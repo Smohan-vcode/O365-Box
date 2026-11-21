@@ -29,10 +29,10 @@ steps:
     task: T3-03
     module: records
     depends_on: [sharepoint.libraries]
-    reads: [tenant, users]
+    reads: [tenant, users, structure]
   - id: sharepoint.config-store
     title: Configuration store and Dictionary
     track: T0
     task: T0-06
     depends_on: [sharepoint.register]
-    reads: ["@document", "@dictionary", company, tenant]
+    reads: ["@document", "@dictionary", company, tenant, structure]

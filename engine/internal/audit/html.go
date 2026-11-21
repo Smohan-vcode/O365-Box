@@ -56,7 +56,7 @@ ul{margin:4px 0;padding-left:20px}
 <tbody>{{range .P.Assessment.Controls}}
 <tr id="{{.ID}}"><td><b>{{.ID}}</b>{{if .Title}}<br><span class="small">{{.Title}}</span>{{end}}</td>
 <td class="s {{cls .Status}}">{{.Status}}</td>
-<td>{{range .Requirements}}<div><span class="{{cls .Status}}">{{.ID}}</span> <span class="small">{{.Statement}}</span></div>{{end}}{{if .Documents}}<div class="small">documents needed: {{join .Documents ", "}}</div>{{end}}</td>
+<td>{{range .Requirements}}<div><span class="{{cls .Status}}">{{.ID}}</span> <span class="small">{{.Statement}}{{if .Document}} ({{.Document}}{{if .Documents}}: {{.Documents}}{{end}}){{end}}</span></div>{{end}}{{if .Documents}}<div class="small">documents needed: {{join .Documents ", "}}</div>{{end}}</td>
 <td class="small">{{.Gap}}</td>
 <td class="small">{{range .Evidence}}<div><a href="{{.}}">{{.}}</a></div>{{end}}</td></tr>{{end}}
 </tbody></table></div>

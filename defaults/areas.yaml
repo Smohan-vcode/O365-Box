@@ -41,7 +41,7 @@ areas:
     title: Apps and automation
     plain: Office apps, AI features and the company's automated flows.
     behind: [Microsoft 365 apps, Power Platform]
-    steps: [powerplatform., policy.m365-apps, policy.powerplatform, policy.powerplatform.]
+    steps: [powerplatform., policy.m365-apps, policy.power-platform, policy.power-platform.]
   - id: web-address
     title: Your web address
     plain: The lock on your domain name and its DNS records.

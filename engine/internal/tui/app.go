@@ -19,8 +19,23 @@ type Options struct {
 	Theme     string             // auto | dark | light | plain
 	Keys      draft.KeySource    // fixed key source (tests); nil picks keychain or passphrase
 	Keychain  func() bool        // reports keychain availability; default draft.KeychainAvailable
-	Choices   *choices.Catalogue // defaults/choices.yaml; nil keeps Security and Structure as outlines
+	Choices   *choices.Catalogue // defaults/choices.yaml; nil keeps "How careful" as an outline
 	Build     BuildFeed          // starts the build; nil shows the outline only
+
+	// Review and approve (SPEC §25).
+	Areas    []Area                              // defaults/areas.yaml; nil shows an empty Review
+	AreaInfo func(Selection) map[string]AreaInfo // the plan by area; nil leaves the counts out
+	Approve  func(area, decision string) error   // records a decision (Approved or NotNow)
+	Domain   string                              // the primary domain typed to confirm; "" uses the draft's
+	Detected map[string]bool                     // discovery facts by choices detect key
+
+	// After the build.
+	Home    func() []AreaStatus // status per area from the last check; nil: no home screen
+	Enforce func(area string) error
+
+	// Audit runs the read-only audit (box audit, SPEC §26) after the TUI
+	// closes; nil explains the path only.
+	Audit func()
 }
 
 type phase int
@@ -29,6 +44,14 @@ const (
 	phaseUnlock phase = iota
 	phaseWelcome
 	phaseWizard
+	phaseAudit
+	phaseHome
+)
+
+// The two ways in from the welcome screen.
+const (
+	pathSetup = iota
+	pathAudit
 )
 
 // Model is the Bubble Tea model of the onboarding wizard.
@@ -50,8 +73,14 @@ type Model struct {
 	newDraft bool
 	frame    int  // animation frame (tickMsg)
 	ticking  bool // a tick is scheduled
+	path     int  // welcome screen: pathSetup or pathAudit
+	home     []AreaStatus
+	homeCur  int
 	Saved    bool // set when the model quit after saving
-	Err      error
+	// AuditChosen is set when the owner chose "Prepare for an audit" and
+	// started it; Run then calls Options.Audit.
+	AuditChosen bool
+	Err         error
 }
 
 var themeCycle = []string{"dark", "light", "plain"}
@@ -59,13 +88,8 @@ var themeCycle = []string{"dark", "light", "plain"}
 // New builds the model. It opens the draft with the keychain when the
 // machine has one; otherwise it asks for a passphrase first.
 func New(opt Options) *Model {
-	m := &Model{opt: opt, steps: Steps(opt.Choices), w: 80, h: 24, d: draft.New()}
+	m := &Model{opt: opt, steps: Steps(opt), w: 80, h: 24, d: draft.New()}
 	m.th = ThemeFor(opt.Theme)
-	if opt.Build != nil {
-		if b, ok := m.steps[len(m.steps)-1].(*buildScreen); ok {
-			b.feed = opt.Build
-		}
-	}
 	for i, n := range themeCycle {
 		if n == m.th.Name {
 			m.themeIdx = i
@@ -200,6 +224,10 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			model, cmd = m.updateUnlock(msg)
 		case phaseWelcome:
 			model, cmd = m.updateWelcome(msg)
+		case phaseAudit:
+			model, cmd = m.updateAudit(msg)
+		case phaseHome:
+			model, cmd = m.updateHome(msg)
 		default:
 			model, cmd = m.updateWizard(msg)
 		}
@@ -212,7 +240,15 @@ func (m *Model) updateWelcome(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch msg.String() {
 	case "ctrl+c", "esc", "q":
 		return m, tea.Quit
+	case "up", "k", "shift+tab":
+		m.path = pathSetup
+	case "down", "j", "tab":
+		m.path = pathAudit
 	case "enter", " ":
+		if m.path == pathAudit {
+			m.phase = phaseAudit
+			return m, nil
+		}
 		m.phase = phaseWizard
 		m.status = "Let's go! Answers save as you move between steps."
 	case "ctrl+t":
@@ -284,6 +320,10 @@ func (m *Model) updateWizard(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.status = "Theme: " + m.th.Name
 		return m, nil
 	}
+	if b, ok := m.steps[m.cur].(*buildScreen); ok && b.ended && msg.String() == "enter" && m.opt.Home != nil {
+		m.openHome()
+		return m, nil
+	}
 	cmd := m.steps[m.cur].Update(msg, m.d)
 	if msg.String() == "enter" || msg.String() == " " {
 		m.save()
@@ -304,12 +344,18 @@ func (m *Model) View() string {
 		return fit(m.viewUnlock(w), w, h)
 	}
 	if m.phase == phaseWelcome {
-		v := m.welcomeCentered(w)
+		v := m.welcomeCentered(w, h)
 		top := (h - strings.Count(v, "\n") - 1) / 2
 		if top > 0 {
 			v = strings.Repeat("\n", top) + v
 		}
 		return fit(v, w, h)
+	}
+	if m.phase == phaseAudit {
+		return fit(m.viewAudit(w), w, h)
+	}
+	if m.phase == phaseHome {
+		return fit(m.viewHome(w, h), w, h)
 	}
 	th := m.th
 	s := m.steps[m.cur]
@@ -461,8 +507,12 @@ func Run(opt Options) error {
 	if err != nil {
 		return err
 	}
-	if fm, ok := final.(*Model); ok && fm.Saved {
+	fm, ok := final.(*Model)
+	if ok && fm.Saved {
 		fmt.Println("Your answers are saved. Run box again to continue where you left off.")
+	}
+	if ok && fm.AuditChosen && opt.Audit != nil {
+		opt.Audit()
 	}
 	return nil
 }

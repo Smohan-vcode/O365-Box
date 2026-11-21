@@ -49,6 +49,12 @@ func (f *tuiFlags) run() error {
 			if cat, err := choices.Load(filepath.Join(root, "defaults", "choices.yaml")); err == nil {
 				opt.Choices = cat
 			}
+			if areas, err := tui.LoadAreas(filepath.Join(root, "defaults", "areas.yaml")); err == nil {
+				opt.Areas = areas
+				if opt.Choices != nil {
+					opt.AreaInfo = areaInfo(root, areas, opt.Choices)
+				}
+			}
 		}
 	}
 	return tui.Run(opt)

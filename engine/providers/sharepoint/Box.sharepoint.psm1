@@ -1133,9 +1133,22 @@ function Get-PolicyPdf($In, $Site, [string] $Lib, [string] $Name) {
   $it = Invoke-BoxGraph -Uri "/drives/$($d.id)/root:/$([uri]::EscapeDataString($Name))?`$select=id"
   $tmp = [IO.Path]::GetTempFileName()
   try {
-    # The redirect to the converted file carries its own authorisation; PowerShell drops the header on it.
-    Invoke-WebRequest -Uri "https://graph.microsoft.com/v1.0/drives/$($d.id)/items/$($it.id)/content?format=pdf" `
-      -Headers @{ Authorization = 'Bearer ' + (Get-BoxAuth 'graph').access_token } -OutFile $tmp -ErrorAction Stop | Out-Null
+    # Graph answers 302 with a pre-authorised link to the converted file,
+    # on a conversion host (not graph.microsoft.com); follow it without the
+    # bearer token and name the host if the network refuses it.
+    $h = [System.Net.Http.HttpClientHandler]::new(); $h.AllowAutoRedirect = $false
+    $hc = [System.Net.Http.HttpClient]::new($h)
+    try {
+      $rq = [System.Net.Http.HttpRequestMessage]::new('GET', "https://graph.microsoft.com/v1.0/drives/$($d.id)/items/$($it.id)/content?format=pdf")
+      $rq.Headers.Authorization = [System.Net.Http.Headers.AuthenticationHeaderValue]::new('Bearer', (Get-BoxAuth 'graph').access_token)
+      $r = $hc.SendAsync($rq).GetAwaiter().GetResult()
+      $code = [int]$r.StatusCode
+      if ($code -ge 400) { throw "PDF conversion failed: HTTP $code" }
+      $loc = if ($r.Headers.Location) { [string]$r.Headers.Location } else { '' }
+      if (-not $loc) { return $r.Content.ReadAsByteArrayAsync().GetAwaiter().GetResult() }
+    } finally { $hc.Dispose() }
+    try { Invoke-WebRequest -Uri $loc -OutFile $tmp -ErrorAction Stop | Out-Null }
+    catch { throw "PDF download from $(([uri]$loc).Host) failed: $($_.Exception.Message)" }
     return [IO.File]::ReadAllBytes($tmp)
   } finally { Remove-Item $tmp -Force -ErrorAction SilentlyContinue }
 }

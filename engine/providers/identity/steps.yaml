@@ -2,7 +2,7 @@
 # authentication methods and Conditional Access (T1). One Microsoft module
 # per provider (spike S-05).
 provider: identity
-modules: [Microsoft.Graph.Authentication]
+modules: []   # Graph over REST (common/BoxGraph.psm1)
 steps:
   - id: identity.break-glass
     title: Break-glass accounts and exclusion group

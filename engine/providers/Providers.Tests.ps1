@@ -64,22 +64,22 @@ Describe 'Graph helper result shapes' {
     function global:Get-BoxAuth { @{ access_token = 'x' } }
   }
   It 'returns an empty array for an empty collection' {
-    Mock -ModuleName BoxGraph Invoke-BoxGraph { @{ value = @() } }
+    Mock -ModuleName BoxGraph Invoke-BoxGraph { [pscustomobject]@{ value = @() } }
     @(Get-BoxGraphAll '/x').Count | Should -Be 0
   }
   It 'returns every item across pages' {
     $script:page = 0
     Mock -ModuleName BoxGraph Invoke-BoxGraph {
       $script:page++
-      if ($script:page -eq 1) { @{ value = @(@{ id = 'a' }); '@odata.nextLink' = 'https://graph.microsoft.com/v1.0/next' } }
-      else { @{ value = @(@{ id = 'b' }) } }
+      if ($script:page -eq 1) { [pscustomobject]@{ value = @([pscustomobject]@{ id = 'a' }); '@odata.nextLink' = 'https://graph.microsoft.com/v1.0/next' } }
+      else { [pscustomobject]@{ value = @([pscustomobject]@{ id = 'b' }) } }
     }
     $r = @(Get-BoxGraphAll '/x')
     $r.Count | Should -Be 2
     $r[1].id | Should -Be 'b'
   }
   It 'returns one item as a one-element array' {
-    Mock -ModuleName BoxGraph Invoke-BoxGraph { @{ value = @(@{ id = 'only'; a = 1; b = 2 }) } }
+    Mock -ModuleName BoxGraph Invoke-BoxGraph { [pscustomobject]@{ value = @([pscustomobject]@{ id = 'only'; a = 1; b = 2 }) } }
     @(Get-BoxGraphAll '/x').Count | Should -Be 1
   }
 }

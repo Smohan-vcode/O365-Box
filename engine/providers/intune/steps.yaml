@@ -2,5 +2,5 @@
 # One Microsoft module per provider (spike S-05). Steps are added by the
 # tasks named above; each needs a handler in Box.intune.psm1.
 provider: intune
-modules: [Microsoft.Graph.Authentication]
+modules: []   # Graph over REST (common/BoxGraph.psm1)
 steps: []

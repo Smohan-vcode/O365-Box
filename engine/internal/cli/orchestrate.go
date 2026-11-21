@@ -192,9 +192,16 @@ func (s *session) appCredentials() error {
 		}
 		s.red.AddSecret(tok.Access)
 		out := map[string]any{"app": map[string]any{"access_token": tok.Access, "resource": res}}
-		if provider == "identity" || provider == "intune" || provider == "teams" {
-			// Graph is also needed by the providers that call it alongside their own API.
+		if res == "https://graph.microsoft.com" {
 			out["graph"] = out["app"]
+		} else {
+			// Providers also read Graph (for example group members) over REST.
+			g, err := cred.Token(ctx, "https://graph.microsoft.com")
+			if err != nil {
+				return nil, err
+			}
+			s.red.AddSecret(g.Access)
+			out["graph"] = map[string]any{"access_token": g.Access}
 		}
 		return out, nil
 	}

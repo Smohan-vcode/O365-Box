@@ -2,6 +2,8 @@
 # shared: shared mailbox, no licence, sign-in blocked; access group gets
 #   full access and send-as. recommended: preselected in the TUI.
 # lists: distribution lists; members are user ids or shared mailbox names.
+# display_name: name shown in the address book; Exchange refuses some words
+#   in group names (for example "postmaster"), but not in the address.
 shared:
   - {name: info, aliases: [hello, contact], access: grp-staff, recommended: true}
   - {name: support, aliases: [help], access: grp-staff, auto_reply: support, recommended: true}
@@ -19,7 +21,7 @@ shared:
   - {name: quotes, access: grp-sales, module: sales, note: "receives blind copies by transport rule"}
   - {name: inbound, access: grp-admins, module: sales, note: "structured messages read by a flow"}
 lists:
-  - {name: postmaster, aliases: [hostmaster, webmaster], members: [founder], external_senders: true, recommended: true}
+  - {name: postmaster, display_name: Mail operations, aliases: [hostmaster, webmaster], members: [founder], external_senders: true, recommended: true}
   - {name: dmarc, members: [founder], external_senders: true, recommended: true}
   - {name: alerts, members: [founder], external_senders: true, recommended: true}
   - {name: press, members: [founder], external_senders: true}

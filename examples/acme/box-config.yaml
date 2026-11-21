@@ -72,6 +72,7 @@ mail:
     auto_reply: privacy
   lists:
   - name: postmaster
+    display_name: Mail operations
     aliases:
     - hostmaster
     - webmaster

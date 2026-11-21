@@ -1,0 +1,821 @@
+{
+  "MOB-001": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.intune-mobile",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceAppManagement/iosManagedAppProtections and /androidManagedAppProtections (targetedAppManagementLevels 'unmanaged' or 'unspecified'); PATCH /beta/deviceManagement/deviceEnrollmentConfigurations/{default-platform-restrictions-id} to block personal enrolment",
+    "payload": {
+      "appProtection": {
+        "appGroupType": "allCoreMicrosoftApps",
+        "targetedAppManagementLevels": "unspecified",
+        "assignments": [
+          {
+            "target": {
+              "@odata.type": "#microsoft.graph.groupAssignmentTarget",
+              "groupId": "{group:grp-staff}"
+            }
+          }
+        ]
+      },
+      "enrollmentRestriction": {
+        "@odata.type": "#microsoft.graph.deviceEnrollmentPlatformRestrictionsConfiguration",
+        "iosRestriction": {
+          "platformBlocked": false,
+          "personalDeviceEnrollmentBlocked": true
+        },
+        "androidForWorkRestriction": {
+          "platformBlocked": false,
+          "personalDeviceEnrollmentBlocked": true
+        },
+        "androidRestriction": {
+          "platformBlocked": true
+        }
+      }
+    },
+    "read": "GET /beta/deviceAppManagement/iosManagedAppProtections?$expand=assignments ; GET /beta/deviceAppManagement/androidManagedAppProtections?$expand=assignments ; GET /beta/deviceManagement/deviceEnrollmentConfigurations",
+    "check": "an iOS and an Android app protection policy exist, isAssigned == true for grp-staff; default platform restriction iosRestriction.personalDeviceEnrollmentBlocked == true and androidForWorkRestriction.personalDeviceEnrollmentBlocked == true; Conditional Access requires an app protection policy on iOS/Android (entra area)",
+    "permissions": [
+      "graph:DeviceManagementApps.ReadWrite.All",
+      "graph:DeviceManagementServiceConfig.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC: IntuneAppProtectionPolicyiOS/Android, IntuneDeviceEnrollmentPlatformRestriction"
+    },
+    "verified": "appManagementLevel, targetedManagedAppGroupType and deviceEnrollmentPlatformRestriction.personalDeviceEnrollmentBlocked confirmed in beta $metadata. Not verified on the tenant: app protection GET 403 (needs DeviceManagementApps.Read.All); enrolment restriction GET not attempted with the needed scope (DeviceManagementServiceConfig.Read.All not granted).",
+    "notes": "Blocking personal enrolment stops personal phones from enrolling; app protection without enrolment then protects the data. The 'require app protection policy' Conditional Access grant belongs to the entra area and must exist for this to bite. Android device administrator enrolment is blocked outright (deprecated). Needs DeviceManagementApps.ReadWrite.All and DeviceManagementServiceConfig.ReadWrite.All (neither granted)."
+  },
+  "MOB-002": {
+    "status": "gate",
+    "provider": "intune",
+    "step": "policy.intune-mobile",
+    "method": "portal",
+    "apply": "Gate: connect Apple Business Manager (ADE token) and bind managed Google Play in the Intune admin centre; then POST /beta/deviceManagement/depOnboardingSettings/{dep:id}/enrollmentProfiles (depIOSEnrollmentProfile supervisedModeEnabled true) and POST /beta/deviceManagement/androidDeviceOwnerEnrollmentProfiles (enrollmentMode corporateOwnedFullyManaged)",
+    "payload": {
+      "guide": "Intune admin centre > Devices > Enrollment > Apple > Enrollment program tokens: upload the token from Apple Business Manager. Devices > Enrollment > Android > Managed Google Play: sign in with a company Google account and bind. Company phones are bought through or added to Apple Business Manager / zero-touch.",
+      "ios": {
+        "@odata.type": "#microsoft.graph.depIOSEnrollmentProfile",
+        "displayName": "Box iOS corporate",
+        "supervisedModeEnabled": true,
+        "requiresUserAuthentication": true,
+        "isMandatory": true,
+        "profileRemovalDisabled": true
+      },
+      "android": {
+        "@odata.type": "#microsoft.graph.androidDeviceOwnerEnrollmentProfile",
+        "displayName": "Box Android fully managed",
+        "enrollmentMode": "corporateOwnedFullyManaged",
+        "enrollmentTokenType": "default"
+      }
+    },
+    "read": "GET /beta/deviceManagement/androidManagedStoreAccountEnterpriseSettings ; GET /beta/deviceManagement/depOnboardingSettings ; GET .../enrollmentProfiles",
+    "check": "androidManagedStoreAccountEnterpriseSettings.bindStatus == 'bound' and androidDeviceOwnerFullyManagedEnrollmentEnabled == true; an ADE token with a valid expiry; the default iOS ADE profile has supervisedModeEnabled == true",
+    "permissions": [
+      "graph:DeviceManagementServiceConfig.ReadWrite.All",
+      "graph:DeviceManagementConfiguration.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done"
+    },
+    "verified": "GET /beta/deviceManagement/androidManagedStoreAccountEnterpriseSettings returned 200 (bindStatus notBound on the test tenant). GET /beta/deviceManagement/depOnboardingSettings returned 403 (needs DeviceManagementServiceConfig.Read.All / ReadWrite.All, not granted). supervisedModeEnabled and androidDeviceOwnerEnrollmentMode confirmed in beta $metadata.",
+    "notes": "Enhanced tier. The ADE token and the Google binding are human portal steps with company accounts, like G-07; propose gates. After them the profiles are API-applied. Needs DeviceManagementServiceConfig.ReadWrite.All (not granted)."
+  },
+  "MOB-003": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.intune-mobile",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceManagement/deviceCompliancePolicies, one policy per platform ('Box iOS compliance', 'Box Android work profile compliance', 'Box Android fully managed compliance'), each with scheduledActionsForRule block/0 h; PATCH .../{id} to update; POST .../{id}/assign",
+    "payload": {
+      "ios": {
+        "@odata.type": "#microsoft.graph.iosCompliancePolicy",
+        "securityBlockJailbrokenDevices": true
+      },
+      "androidWorkProfile": {
+        "@odata.type": "#microsoft.graph.androidWorkProfileCompliancePolicy",
+        "securityBlockJailbrokenDevices": true
+      },
+      "androidDeviceOwner": {
+        "@odata.type": "#microsoft.graph.androidDeviceOwnerCompliancePolicy",
+        "securityBlockJailbrokenDevices": true
+      }
+    },
+    "read": "GET /beta/deviceManagement/deviceCompliancePolicies/{id}",
+    "check": "securityBlockJailbrokenDevices == true on all three policies",
+    "permissions": [
+      "graph:DeviceManagementConfiguration.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalents: IntuneDeviceCompliancePolicyiOS, IntuneDeviceCompliancePolicyAndroidWorkProfile, IntuneDeviceCompliancePolicyAndroidDeviceOwner"
+    },
+    "verified": "properties present on microsoft.graph.iosCompliancePolicy / androidWorkProfileCompliancePolicy / androidDeviceOwnerCompliancePolicy in the test tenant's beta $metadata; GET /beta/deviceManagement/deviceCompliancePolicies returned 200 (none yet)",
+    "notes": ""
+  },
+  "MOB-004": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.intune-mobile",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceManagement/deviceCompliancePolicies, one policy per platform ('Box iOS compliance', 'Box Android work profile compliance', 'Box Android fully managed compliance'), each with scheduledActionsForRule block/0 h; PATCH .../{id} to update; POST .../{id}/assign",
+    "payload": {
+      "ios": {
+        "@odata.type": "#microsoft.graph.iosCompliancePolicy",
+        "osMinimumVersion": "{config:devices.ios.minimum_version}"
+      },
+      "androidWorkProfile": {
+        "@odata.type": "#microsoft.graph.androidWorkProfileCompliancePolicy",
+        "osMinimumVersion": "{config:devices.android.minimum_version}"
+      },
+      "androidDeviceOwner": {
+        "@odata.type": "#microsoft.graph.androidDeviceOwnerCompliancePolicy",
+        "osMinimumVersion": "{config:devices.android.minimum_version}"
+      }
+    },
+    "read": "GET /beta/deviceManagement/deviceCompliancePolicies/{id}",
+    "check": "osMinimumVersion == configured value on each policy",
+    "permissions": [
+      "graph:DeviceManagementConfiguration.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalents: IntuneDeviceCompliancePolicyiOS, IntuneDeviceCompliancePolicyAndroidWorkProfile, IntuneDeviceCompliancePolicyAndroidDeviceOwner"
+    },
+    "verified": "properties present on microsoft.graph.iosCompliancePolicy / androidWorkProfileCompliancePolicy / androidDeviceOwnerCompliancePolicy in the test tenant's beta $metadata; GET /beta/deviceManagement/deviceCompliancePolicies returned 200 (none yet)",
+    "notes": "Intune has no relative 'current minus one' value; osMinimumVersion is a fixed version string. The value must come from configuration and move with each major release (propose devices.ios.minimum_version and devices.android.minimum_version); decision on who maintains it."
+  },
+  "MOB-005": {
+    "status": "unresolved",
+    "provider": "intune",
+    "step": "policy.intune-mobile",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceManagement/deviceCompliancePolicies, one policy per platform ('Box iOS compliance', 'Box Android work profile compliance', 'Box Android fully managed compliance'), each with scheduledActionsForRule block/0 h; PATCH .../{id} to update; POST .../{id}/assign",
+    "payload": {
+      "ios": {
+        "@odata.type": "#microsoft.graph.iosCompliancePolicy",
+        "passcodeRequired": true,
+        "passcodeMinimumLength": 6,
+        "passcodeBlockSimple": true,
+        "passcodeRequiredType": "numeric"
+      },
+      "androidWorkProfile": {
+        "@odata.type": "#microsoft.graph.androidWorkProfileCompliancePolicy",
+        "passwordRequired": true,
+        "requiredPasswordComplexity": "medium",
+        "passwordRequiredType": "numericComplex",
+        "passwordMinimumLength": 6
+      },
+      "androidDeviceOwner": {
+        "@odata.type": "#microsoft.graph.androidDeviceOwnerCompliancePolicy",
+        "passwordRequired": true,
+        "passwordRequiredType": "numericComplex",
+        "passwordMinimumLength": 6
+      }
+    },
+    "read": "GET /beta/deviceManagement/deviceCompliancePolicies/{id}",
+    "check": "iOS passcodeRequired && passcodeMinimumLength == 6 && passcodeBlockSimple; Android fully managed passwordRequiredType == numericComplex && passwordMinimumLength == 6",
+    "permissions": [
+      "graph:DeviceManagementConfiguration.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalents: IntuneDeviceCompliancePolicyiOS, IntuneDeviceCompliancePolicyAndroidWorkProfile, IntuneDeviceCompliancePolicyAndroidDeviceOwner"
+    },
+    "verified": "properties present on microsoft.graph.iosCompliancePolicy / androidWorkProfileCompliancePolicy / androidDeviceOwnerCompliancePolicy in the test tenant's beta $metadata; GET /beta/deviceManagement/deviceCompliancePolicies returned 200 (none yet)",
+    "notes": "iOS and Android fully managed (device owner) deliver the value exactly. Android personally owned work profile on Android 12 and later ignores passwordRequiredType/passwordMinimumLength for the device lock and offers only requiredPasswordComplexity: medium (PIN of 4+ with no repeating or ordered sequences) or high (8+). No setting gives '6 digits, simple blocked' for the device lock there. Available: medium complexity (nearer, shorter), high complexity (stricter), or the work-profile passcode (workProfileRequirePassword, workProfilePasswordRequiredType numericComplex, workProfilePasswordMinimumLength 6), which is exact but protects only the work profile. Decision needed."
+  },
+  "MOB-006": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.intune-mobile",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceManagement/deviceCompliancePolicies, one policy per platform ('Box iOS compliance', 'Box Android work profile compliance', 'Box Android fully managed compliance'), each with scheduledActionsForRule block/0 h; PATCH .../{id} to update; POST .../{id}/assign",
+    "payload": {
+      "ios": {
+        "@odata.type": "#microsoft.graph.iosCompliancePolicy",
+        "passcodeMinutesOfInactivityBeforeLock": 5
+      },
+      "androidWorkProfile": {
+        "@odata.type": "#microsoft.graph.androidWorkProfileCompliancePolicy",
+        "passwordMinutesOfInactivityBeforeLock": 5
+      },
+      "androidDeviceOwner": {
+        "@odata.type": "#microsoft.graph.androidDeviceOwnerCompliancePolicy",
+        "passwordMinutesOfInactivityBeforeLock": 5
+      }
+    },
+    "read": "GET /beta/deviceManagement/deviceCompliancePolicies/{id}",
+    "check": "passcodeMinutesOfInactivityBeforeLock == 5 (iOS); passwordMinutesOfInactivityBeforeLock == 5 (Android)",
+    "permissions": [
+      "graph:DeviceManagementConfiguration.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalents: IntuneDeviceCompliancePolicyiOS, IntuneDeviceCompliancePolicyAndroidWorkProfile, IntuneDeviceCompliancePolicyAndroidDeviceOwner"
+    },
+    "verified": "properties present on microsoft.graph.iosCompliancePolicy / androidWorkProfileCompliancePolicy / androidDeviceOwnerCompliancePolicy in the test tenant's beta $metadata; GET /beta/deviceManagement/deviceCompliancePolicies returned 200 (none yet)",
+    "notes": ""
+  },
+  "MOB-007": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.intune-mobile",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceManagement/deviceCompliancePolicies, one policy per platform ('Box iOS compliance', 'Box Android work profile compliance', 'Box Android fully managed compliance'), each with scheduledActionsForRule block/0 h; PATCH .../{id} to update; POST .../{id}/assign",
+    "payload": {
+      "androidWorkProfile": {
+        "@odata.type": "#microsoft.graph.androidWorkProfileCompliancePolicy",
+        "storageRequireEncryption": true
+      },
+      "androidDeviceOwner": {
+        "@odata.type": "#microsoft.graph.androidDeviceOwnerCompliancePolicy",
+        "storageRequireEncryption": true
+      }
+    },
+    "read": "GET /beta/deviceManagement/deviceCompliancePolicies/{id}",
+    "check": "storageRequireEncryption == true on both Android policies",
+    "permissions": [
+      "graph:DeviceManagementConfiguration.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalents: IntuneDeviceCompliancePolicyiOS, IntuneDeviceCompliancePolicyAndroidWorkProfile, IntuneDeviceCompliancePolicyAndroidDeviceOwner"
+    },
+    "verified": "properties present on microsoft.graph.iosCompliancePolicy / androidWorkProfileCompliancePolicy / androidDeviceOwnerCompliancePolicy in the test tenant's beta $metadata; GET /beta/deviceManagement/deviceCompliancePolicies returned 200 (none yet)",
+    "notes": "Android only, as stated. iOS encrypts whenever a passcode is set."
+  },
+  "MOB-008": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.intune-mobile",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceManagement/deviceCompliancePolicies, one policy per platform ('Box iOS compliance', 'Box Android work profile compliance', 'Box Android fully managed compliance'), each with scheduledActionsForRule block/0 h; PATCH .../{id} to update; POST .../{id}/assign",
+    "payload": {
+      "androidWorkProfile": {
+        "@odata.type": "#microsoft.graph.androidWorkProfileCompliancePolicy",
+        "securityRequireSafetyNetAttestationBasicIntegrity": true,
+        "securityRequireSafetyNetAttestationCertifiedDevice": true,
+        "securityRequiredAndroidSafetyNetEvaluationType": "basic"
+      },
+      "androidDeviceOwner": {
+        "@odata.type": "#microsoft.graph.androidDeviceOwnerCompliancePolicy",
+        "securityRequireSafetyNetAttestationBasicIntegrity": true,
+        "securityRequireSafetyNetAttestationCertifiedDevice": true,
+        "securityRequiredAndroidSafetyNetEvaluationType": "basic"
+      }
+    },
+    "read": "GET /beta/deviceManagement/deviceCompliancePolicies/{id}",
+    "check": "securityRequireSafetyNetAttestationBasicIntegrity == true && securityRequireSafetyNetAttestationCertifiedDevice == true",
+    "permissions": [
+      "graph:DeviceManagementConfiguration.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalents: IntuneDeviceCompliancePolicyiOS, IntuneDeviceCompliancePolicyAndroidWorkProfile, IntuneDeviceCompliancePolicyAndroidDeviceOwner"
+    },
+    "verified": "properties present on microsoft.graph.iosCompliancePolicy / androidWorkProfileCompliancePolicy / androidDeviceOwnerCompliancePolicy in the test tenant's beta $metadata; GET /beta/deviceManagement/deviceCompliancePolicies returned 200 (none yet)",
+    "notes": "Graph still names these SafetyNet; Intune evaluates them with the Play Integrity verdict (basic integrity + device integrity). Evaluation type 'basic' (not hardwareBacked = strong integrity)."
+  },
+  "MOB-009": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.intune-mobile",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceManagement/deviceCompliancePolicies, one policy per platform ('Box iOS compliance', 'Box Android work profile compliance', 'Box Android fully managed compliance'), each with scheduledActionsForRule block/0 h; PATCH .../{id} to update; POST .../{id}/assign",
+    "payload": {
+      "androidWorkProfile": {
+        "@odata.type": "#microsoft.graph.androidWorkProfileCompliancePolicy",
+        "securityPreventInstallAppsFromUnknownSources": true,
+        "securityDisableUsbDebugging": true
+      },
+      "androidDeviceOwnerRestrictions": {
+        "@odata.type": "#microsoft.graph.androidDeviceOwnerGeneralDeviceConfiguration",
+        "displayName": "Box Android fully managed restrictions",
+        "appsAllowInstallFromUnknownSources": false,
+        "securityDeveloperSettingsEnabled": false
+      }
+    },
+    "read": "GET /beta/deviceManagement/deviceCompliancePolicies/{id}",
+    "check": "work profile: securityPreventInstallAppsFromUnknownSources == true && securityDisableUsbDebugging == true; fully managed: device restrictions appsAllowInstallFromUnknownSources == false && securityDeveloperSettingsEnabled == false",
+    "permissions": [
+      "graph:DeviceManagementConfiguration.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalents: IntuneDeviceCompliancePolicyiOS, IntuneDeviceCompliancePolicyAndroidWorkProfile, IntuneDeviceCompliancePolicyAndroidDeviceOwner"
+    },
+    "verified": "properties present on microsoft.graph.iosCompliancePolicy / androidWorkProfileCompliancePolicy / androidDeviceOwnerCompliancePolicy in the test tenant's beta $metadata; GET /beta/deviceManagement/deviceCompliancePolicies returned 200 (none yet)",
+    "notes": "Fully managed devices have no compliance property for these; they are blocked by the device restriction profile androidDeviceOwnerGeneralDeviceConfiguration (POST /beta/deviceManagement/deviceConfigurations: appsAllowInstallFromUnknownSources false, securityDeveloperSettingsEnabled false), which prevents rather than reports."
+  },
+  "MOB-010": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.intune-mobile",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceManagement/deviceCompliancePolicies, one policy per platform ('Box iOS compliance', 'Box Android work profile compliance', 'Box Android fully managed compliance'), each with scheduledActionsForRule block/0 h; PATCH .../{id} to update; POST .../{id}/assign",
+    "payload": {
+      "ios": {
+        "@odata.type": "#microsoft.graph.iosCompliancePolicy",
+        "deviceThreatProtectionEnabled": true,
+        "deviceThreatProtectionRequiredSecurityLevel": "low"
+      },
+      "androidWorkProfile": {
+        "@odata.type": "#microsoft.graph.androidWorkProfileCompliancePolicy",
+        "deviceThreatProtectionEnabled": true,
+        "deviceThreatProtectionRequiredSecurityLevel": "low"
+      },
+      "androidDeviceOwner": {
+        "@odata.type": "#microsoft.graph.androidDeviceOwnerCompliancePolicy",
+        "deviceThreatProtectionEnabled": true,
+        "deviceThreatProtectionRequiredSecurityLevel": "low"
+      }
+    },
+    "read": "GET /beta/deviceManagement/deviceCompliancePolicies/{id}",
+    "check": "deviceThreatProtectionEnabled == true && deviceThreatProtectionRequiredSecurityLevel == 'low' (allows secured and low) on each policy; MDE mobile threat defence connector partnerState == 'enabled' with iOS and Android compliance evaluation on",
+    "permissions": [
+      "graph:DeviceManagementConfiguration.ReadWrite.All",
+      "graph:DeviceManagementServiceConfig.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalents: IntuneDeviceCompliancePolicyiOS, IntuneDeviceCompliancePolicyAndroidWorkProfile, IntuneDeviceCompliancePolicyAndroidDeviceOwner"
+    },
+    "verified": "properties present on microsoft.graph.iosCompliancePolicy / androidWorkProfileCompliancePolicy / androidDeviceOwnerCompliancePolicy in the test tenant's beta $metadata; GET /beta/deviceManagement/deviceCompliancePolicies returned 200 (none yet)",
+    "notes": "Prerequisite: the Defender for Endpoint to Intune connection. Turn on 'Microsoft Intune connection' in Defender portal advanced features (portal only), then the Intune connector (PATCH /beta/deviceManagement/mobileThreatDefenseConnectors/fc780465-2017-40d4-a0c5-307022471b92: androidEnabled, iosEnabled true), which needs DeviceManagementServiceConfig.ReadWrite.All (not granted; GET returned 403). Users need the Defender app on the phone. Propose a gate for the portal half."
+  },
+  "MOB-011": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.intune-mobile",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceAppManagement/iosManagedAppProtections and /androidManagedAppProtections ('Box iOS app protection', 'Box Android app protection': appGroupType allCoreMicrosoftApps, targetedAppManagementLevels unspecified); PATCH .../{id} to update; POST .../{id}/assign to {group:grp-staff}",
+    "payload": {
+      "ios": {
+        "@odata.type": "#microsoft.graph.iosManagedAppProtection",
+        "pinRequired": true,
+        "pinCharacterSet": "numeric",
+        "minimumPinLength": 6,
+        "simplePinBlocked": true,
+        "fingerprintBlocked": false,
+        "periodOnlineBeforeAccessCheck": "PT30M",
+        "faceIdBlocked": false
+      },
+      "android": {
+        "@odata.type": "#microsoft.graph.androidManagedAppProtection",
+        "pinRequired": true,
+        "pinCharacterSet": "numeric",
+        "minimumPinLength": 6,
+        "simplePinBlocked": true,
+        "fingerprintBlocked": false,
+        "periodOnlineBeforeAccessCheck": "PT30M",
+        "biometricAuthenticationBlocked": false
+      }
+    },
+    "read": "GET /beta/deviceAppManagement/iosManagedAppProtections/{id} ; GET /beta/deviceAppManagement/androidManagedAppProtections/{id}",
+    "check": "pinRequired == true, pinCharacterSet == 'numeric', minimumPinLength == 6, periodOnlineBeforeAccessCheck == 'PT30M'",
+    "permissions": [
+      "graph:DeviceManagementApps.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalents: IntuneAppProtectionPolicyiOS, IntuneAppProtectionPolicyAndroid"
+    },
+    "verified": "not verified on the tenant: GET /beta/deviceAppManagement/iosManagedAppProtections returned 403 (needs DeviceManagementApps.Read.All / ReadWrite.All, not granted). Properties and enum values confirmed in the test tenant's beta $metadata (iosManagedAppProtection, androidManagedAppProtection, managedAppProtection).",
+    "notes": "All app protection settings live in one iOS and one Android policy; the payload shows only this setting's properties. Needs DeviceManagementApps.ReadWrite.All, which is not in app-permissions.yaml. Biometrics allowed in place of the PIN ('PIN or biometric'). 'Recheck after 30 minutes' = periodOnlineBeforeAccessCheck PT30M (the access requirement recheck interval)."
+  },
+  "MOB-012": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.intune-mobile",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceAppManagement/iosManagedAppProtections and /androidManagedAppProtections ('Box iOS app protection', 'Box Android app protection': appGroupType allCoreMicrosoftApps, targetedAppManagementLevels unspecified); PATCH .../{id} to update; POST .../{id}/assign to {group:grp-staff}",
+    "payload": {
+      "ios": {
+        "@odata.type": "#microsoft.graph.iosManagedAppProtection",
+        "allowedOutboundDataTransferDestinations": "managedApps"
+      },
+      "android": {
+        "@odata.type": "#microsoft.graph.androidManagedAppProtection",
+        "allowedOutboundDataTransferDestinations": "managedApps"
+      }
+    },
+    "read": "GET /beta/deviceAppManagement/iosManagedAppProtections/{id} ; GET /beta/deviceAppManagement/androidManagedAppProtections/{id}",
+    "check": "allowedOutboundDataTransferDestinations == 'managedApps'",
+    "permissions": [
+      "graph:DeviceManagementApps.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalents: IntuneAppProtectionPolicyiOS, IntuneAppProtectionPolicyAndroid"
+    },
+    "verified": "not verified on the tenant: GET /beta/deviceAppManagement/iosManagedAppProtections returned 403 (needs DeviceManagementApps.Read.All / ReadWrite.All, not granted). Properties and enum values confirmed in the test tenant's beta $metadata (iosManagedAppProtection, androidManagedAppProtection, managedAppProtection).",
+    "notes": "All app protection settings live in one iOS and one Android policy; the payload shows only this setting's properties. Needs DeviceManagementApps.ReadWrite.All, which is not in app-permissions.yaml."
+  },
+  "MOB-013": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.intune-mobile",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceAppManagement/iosManagedAppProtections and /androidManagedAppProtections ('Box iOS app protection', 'Box Android app protection': appGroupType allCoreMicrosoftApps, targetedAppManagementLevels unspecified); PATCH .../{id} to update; POST .../{id}/assign to {group:grp-staff}",
+    "payload": {
+      "ios": {
+        "@odata.type": "#microsoft.graph.iosManagedAppProtection",
+        "allowedOutboundClipboardSharingLevel": "managedAppsWithPasteIn"
+      },
+      "android": {
+        "@odata.type": "#microsoft.graph.androidManagedAppProtection",
+        "allowedOutboundClipboardSharingLevel": "managedAppsWithPasteIn"
+      }
+    },
+    "read": "GET /beta/deviceAppManagement/iosManagedAppProtections/{id} ; GET /beta/deviceAppManagement/androidManagedAppProtections/{id}",
+    "check": "allowedOutboundClipboardSharingLevel == 'managedAppsWithPasteIn'",
+    "permissions": [
+      "graph:DeviceManagementApps.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalents: IntuneAppProtectionPolicyiOS, IntuneAppProtectionPolicyAndroid"
+    },
+    "verified": "not verified on the tenant: GET /beta/deviceAppManagement/iosManagedAppProtections returned 403 (needs DeviceManagementApps.Read.All / ReadWrite.All, not granted). Properties and enum values confirmed in the test tenant's beta $metadata (iosManagedAppProtection, androidManagedAppProtection, managedAppProtection).",
+    "notes": "All app protection settings live in one iOS and one Android policy; the payload shows only this setting's properties. Needs DeviceManagementApps.ReadWrite.All, which is not in app-permissions.yaml."
+  },
+  "MOB-014": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.intune-mobile",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceAppManagement/iosManagedAppProtections and /androidManagedAppProtections ('Box iOS app protection', 'Box Android app protection': appGroupType allCoreMicrosoftApps, targetedAppManagementLevels unspecified); PATCH .../{id} to update; POST .../{id}/assign to {group:grp-staff}",
+    "payload": {
+      "ios": {
+        "@odata.type": "#microsoft.graph.iosManagedAppProtection",
+        "saveAsBlocked": true,
+        "allowedDataStorageLocations": [
+          "oneDriveForBusiness",
+          "sharePoint"
+        ]
+      },
+      "android": {
+        "@odata.type": "#microsoft.graph.androidManagedAppProtection",
+        "saveAsBlocked": true,
+        "allowedDataStorageLocations": [
+          "oneDriveForBusiness",
+          "sharePoint"
+        ]
+      }
+    },
+    "read": "GET /beta/deviceAppManagement/iosManagedAppProtections/{id} ; GET /beta/deviceAppManagement/androidManagedAppProtections/{id}",
+    "check": "saveAsBlocked == true && allowedDataStorageLocations == ['oneDriveForBusiness','sharePoint']",
+    "permissions": [
+      "graph:DeviceManagementApps.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalents: IntuneAppProtectionPolicyiOS, IntuneAppProtectionPolicyAndroid"
+    },
+    "verified": "not verified on the tenant: GET /beta/deviceAppManagement/iosManagedAppProtections returned 403 (needs DeviceManagementApps.Read.All / ReadWrite.All, not granted). Properties and enum values confirmed in the test tenant's beta $metadata (iosManagedAppProtection, androidManagedAppProtection, managedAppProtection).",
+    "notes": "All app protection settings live in one iOS and one Android policy; the payload shows only this setting's properties. Needs DeviceManagementApps.ReadWrite.All, which is not in app-permissions.yaml."
+  },
+  "MOB-015": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.intune-mobile",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceAppManagement/iosManagedAppProtections and /androidManagedAppProtections ('Box iOS app protection', 'Box Android app protection': appGroupType allCoreMicrosoftApps, targetedAppManagementLevels unspecified); PATCH .../{id} to update; POST .../{id}/assign to {group:grp-staff}",
+    "payload": {
+      "ios": {
+        "@odata.type": "#microsoft.graph.iosManagedAppProtection",
+        "dataBackupBlocked": true
+      },
+      "android": {
+        "@odata.type": "#microsoft.graph.androidManagedAppProtection",
+        "dataBackupBlocked": true
+      }
+    },
+    "read": "GET /beta/deviceAppManagement/iosManagedAppProtections/{id} ; GET /beta/deviceAppManagement/androidManagedAppProtections/{id}",
+    "check": "dataBackupBlocked == true",
+    "permissions": [
+      "graph:DeviceManagementApps.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalents: IntuneAppProtectionPolicyiOS, IntuneAppProtectionPolicyAndroid"
+    },
+    "verified": "not verified on the tenant: GET /beta/deviceAppManagement/iosManagedAppProtections returned 403 (needs DeviceManagementApps.Read.All / ReadWrite.All, not granted). Properties and enum values confirmed in the test tenant's beta $metadata (iosManagedAppProtection, androidManagedAppProtection, managedAppProtection).",
+    "notes": "All app protection settings live in one iOS and one Android policy; the payload shows only this setting's properties. Needs DeviceManagementApps.ReadWrite.All, which is not in app-permissions.yaml. Blocks iTunes/iCloud and Android backup of organisation data."
+  },
+  "MOB-016": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.intune-mobile",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceAppManagement/iosManagedAppProtections and /androidManagedAppProtections ('Box iOS app protection', 'Box Android app protection': appGroupType allCoreMicrosoftApps, targetedAppManagementLevels unspecified); PATCH .../{id} to update; POST .../{id}/assign to {group:grp-staff}",
+    "payload": {
+      "ios": {
+        "@odata.type": "#microsoft.graph.iosManagedAppProtection",
+        "appDataEncryptionType": "whenDeviceLocked"
+      },
+      "android": {
+        "@odata.type": "#microsoft.graph.androidManagedAppProtection",
+        "encryptAppData": true,
+        "disableAppEncryptionIfDeviceEncryptionIsEnabled": false
+      }
+    },
+    "read": "GET /beta/deviceAppManagement/iosManagedAppProtections/{id} ; GET /beta/deviceAppManagement/androidManagedAppProtections/{id}",
+    "check": "iOS appDataEncryptionType == 'whenDeviceLocked'; Android encryptAppData == true",
+    "permissions": [
+      "graph:DeviceManagementApps.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalents: IntuneAppProtectionPolicyiOS, IntuneAppProtectionPolicyAndroid"
+    },
+    "verified": "not verified on the tenant: GET /beta/deviceAppManagement/iosManagedAppProtections returned 403 (needs DeviceManagementApps.Read.All / ReadWrite.All, not granted). Properties and enum values confirmed in the test tenant's beta $metadata (iosManagedAppProtection, androidManagedAppProtection, managedAppProtection).",
+    "notes": "All app protection settings live in one iOS and one Android policy; the payload shows only this setting's properties. Needs DeviceManagementApps.ReadWrite.All, which is not in app-permissions.yaml."
+  },
+  "MOB-017": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.intune-mobile",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceAppManagement/iosManagedAppProtections and /androidManagedAppProtections ('Box iOS app protection', 'Box Android app protection': appGroupType allCoreMicrosoftApps, targetedAppManagementLevels unspecified); PATCH .../{id} to update; POST .../{id}/assign to {group:grp-staff}",
+    "payload": {
+      "ios": {
+        "@odata.type": "#microsoft.graph.iosManagedAppProtection",
+        "managedBrowserToOpenLinksRequired": true,
+        "managedBrowser": "microsoftEdge"
+      },
+      "android": {
+        "@odata.type": "#microsoft.graph.androidManagedAppProtection",
+        "managedBrowserToOpenLinksRequired": true,
+        "managedBrowser": "microsoftEdge"
+      }
+    },
+    "read": "GET /beta/deviceAppManagement/iosManagedAppProtections/{id} ; GET /beta/deviceAppManagement/androidManagedAppProtections/{id}",
+    "check": "managedBrowserToOpenLinksRequired == true && managedBrowser == 'microsoftEdge'",
+    "permissions": [
+      "graph:DeviceManagementApps.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalents: IntuneAppProtectionPolicyiOS, IntuneAppProtectionPolicyAndroid"
+    },
+    "verified": "not verified on the tenant: GET /beta/deviceAppManagement/iosManagedAppProtections returned 403 (needs DeviceManagementApps.Read.All / ReadWrite.All, not granted). Properties and enum values confirmed in the test tenant's beta $metadata (iosManagedAppProtection, androidManagedAppProtection, managedAppProtection).",
+    "notes": "All app protection settings live in one iOS and one Android policy; the payload shows only this setting's properties. Needs DeviceManagementApps.ReadWrite.All, which is not in app-permissions.yaml."
+  },
+  "MOB-018": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.intune-mobile",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceAppManagement/iosManagedAppProtections and /androidManagedAppProtections ('Box iOS app protection', 'Box Android app protection': appGroupType allCoreMicrosoftApps, targetedAppManagementLevels unspecified); PATCH .../{id} to update; POST .../{id}/assign to {group:grp-staff}",
+    "payload": {
+      "android": {
+        "@odata.type": "#microsoft.graph.androidManagedAppProtection",
+        "screenCaptureBlocked": true
+      }
+    },
+    "read": "GET /beta/deviceAppManagement/iosManagedAppProtections/{id} ; GET /beta/deviceAppManagement/androidManagedAppProtections/{id}",
+    "check": "Android screenCaptureBlocked == true",
+    "permissions": [
+      "graph:DeviceManagementApps.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalents: IntuneAppProtectionPolicyiOS, IntuneAppProtectionPolicyAndroid"
+    },
+    "verified": "not verified on the tenant: GET /beta/deviceAppManagement/iosManagedAppProtections returned 403 (needs DeviceManagementApps.Read.All / ReadWrite.All, not granted). Properties and enum values confirmed in the test tenant's beta $metadata (iosManagedAppProtection, androidManagedAppProtection, managedAppProtection).",
+    "notes": "All app protection settings live in one iOS and one Android policy; the payload shows only this setting's properties. Needs DeviceManagementApps.ReadWrite.All, which is not in app-permissions.yaml. Android only, as stated. iOS now also has screenCaptureConfigurationState (notBlocked/blocked) if the requirement widens."
+  },
+  "MOB-019": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.intune-mobile",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceAppManagement/iosManagedAppProtections and /androidManagedAppProtections ('Box iOS app protection', 'Box Android app protection': appGroupType allCoreMicrosoftApps, targetedAppManagementLevels unspecified); PATCH .../{id} to update; POST .../{id}/assign to {group:grp-staff}",
+    "payload": {
+      "ios": {
+        "@odata.type": "#microsoft.graph.iosManagedAppProtection",
+        "printBlocked": true
+      },
+      "android": {
+        "@odata.type": "#microsoft.graph.androidManagedAppProtection",
+        "printBlocked": true
+      }
+    },
+    "read": "GET /beta/deviceAppManagement/iosManagedAppProtections/{id} ; GET /beta/deviceAppManagement/androidManagedAppProtections/{id}",
+    "check": "printBlocked == true",
+    "permissions": [
+      "graph:DeviceManagementApps.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalents: IntuneAppProtectionPolicyiOS, IntuneAppProtectionPolicyAndroid"
+    },
+    "verified": "not verified on the tenant: GET /beta/deviceAppManagement/iosManagedAppProtections returned 403 (needs DeviceManagementApps.Read.All / ReadWrite.All, not granted). Properties and enum values confirmed in the test tenant's beta $metadata (iosManagedAppProtection, androidManagedAppProtection, managedAppProtection).",
+    "notes": "All app protection settings live in one iOS and one Android policy; the payload shows only this setting's properties. Needs DeviceManagementApps.ReadWrite.All, which is not in app-permissions.yaml. Enhanced tier."
+  },
+  "MOB-020": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.intune-mobile",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceAppManagement/iosManagedAppProtections and /androidManagedAppProtections ('Box iOS app protection', 'Box Android app protection': appGroupType allCoreMicrosoftApps, targetedAppManagementLevels unspecified); PATCH .../{id} to update; POST .../{id}/assign to {group:grp-staff}",
+    "payload": {
+      "ios": {
+        "@odata.type": "#microsoft.graph.iosManagedAppProtection",
+        "thirdPartyKeyboardsBlocked": true
+      },
+      "android": {
+        "@odata.type": "#microsoft.graph.androidManagedAppProtection",
+        "keyboardsRestricted": true,
+        "approvedKeyboards": "{list:android_approved_keyboards}"
+      }
+    },
+    "read": "GET /beta/deviceAppManagement/iosManagedAppProtections/{id} ; GET /beta/deviceAppManagement/androidManagedAppProtections/{id}",
+    "check": "iOS thirdPartyKeyboardsBlocked == true; Android keyboardsRestricted == true with approvedKeyboards == the configured list",
+    "permissions": [
+      "graph:DeviceManagementApps.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalents: IntuneAppProtectionPolicyiOS, IntuneAppProtectionPolicyAndroid"
+    },
+    "verified": "not verified on the tenant: GET /beta/deviceAppManagement/iosManagedAppProtections returned 403 (needs DeviceManagementApps.Read.All / ReadWrite.All, not granted). Properties and enum values confirmed in the test tenant's beta $metadata (iosManagedAppProtection, androidManagedAppProtection, managedAppProtection).",
+    "notes": "All app protection settings live in one iOS and one Android policy; the payload shows only this setting's properties. Needs DeviceManagementApps.ReadWrite.All, which is not in app-permissions.yaml. Enhanced tier. Android has no 'block third-party keyboards' switch: it restricts to an approved list of keyboard packages (for example Gboard and the OEM keyboard), which must be engine data; check that this is acceptable as the meaning of 'blocked'."
+  },
+  "MOB-021": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.intune-mobile",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceAppManagement/iosManagedAppProtections and /androidManagedAppProtections ('Box iOS app protection', 'Box Android app protection': appGroupType allCoreMicrosoftApps, targetedAppManagementLevels unspecified); PATCH .../{id} to update; POST .../{id}/assign to {group:grp-staff}",
+    "payload": {
+      "ios": {
+        "@odata.type": "#microsoft.graph.iosManagedAppProtection",
+        "deviceComplianceRequired": true,
+        "appActionIfDeviceComplianceRequired": "block"
+      },
+      "android": {
+        "@odata.type": "#microsoft.graph.androidManagedAppProtection",
+        "deviceComplianceRequired": true,
+        "appActionIfDeviceComplianceRequired": "block"
+      }
+    },
+    "read": "GET /beta/deviceAppManagement/iosManagedAppProtections/{id} ; GET /beta/deviceAppManagement/androidManagedAppProtections/{id}",
+    "check": "deviceComplianceRequired == true && appActionIfDeviceComplianceRequired == 'block'",
+    "permissions": [
+      "graph:DeviceManagementApps.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalents: IntuneAppProtectionPolicyiOS, IntuneAppProtectionPolicyAndroid"
+    },
+    "verified": "not verified on the tenant: GET /beta/deviceAppManagement/iosManagedAppProtections returned 403 (needs DeviceManagementApps.Read.All / ReadWrite.All, not granted). Properties and enum values confirmed in the test tenant's beta $metadata (iosManagedAppProtection, androidManagedAppProtection, managedAppProtection).",
+    "notes": "All app protection settings live in one iOS and one Android policy; the payload shows only this setting's properties. Needs DeviceManagementApps.ReadWrite.All, which is not in app-permissions.yaml. 'Jailbroken/rooted devices' conditional launch maps to deviceComplianceRequired in Graph."
+  },
+  "MOB-022": {
+    "status": "unresolved",
+    "provider": "intune",
+    "step": "policy.intune-mobile",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceAppManagement/iosManagedAppProtections and /androidManagedAppProtections ('Box iOS app protection', 'Box Android app protection': appGroupType allCoreMicrosoftApps, targetedAppManagementLevels unspecified); PATCH .../{id} to update; POST .../{id}/assign to {group:grp-staff}",
+    "payload": {
+      "ios": {
+        "@odata.type": "#microsoft.graph.iosManagedAppProtection",
+        "minimumWarningOsVersion": "{config:devices.ios.minimum_version}",
+        "minimumRequiredOsVersion": "{config:devices.ios.block_below_version}"
+      },
+      "android": {
+        "@odata.type": "#microsoft.graph.androidManagedAppProtection",
+        "minimumWarningOsVersion": "{config:devices.ios.minimum_version}",
+        "minimumRequiredOsVersion": "{config:devices.ios.block_below_version}"
+      }
+    },
+    "read": "GET /beta/deviceAppManagement/iosManagedAppProtections/{id} ; GET /beta/deviceAppManagement/androidManagedAppProtections/{id}",
+    "check": "minimumWarningOsVersion and minimumRequiredOsVersion == configured values; app version properties not set",
+    "permissions": [
+      "graph:DeviceManagementApps.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalents: IntuneAppProtectionPolicyiOS, IntuneAppProtectionPolicyAndroid"
+    },
+    "verified": "not verified on the tenant: GET /beta/deviceAppManagement/iosManagedAppProtections returned 403 (needs DeviceManagementApps.Read.All / ReadWrite.All, not granted). Properties and enum values confirmed in the test tenant's beta $metadata (iosManagedAppProtection, androidManagedAppProtection, managedAppProtection).",
+    "notes": "Operating system part is exact (minimumWarningOsVersion warn, minimumRequiredOsVersion block, per platform) but only with fixed version strings maintained in configuration. App version part has no relative form: minimumWarningAppVersion / minimumRequiredAppVersion are one fixed version string applied to every app in the policy, so 'current minus one' per app cannot be expressed. Available: OS warn/block with configured versions, and either no app version check or per-app policies with fixed versions. Decision needed. Needs DeviceManagementApps.ReadWrite.All (not granted)."
+  },
+  "MOB-023": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.intune-mobile",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceAppManagement/iosManagedAppProtections and /androidManagedAppProtections ('Box iOS app protection', 'Box Android app protection': appGroupType allCoreMicrosoftApps, targetedAppManagementLevels unspecified); PATCH .../{id} to update; POST .../{id}/assign to {group:grp-staff}",
+    "payload": {
+      "ios": {
+        "@odata.type": "#microsoft.graph.iosManagedAppProtection",
+        "periodOfflineBeforeAccessCheck": "PT12H",
+        "periodOfflineBeforeWipeIsEnforced": "P90D"
+      },
+      "android": {
+        "@odata.type": "#microsoft.graph.androidManagedAppProtection",
+        "periodOfflineBeforeAccessCheck": "PT12H",
+        "periodOfflineBeforeWipeIsEnforced": "P90D"
+      }
+    },
+    "read": "GET /beta/deviceAppManagement/iosManagedAppProtections/{id} ; GET /beta/deviceAppManagement/androidManagedAppProtections/{id}",
+    "check": "periodOfflineBeforeAccessCheck == 'PT12H' && periodOfflineBeforeWipeIsEnforced == 'P90D'",
+    "permissions": [
+      "graph:DeviceManagementApps.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalents: IntuneAppProtectionPolicyiOS, IntuneAppProtectionPolicyAndroid"
+    },
+    "verified": "not verified on the tenant: GET /beta/deviceAppManagement/iosManagedAppProtections returned 403 (needs DeviceManagementApps.Read.All / ReadWrite.All, not granted). Properties and enum values confirmed in the test tenant's beta $metadata (iosManagedAppProtection, androidManagedAppProtection, managedAppProtection).",
+    "notes": "All app protection settings live in one iOS and one Android policy; the payload shows only this setting's properties. Needs DeviceManagementApps.ReadWrite.All, which is not in app-permissions.yaml."
+  },
+  "MOB-024": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.intune-mobile",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceAppManagement/iosManagedAppProtections and /androidManagedAppProtections ('Box iOS app protection', 'Box Android app protection': appGroupType allCoreMicrosoftApps, targetedAppManagementLevels unspecified); PATCH .../{id} to update; POST .../{id}/assign to {group:grp-staff}",
+    "payload": {
+      "ios": {
+        "@odata.type": "#microsoft.graph.iosManagedAppProtection",
+        "maximumPinRetries": 5,
+        "appActionIfMaximumPinRetriesExceeded": "block"
+      },
+      "android": {
+        "@odata.type": "#microsoft.graph.androidManagedAppProtection",
+        "maximumPinRetries": 5,
+        "appActionIfMaximumPinRetriesExceeded": "block"
+      }
+    },
+    "read": "GET /beta/deviceAppManagement/iosManagedAppProtections/{id} ; GET /beta/deviceAppManagement/androidManagedAppProtections/{id}",
+    "check": "maximumPinRetries == 5 && appActionIfMaximumPinRetriesExceeded == 'block'",
+    "permissions": [
+      "graph:DeviceManagementApps.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalents: IntuneAppProtectionPolicyiOS, IntuneAppProtectionPolicyAndroid"
+    },
+    "verified": "not verified on the tenant: GET /beta/deviceAppManagement/iosManagedAppProtections returned 403 (needs DeviceManagementApps.Read.All / ReadWrite.All, not granted). Properties and enum values confirmed in the test tenant's beta $metadata (iosManagedAppProtection, androidManagedAppProtection, managedAppProtection).",
+    "notes": "All app protection settings live in one iOS and one Android policy; the payload shows only this setting's properties. Needs DeviceManagementApps.ReadWrite.All, which is not in app-permissions.yaml. 'block' is the Graph value behind the admin centre's 'Reset PIN' action (the other choice is 'wipe')."
+  },
+  "MOB-025": {
+    "status": "resolved",
+    "provider": "intune",
+    "step": "policy.intune-mobile",
+    "method": "graph-beta",
+    "apply": "POST /beta/deviceAppManagement/iosManagedAppProtections and /androidManagedAppProtections ('Box iOS app protection', 'Box Android app protection': appGroupType allCoreMicrosoftApps, targetedAppManagementLevels unspecified); PATCH .../{id} to update; POST .../{id}/assign to {group:grp-staff}",
+    "payload": {
+      "ios": {
+        "@odata.type": "#microsoft.graph.iosManagedAppProtection",
+        "appActionIfUnableToAuthenticateUser": "wipe"
+      },
+      "android": {
+        "@odata.type": "#microsoft.graph.androidManagedAppProtection",
+        "appActionIfUnableToAuthenticateUser": "wipe"
+      }
+    },
+    "read": "GET /beta/deviceAppManagement/iosManagedAppProtections/{id} ; GET /beta/deviceAppManagement/androidManagedAppProtections/{id}",
+    "check": "appActionIfUnableToAuthenticateUser == 'wipe'",
+    "permissions": [
+      "graph:DeviceManagementApps.ReadWrite.All"
+    ],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalents: IntuneAppProtectionPolicyiOS, IntuneAppProtectionPolicyAndroid"
+    },
+    "verified": "not verified on the tenant: GET /beta/deviceAppManagement/iosManagedAppProtections returned 403 (needs DeviceManagementApps.Read.All / ReadWrite.All, not granted). Properties and enum values confirmed in the test tenant's beta $metadata (iosManagedAppProtection, androidManagedAppProtection, managedAppProtection).",
+    "notes": "All app protection settings live in one iOS and one Android policy; the payload shows only this setting's properties. Needs DeviceManagementApps.ReadWrite.All, which is not in app-permissions.yaml. 'Disabled account' conditional launch maps to appActionIfUnableToAuthenticateUser (block | wipe)."
+  }
+}

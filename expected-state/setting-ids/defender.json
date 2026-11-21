@@ -1,0 +1,673 @@
+{
+  "DEF-001": {
+    "status": "gate",
+    "provider": "intune",
+    "step": "policy.defender",
+    "method": "portal",
+    "apply": "Gate (SPEC \u00a722): Defender portal > Settings > Endpoints > Advanced features: 'Automated Investigation' on; Settings > Endpoints > Device groups: every group (and 'Ungrouped devices') remediation level 'Full - remediate threats automatically'.",
+    "payload": {
+      "guide": "Defender portal > Settings > Endpoints > Advanced features: 'Automated Investigation' on; Settings > Endpoints > Device groups: every group (and 'Ungrouped devices') remediation level 'Full - remediate threats automatically'."
+    },
+    "read": "Defender portal (Settings > Endpoints); evidence: screenshot or export attached to the gate's Events item",
+    "check": "Advanced features 'Automated Investigation' == On; each device group automation level == Full",
+    "permissions": [],
+    "roles": [
+      "Security Administrator (the person at the gate)"
+    ],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; no Microsoft365DSC resource for Defender for Endpoint portal settings"
+    },
+    "verified": "not verified: Defender portal setting with no Graph or Exchange API; the Defender for Endpoint API host is blocked from this environment and has no settings endpoint for it",
+    "notes": "Defender for Business turns this on by default with full automation; the gate confirms it. No public API reads or writes device-group automation level."
+  },
+  "DEF-002": {
+    "status": "gate",
+    "provider": "intune",
+    "step": "policy.defender",
+    "method": "portal",
+    "apply": "Gate (SPEC \u00a722): Defender portal > Settings > Endpoints > Advanced features > Tamper protection: On.",
+    "payload": {
+      "guide": "Defender portal > Settings > Endpoints > Advanced features > Tamper protection: On."
+    },
+    "read": "Defender portal; GET /beta/deviceManagement/managedDevices/{id}/windowsProtectionState (needs DeviceManagementManagedDevices.Read.All, not granted)",
+    "check": "Advanced features 'Tamper protection' == On; per device: managedDevices/{id}/windowsProtectionState.tamperProtectionEnabled == true (Windows) and MAC-028 enforcement level block (macOS)",
+    "permissions": [],
+    "roles": [
+      "Security Administrator (the person at the gate)"
+    ],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; no Microsoft365DSC resource for Defender for Endpoint portal settings"
+    },
+    "verified": "not verified: Defender portal setting with no Graph or Exchange API; the Defender for Endpoint API host is blocked from this environment and has no settings endpoint for it",
+    "notes": "Portal only for the tenant-wide switch. Per-device tamper protection can also be pushed by Intune (Windows: endpoint security antivirus 'Windows Security experience' setting; macOS: MAC-028), which the windows and macOS areas cover."
+  },
+  "DEF-003": {
+    "status": "gate",
+    "provider": "intune",
+    "step": "policy.defender",
+    "method": "portal",
+    "apply": "Gate (SPEC \u00a722): Defender portal > Settings > Endpoints > Web content filtering > Add policy: block Adult content, High bandwidth (abuse-related categories), Legal liability and Security-risk categories chosen in the setting; scope all device groups. Needs network protection in block mode on devices (WIN/MAC-029).",
+    "payload": {
+      "guide": "Defender portal > Settings > Endpoints > Web content filtering > Add policy: block Adult content, High bandwidth (abuse-related categories), Legal liability and Security-risk categories chosen in the setting; scope all device groups. Needs network protection in block mode on devices (WIN/MAC-029)."
+    },
+    "read": "Defender portal (Settings > Endpoints > Web content filtering); Reports > Web protection",
+    "check": "a web content filtering policy exists with the listed categories blocked and scope 'all devices'",
+    "permissions": [],
+    "roles": [
+      "Security Administrator (the person at the gate)"
+    ],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; no Microsoft365DSC resource for Defender for Endpoint portal settings"
+    },
+    "verified": "not verified: Defender portal setting with no Graph or Exchange API; the Defender for Endpoint API host is blocked from this environment and has no settings endpoint for it",
+    "notes": "Mode staged: start with the categories under 'audit' (Web content filtering supports audit-only categories), then move them to 'block' when rollout.stage is enforce. Category list must be named exactly at the gate; the requirement's words map to Microsoft's parent categories Adult content, High bandwidth, Legal liability, Security risk.",
+    "payload_audit": {
+      "guide": "Same policy with the categories selected under 'Audit' instead of 'Block' (no blocking; activity shows in the web protection report)."
+    }
+  },
+  "DEF-004": {
+    "status": "gate",
+    "provider": "intune",
+    "step": "policy.defender",
+    "method": "portal",
+    "apply": "Gate (SPEC \u00a722): Defender portal > Settings > Endpoints > Advanced features: 'Custom network indicators' On.",
+    "payload": {
+      "guide": "Defender portal > Settings > Endpoints > Advanced features: 'Custom network indicators' On."
+    },
+    "read": "Defender portal",
+    "check": "Advanced features 'Custom network indicators' == On",
+    "permissions": [],
+    "roles": [
+      "Security Administrator (the person at the gate)"
+    ],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; no Microsoft365DSC resource for Defender for Endpoint portal settings"
+    },
+    "verified": "not verified: Defender portal setting with no Graph or Exchange API; the Defender for Endpoint API host is blocked from this environment and has no settings endpoint for it",
+    "notes": "Portal only. Indicators themselves can be created through the Defender for Endpoint API (POST /api/indicators on api.security.microsoft.com, needs Ti.ReadWrite.All on WindowsDefenderATP); that host is blocked here and the permission is not in app-permissions.yaml."
+  },
+  "DEF-005": {
+    "status": "gate",
+    "provider": "intune",
+    "step": "policy.defender",
+    "method": "portal",
+    "apply": "Gate (SPEC \u00a722): Defender portal > Settings > Device discovery > Discovery setup: mode 'Standard discovery'.",
+    "payload": {
+      "guide": "Defender portal > Settings > Device discovery > Discovery setup: mode 'Standard discovery'."
+    },
+    "read": "Defender portal",
+    "check": "Device discovery mode == Standard",
+    "permissions": [],
+    "roles": [
+      "Security Administrator (the person at the gate)"
+    ],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; no Microsoft365DSC resource for Defender for Endpoint portal settings"
+    },
+    "verified": "not verified: Defender portal setting with no Graph or Exchange API; the Defender for Endpoint API host is blocked from this environment and has no settings endpoint for it",
+    "notes": "Portal only."
+  },
+  "DEF-006": {
+    "status": "gate",
+    "provider": "intune",
+    "step": "policy.defender",
+    "method": "portal",
+    "apply": "Gate (SPEC \u00a722): Defender portal > Settings > Endpoints > Email notifications > Vulnerabilities: add a rule sending to {mailbox:alerts} for new vulnerabilities, exploits and weekly exposure.",
+    "payload": {
+      "guide": "Defender portal > Settings > Endpoints > Email notifications > Vulnerabilities: add a rule sending to {mailbox:alerts} for new vulnerabilities, exploits and weekly exposure."
+    },
+    "read": "Defender portal",
+    "check": "a vulnerability notification rule exists with recipient {mailbox:alerts}",
+    "permissions": [],
+    "roles": [
+      "Security Administrator (the person at the gate)"
+    ],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; no Microsoft365DSC resource for Defender for Endpoint portal settings"
+    },
+    "verified": "not verified: Defender portal setting with no Graph or Exchange API; the Defender for Endpoint API host is blocked from this environment and has no settings endpoint for it",
+    "notes": "Mode report (evidence only). Portal only. Weekly exposure evidence can also be pulled from Graph security (exposure/secure score) by the collector."
+  },
+  "DEF-007": {
+    "status": "gate",
+    "provider": "intune",
+    "step": "policy.defender",
+    "method": "portal",
+    "apply": "Gate (SPEC \u00a722): Defender portal > Settings > Endpoints > Email notifications > Alerts: rule for severity Medium and High (and Low/Informational off) to {mailbox:alerts}, all device groups.",
+    "payload": {
+      "guide": "Defender portal > Settings > Endpoints > Email notifications > Alerts: rule for severity Medium and High (and Low/Informational off) to {mailbox:alerts}, all device groups."
+    },
+    "read": "Defender portal",
+    "check": "an alert notification rule exists, severities include Medium and High, recipient {mailbox:alerts}",
+    "permissions": [],
+    "roles": [
+      "Security Administrator (the person at the gate)"
+    ],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; no Microsoft365DSC resource for Defender for Endpoint portal settings"
+    },
+    "verified": "not verified: Defender portal setting with no Graph or Exchange API; the Defender for Endpoint API host is blocked from this environment and has no settings endpoint for it",
+    "notes": "Portal only for Defender for Endpoint alert email rules. (Mail alert policies for Defender for Office 365 are Purview Set-ProtectionAlert, see DEF-019.)"
+  },
+  "DEF-008": {
+    "status": "gate",
+    "provider": "intune",
+    "step": "policy.defender",
+    "method": "portal",
+    "apply": "Gate (SPEC \u00a722): Defender portal > Settings > Microsoft Defender XDR > Preview features: off; Settings > Endpoints > Advanced features > Preview features: off.",
+    "payload": {
+      "guide": "Defender portal > Settings > Microsoft Defender XDR > Preview features: off; Settings > Endpoints > Advanced features > Preview features: off."
+    },
+    "read": "Defender portal",
+    "check": "Preview features == Off in both places",
+    "permissions": [],
+    "roles": [
+      "Security Administrator (the person at the gate)"
+    ],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; no Microsoft365DSC resource for Defender for Endpoint portal settings"
+    },
+    "verified": "not verified: Defender portal setting with no Graph or Exchange API; the Defender for Endpoint API host is blocked from this environment and has no settings endpoint for it",
+    "notes": "Portal only."
+  },
+  "DEF-009": {
+    "status": "gate",
+    "provider": "exchange",
+    "step": "policy.defender",
+    "method": "cmdlet",
+    "apply": "Gate (first turn-on in portal: Email & collaboration > Policies & rules > Threat policies > Preset security policies > Standard protection > Manage protection settings), then Set-EOPProtectionPolicyRule / Set-ATPProtectionPolicyRule -Identity 'Standard Preset Security Policy' and Enable-EOPProtectionPolicyRule / Enable-ATPProtectionPolicyRule",
+    "payload": {
+      "Set-EOPProtectionPolicyRule": {
+        "Identity": "Standard Preset Security Policy",
+        "RecipientDomainIs": [
+          "{domain:accepted_all}"
+        ]
+      },
+      "Set-ATPProtectionPolicyRule": {
+        "Identity": "Standard Preset Security Policy",
+        "RecipientDomainIs": [
+          "{domain:accepted_all}"
+        ]
+      },
+      "Enable-EOPProtectionPolicyRule": {
+        "Identity": "Standard Preset Security Policy"
+      },
+      "Enable-ATPProtectionPolicyRule": {
+        "Identity": "Standard Preset Security Policy"
+      }
+    },
+    "read": "Get-EOPProtectionPolicyRule -Identity 'Standard Preset Security Policy'; Get-ATPProtectionPolicyRule -Identity 'Standard Preset Security Policy'",
+    "check": "both rules State == 'Enabled' and RecipientDomainIs contains every accepted domain",
+    "permissions": [
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [
+      "Exchange Administrator"
+    ],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalent: EXOEOPProtectionPolicyRule, EXOATPProtectionPolicyRule"
+    },
+    "verified": "Connect-ExchangeOnline -AccessToken (app-only) on the test tenant; Get-Command shows the cmdlet and every parameter used here (EXO only exposes cmdlets the app's RBAC allows); the Get-* read returned the default object; no preset rules exist yet (count 0)",
+    "notes": "The preset's rules and policies do not exist until the preset is turned on once in the Defender portal (Get-EOPProtectionPolicyRule and Get-ATPProtectionPolicyRule returned no rules on the test tenant), so the first turn-on is a gate; after it, the cmdlets below set recipients and state. Preset policies themselves cannot be edited, only their rules. SentToMemberOf needs mail-enabled groups; if the access groups are plain security groups, the pipeline must pass SentTo with the members instead. SPEC \u00a723 asks every setting to exclude grp-break-glass where the product allows; for mail protection that weakens protection on the most sensitive accounts, so ExceptIfSentToMemberOf is left out: decision for the reviewer."
+  },
+  "DEF-010": {
+    "status": "gate",
+    "provider": "exchange",
+    "step": "policy.defender",
+    "method": "cmdlet",
+    "apply": "Gate (first turn-on in portal: Preset security policies > Strict protection), then Set-EOPProtectionPolicyRule / Set-ATPProtectionPolicyRule -Identity 'Strict Preset Security Policy' and Enable-EOPProtectionPolicyRule / Enable-ATPProtectionPolicyRule",
+    "payload": {
+      "Set-EOPProtectionPolicyRule": {
+        "Identity": "Strict Preset Security Policy",
+        "SentTo": [
+          "{user:founder}"
+        ],
+        "SentToMemberOf": [
+          "{group:grp-admins}",
+          "{group:grp-finance}",
+          "{group:grp-legal}"
+        ]
+      },
+      "Set-ATPProtectionPolicyRule": {
+        "Identity": "Strict Preset Security Policy",
+        "SentTo": [
+          "{user:founder}"
+        ],
+        "SentToMemberOf": [
+          "{group:grp-admins}",
+          "{group:grp-finance}",
+          "{group:grp-legal}"
+        ]
+      },
+      "Enable-EOPProtectionPolicyRule": {
+        "Identity": "Strict Preset Security Policy"
+      },
+      "Enable-ATPProtectionPolicyRule": {
+        "Identity": "Strict Preset Security Policy"
+      }
+    },
+    "read": "Get-EOPProtectionPolicyRule -Identity 'Strict Preset Security Policy'; Get-ATPProtectionPolicyRule -Identity 'Strict Preset Security Policy'",
+    "check": "both rules State == 'Enabled'; SentTo/SentToMemberOf match the owner and the admins, finance and legal groups",
+    "permissions": [
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [
+      "Exchange Administrator"
+    ],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalent: EXOEOPProtectionPolicyRule, EXOATPProtectionPolicyRule"
+    },
+    "verified": "Connect-ExchangeOnline -AccessToken (app-only) on the test tenant; Get-Command shows the cmdlet and every parameter used here (EXO only exposes cmdlets the app's RBAC allows); the Get-* read returned the default object; no preset rules exist yet (count 0)",
+    "notes": "Strict takes precedence over Standard for the same recipient. The preset's rules and policies do not exist until the preset is turned on once in the Defender portal (Get-EOPProtectionPolicyRule and Get-ATPProtectionPolicyRule returned no rules on the test tenant), so the first turn-on is a gate; after it, the cmdlets below set recipients and state. Preset policies themselves cannot be edited, only their rules. SentToMemberOf needs mail-enabled groups; if the access groups are plain security groups, the pipeline must pass SentTo with the members instead. SPEC \u00a723 asks every setting to exclude grp-break-glass where the product allows; for mail protection that weakens protection on the most sensitive accounts, so ExceptIfSentToMemberOf is left out: decision for the reviewer."
+  },
+  "DEF-011": {
+    "status": "gate",
+    "provider": "exchange",
+    "step": "policy.defender",
+    "method": "cmdlet",
+    "apply": "Gate: Preset security policies > Standard and Strict > Manage protection settings > Impersonation protection: add the named users ({list:impersonation_users}) and 'include domains I own'. Preset anti-phishing policies cannot be edited with Set-AntiPhishPolicy.",
+    "payload": {
+      "guide": "Add users to protect (up to 350) and turn on 'Include domains I own' (and custom domains if any) in each preset; the preset's action for impersonation is Quarantine.",
+      "equivalentProperties": {
+        "EnableTargetedUserProtection": true,
+        "TargetedUsersToProtect": [
+          "{list:impersonation_users}"
+        ],
+        "TargetedUserProtectionAction": "Quarantine",
+        "EnableOrganizationDomainsProtection": true,
+        "TargetedDomainProtectionAction": "Quarantine",
+        "EnableMailboxIntelligenceProtection": true,
+        "MailboxIntelligenceProtectionAction": "Quarantine"
+      }
+    },
+    "read": "Get-AntiPhishPolicy | Where-Object RecommendedPolicyType -in 'Standard','Strict'",
+    "check": "EnableTargetedUserProtection == true, TargetedUsersToProtect contains every named user, EnableOrganizationDomainsProtection == true, TargetedUserProtectionAction == 'Quarantine', TargetedDomainProtectionAction == 'Quarantine'",
+    "permissions": [
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [
+      "Exchange Administrator"
+    ],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalent: EXOAntiPhishPolicy"
+    },
+    "verified": "Connect-ExchangeOnline -AccessToken (app-only) on the test tenant; Get-Command shows the cmdlet and every parameter used here (EXO only exposes cmdlets the app's RBAC allows); the Get-* read returned the default object; Get-AntiPhishPolicy properties EnableTargetedUserProtection, TargetedUsersToProtect, EnableOrganizationDomainsProtection, TargetedUserProtectionAction present",
+    "notes": "Gate because presets take precedence over custom anti-phishing policies (a custom policy would not apply to recipients a preset covers) and the preset policies are read-only to Set-AntiPhishPolicy. That the preset's impersonation list is portal-only is from Microsoft's documentation; not tested (read-only run). The apply task should try Set-AntiPhishPolicy on the preset once on test; if it works, this becomes resolved. Named users are a Dictionary/configuration list (no key yet)."
+  },
+  "DEF-012": {
+    "status": "resolved",
+    "provider": "exchange",
+    "step": "policy.defender",
+    "method": "cmdlet",
+    "apply": "Set-AntiPhishPolicy -Identity 'Office365 AntiPhish Default' -HonorDmarcPolicy $true -DmarcRejectAction Reject -DmarcQuarantineAction Quarantine",
+    "payload": {
+      "Identity": "Office365 AntiPhish Default",
+      "HonorDmarcPolicy": true,
+      "DmarcRejectAction": "Reject",
+      "DmarcQuarantineAction": "Quarantine"
+    },
+    "read": "Get-AntiPhishPolicy",
+    "check": "every anti-phishing policy (default and presets) HonorDmarcPolicy == true; default DmarcRejectAction == 'Reject', DmarcQuarantineAction == 'Quarantine'",
+    "permissions": [
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [
+      "Exchange Administrator"
+    ],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalent: EXOAntiPhishPolicy"
+    },
+    "verified": "Connect-ExchangeOnline -AccessToken (app-only) on the test tenant; Get-Command shows the cmdlet and every parameter used here (EXO only exposes cmdlets the app's RBAC allows); the Get-* read returned the default object",
+    "notes": "Preset policies honour DMARC by default; the default policy covers anyone outside the presets."
+  },
+  "DEF-013": {
+    "status": "unresolved",
+    "provider": "exchange",
+    "step": "policy.defender",
+    "method": "cmdlet",
+    "apply": "Set-SafeAttachmentPolicy (custom policy) -Action DynamicDelivery, or the preset's fixed Action Block",
+    "payload": {
+      "options": [
+        {
+          "source": "Standard/Strict preset (DEF-009/010)",
+          "Action": "Block"
+        },
+        {
+          "source": "custom policy via New-SafeAttachmentPolicy / New-SafeAttachmentRule",
+          "Action": "DynamicDelivery",
+          "Enable": true,
+          "QuarantineTag": "AdminOnlyAccessPolicy"
+        }
+      ]
+    },
+    "read": "Get-SafeAttachmentPolicy",
+    "check": "Action == 'Block' or 'DynamicDelivery' on the policy that applies to each recipient",
+    "permissions": [
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [
+      "Exchange Administrator"
+    ],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalent: EXOSafeAttachmentPolicy, EXOSafeAttachmentRule"
+    },
+    "verified": "Connect-ExchangeOnline -AccessToken (app-only) on the test tenant; Get-Command shows the cmdlet and every parameter used here (EXO only exposes cmdlets the app's RBAC allows); the Get-* read returned the default object; Set-SafeAttachmentPolicy -Action and -Enable present",
+    "notes": "Unresolved: Safe Attachments 'Action' is one value: Block, DynamicDelivery or Allow. 'With dynamic delivery' and 'block' cannot both hold. The Standard and Strict presets fix Action = Block and take precedence over custom policies, so Dynamic Delivery is only possible for recipients outside the presets. Available: Block via presets (malicious attachments blocked, delivery waits for the scan) or Dynamic Delivery via a custom policy for recipients excluded from the presets. Decision needed."
+  },
+  "DEF-014": {
+    "status": "resolved",
+    "provider": "exchange",
+    "step": "policy.defender",
+    "method": "cmdlet",
+    "apply": "Set-AtpPolicyForO365 -EnableATPForSPOTeamsODB $true",
+    "payload": {
+      "EnableATPForSPOTeamsODB": true
+    },
+    "read": "Get-AtpPolicyForO365",
+    "check": "EnableATPForSPOTeamsODB == true",
+    "permissions": [
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [
+      "Exchange Administrator"
+    ],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalent: EXOAtpPolicyForO365"
+    },
+    "verified": "Connect-ExchangeOnline -AccessToken (app-only) on the test tenant; Get-Command shows the cmdlet and every parameter used here (EXO only exposes cmdlets the app's RBAC allows); the Get-* read returned the default object",
+    "notes": "Currently False on the test tenant. Safe Documents (EnableSafeDocs) needs Microsoft 365 E5 and is not set. Pair with SharePoint Set-SPOTenant -DisallowInfectedFileDownload $true (sharepoint area) so infected files cannot be downloaded."
+  },
+  "DEF-015": {
+    "status": "resolved",
+    "provider": "exchange",
+    "step": "policy.defender",
+    "method": "cmdlet",
+    "apply": "Delivered by the Standard and Strict presets (DEF-009/DEF-010: Enable-ATPProtectionPolicyRule); Built-In Protection covers anyone outside them",
+    "payload": {
+      "expectedPresetSafeLinks": {
+        "EnableSafeLinksForEmail": true,
+        "EnableSafeLinksForTeams": true,
+        "EnableSafeLinksForOffice": true,
+        "AllowClickThrough": false,
+        "TrackClicks": true,
+        "ScanUrls": true,
+        "EnableForInternalSenders": true,
+        "DeliverMessageAfterScan": true,
+        "DisableUrlRewrite": false
+      }
+    },
+    "read": "Get-SafeLinksPolicy | Where-Object { $_.RecommendedPolicyType -in 'Standard','Strict' -or $_.IsBuiltInProtection }",
+    "check": "on the Standard and Strict Safe Links policies: EnableSafeLinksForEmail, EnableSafeLinksForTeams, EnableSafeLinksForOffice == true and AllowClickThrough == false",
+    "permissions": [
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [
+      "Exchange Administrator"
+    ],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalent: EXOSafeLinksPolicy"
+    },
+    "verified": "Connect-ExchangeOnline -AccessToken (app-only) on the test tenant; Get-Command shows the cmdlet and every parameter used here (EXO only exposes cmdlets the app's RBAC allows); the Get-* read returned the default object; Get-SafeLinksPolicy returned the built-in policy",
+    "notes": "No separate apply: preset Safe Links policies carry these values and cannot be edited; a custom policy would lose to the preset. Depends on the DEF-009 gate. The test tenant today has only 'Built-In Protection Policy' (IsBuiltInProtection true)."
+  },
+  "DEF-016": {
+    "status": "resolved",
+    "provider": "exchange",
+    "step": "policy.defender",
+    "method": "cmdlet",
+    "apply": "Set-MalwareFilterPolicy -Identity Default -EnableFileFilter $true -ZapEnabled $true; Set-HostedContentFilterPolicy -Identity Default -PhishZapEnabled $true -SpamZapEnabled $true",
+    "payload": {
+      "Set-MalwareFilterPolicy": {
+        "Identity": "Default",
+        "EnableFileFilter": true,
+        "FileTypeAction": "Reject",
+        "ZapEnabled": true
+      },
+      "Set-HostedContentFilterPolicy": {
+        "Identity": "Default",
+        "PhishZapEnabled": true,
+        "SpamZapEnabled": true
+      }
+    },
+    "read": "Get-MalwareFilterPolicy -Identity Default; Get-HostedContentFilterPolicy -Identity Default",
+    "check": "EnableFileFilter == true, ZapEnabled == true (malware); PhishZapEnabled == true, SpamZapEnabled == true (anti-spam)",
+    "permissions": [
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [
+      "Exchange Administrator"
+    ],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalent: EXOMalwareFilterPolicy, EXOHostedContentFilterPolicy"
+    },
+    "verified": "Connect-ExchangeOnline -AccessToken (app-only) on the test tenant; Get-Command shows the cmdlet and every parameter used here (EXO only exposes cmdlets the app's RBAC allows); the Get-* read returned the default object",
+    "notes": "Default file type list is kept (Microsoft's common attachment list). ZAP for Teams (Set-TeamsProtectionPolicy -ZapEnabled) needs Defender for Office 365 Plan 2 and is not included."
+  },
+  "DEF-017": {
+    "status": "resolved",
+    "provider": "exchange",
+    "step": "policy.defender",
+    "method": "cmdlet",
+    "apply": "Set-HostedContentFilterPolicy -Identity Default -HighConfidencePhishAction Quarantine -HighConfidencePhishQuarantineTag AdminOnlyAccessPolicy; Set-MalwareFilterPolicy -Identity Default -QuarantineTag AdminOnlyAccessPolicy",
+    "payload": {
+      "Set-HostedContentFilterPolicy": {
+        "Identity": "Default",
+        "HighConfidencePhishAction": "Quarantine",
+        "HighConfidencePhishQuarantineTag": "AdminOnlyAccessPolicy"
+      },
+      "Set-MalwareFilterPolicy": {
+        "Identity": "Default",
+        "QuarantineTag": "AdminOnlyAccessPolicy"
+      }
+    },
+    "read": "Get-HostedContentFilterPolicy; Get-MalwareFilterPolicy; Get-QuarantinePolicy -Identity AdminOnlyAccessPolicy",
+    "check": "HighConfidencePhishAction == 'Quarantine' && HighConfidencePhishQuarantineTag == 'AdminOnlyAccessPolicy' on every anti-spam policy; malware QuarantineTag == 'AdminOnlyAccessPolicy'",
+    "permissions": [
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [
+      "Exchange Administrator"
+    ],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalent: EXOHostedContentFilterPolicy, EXOMalwareFilterPolicy, EXOQuarantinePolicy"
+    },
+    "verified": "Connect-ExchangeOnline -AccessToken (app-only) on the test tenant; Get-Command shows the cmdlet and every parameter used here (EXO only exposes cmdlets the app's RBAC allows); the Get-* read returned the default object",
+    "notes": "AdminOnlyAccessPolicy is a built-in quarantine policy (present on the test tenant) that lets only administrators release. Presets already use it for these verdicts."
+  },
+  "DEF-018": {
+    "status": "resolved",
+    "provider": "exchange",
+    "step": "policy.defender",
+    "method": "cmdlet",
+    "apply": "Set-HostedOutboundSpamFilterPolicy -Identity Default -AutoForwardingMode Off",
+    "payload": {
+      "Identity": "Default",
+      "AutoForwardingMode": "Off"
+    },
+    "read": "Get-HostedOutboundSpamFilterPolicy",
+    "check": "AutoForwardingMode == 'Off' on every outbound policy",
+    "permissions": [
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [
+      "Exchange Administrator"
+    ],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalent: EXOHostedOutboundSpamFilterPolicy"
+    },
+    "verified": "Connect-ExchangeOnline -AccessToken (app-only) on the test tenant; Get-Command shows the cmdlet and every parameter used here (EXO only exposes cmdlets the app's RBAC allows); the Get-* read returned the default object",
+    "notes": "Currently 'Automatic' on the test tenant (which Microsoft now treats as Off, but stating Off removes doubt). Exceptions go in a separate outbound policy scoped to named senders."
+  },
+  "DEF-019": {
+    "status": "resolved",
+    "provider": "exchange",
+    "step": "policy.defender",
+    "method": "cmdlet",
+    "apply": "Set-HostedOutboundSpamFilterPolicy -Identity Default -ActionWhenThresholdReached BlockUser; notification by the Purview alert policy 'User restricted from sending email' (Set-ProtectionAlert -NotifyUser)",
+    "payload": {
+      "Set-HostedOutboundSpamFilterPolicy": {
+        "Identity": "Default",
+        "ActionWhenThresholdReached": "BlockUser",
+        "RecipientLimitExternalPerHour": 0,
+        "RecipientLimitInternalPerHour": 0,
+        "RecipientLimitPerDay": 0
+      },
+      "Set-ProtectionAlert": {
+        "Identity": "User restricted from sending email",
+        "NotifyUser": [
+          "{mailbox:alerts}"
+        ]
+      }
+    },
+    "read": "Get-HostedOutboundSpamFilterPolicy -Identity Default; Get-ProtectionAlert -Identity 'User restricted from sending email'",
+    "check": "ActionWhenThresholdReached == 'BlockUser'; the alert's NotifyUser contains {mailbox:alerts}",
+    "permissions": [
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [
+      "Exchange Administrator",
+      "Security Administrator (S&C alert policy; not yet granted)"
+    ],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalent: EXOHostedOutboundSpamFilterPolicy, SCProtectionAlert"
+    },
+    "verified": "Connect-ExchangeOnline -AccessToken (app-only) on the test tenant; Get-Command shows the cmdlet and every parameter used here (EXO only exposes cmdlets the app's RBAC allows); the Get-* read returned the default object (outbound policy). Not verified: Set-ProtectionAlert/Get-ProtectionAlert, Connect-IPPSSession -AccessToken unsupported in module 3.6.0",
+    "notes": "'Restrict sender' = BlockUser (sender restricted until an admin releases). Limits 0 mean the service defaults. NotifyOutboundSpam / NotifyOutboundSpamRecipients still exist as parameters but Microsoft has deprecated them in favour of the default alert policies, so notification is through the Purview alert. Set-/Get-ProtectionAlert are Security & Compliance cmdlets: Connect-IPPSSession in the installed ExchangeOnlineManagement 3.6.0 has no -AccessToken parameter, so the S&C half was not verified and needs a newer module (3.8+) or certificate sign-in; the S&C session also needs an S&C role for the app (for example Security Administrator), not in app-permissions.yaml."
+  },
+  "DEF-020": {
+    "status": "resolved",
+    "provider": "exchange",
+    "step": "policy.defender",
+    "method": "cmdlet",
+    "apply": "Set-ReportSubmissionPolicy -Identity DefaultReportSubmissionPolicy ...; New-ReportSubmissionRule -Name DefaultReportSubmissionRule -ReportSubmissionPolicy DefaultReportSubmissionPolicy -SentTo {mailbox:security}",
+    "payload": {
+      "Set-ReportSubmissionPolicy": {
+        "Identity": "DefaultReportSubmissionPolicy",
+        "EnableReportToMicrosoft": true,
+        "ReportJunkToCustomizedAddress": true,
+        "ReportNotJunkToCustomizedAddress": true,
+        "ReportPhishToCustomizedAddress": true,
+        "ReportJunkAddresses": [
+          "{mailbox:security}"
+        ],
+        "ReportNotJunkAddresses": [
+          "{mailbox:security}"
+        ],
+        "ReportPhishAddresses": [
+          "{mailbox:security}"
+        ],
+        "EnableThirdPartyAddress": false,
+        "ReportChatMessageEnabled": true,
+        "ReportChatMessageToCustomizedAddressEnabled": true
+      },
+      "New-ReportSubmissionRule": {
+        "Name": "DefaultReportSubmissionRule",
+        "ReportSubmissionPolicy": "DefaultReportSubmissionPolicy",
+        "SentTo": [
+          "{mailbox:security}"
+        ]
+      }
+    },
+    "read": "Get-ReportSubmissionPolicy; Get-ReportSubmissionRule",
+    "check": "EnableReportToMicrosoft == true, ReportPhishToCustomizedAddress == true, ReportPhishAddresses == [{mailbox:security}] (same for junk/not junk); rule SentTo == {mailbox:security} and State Enabled",
+    "permissions": [
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [
+      "Exchange Administrator"
+    ],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalent: EXOReportSubmissionPolicy, EXOReportSubmissionRule"
+    },
+    "verified": "Connect-ExchangeOnline -AccessToken (app-only) on the test tenant; Get-Command shows the cmdlet and every parameter used here (EXO only exposes cmdlets the app's RBAC allows); the Get-* read returned the default object",
+    "notes": "Uses the built-in Report button in Outlook (on by default when user reporting is on). The reporting mailbox should also be a SecOps mailbox in the advanced delivery policy (New-SecOpsOverridePolicy / New-ExoSecOpsOverrideRule) so filtering does not touch reports; that cmdlet was not checked. Currently no rule exists on the test tenant."
+  },
+  "DEF-021": {
+    "status": "unresolved",
+    "provider": "exchange",
+    "step": "policy.defender",
+    "method": "cmdlet",
+    "apply": "No tenant setting. Read-only check of Get-TenantAllowBlockListItems; the pipeline creates any entry it adds with New-TenantAllowBlockListItems -ExpirationDate (now + 30 days)",
+    "payload": {
+      "check_lists": [
+        "Sender",
+        "Url",
+        "FileHash",
+        "IP"
+      ],
+      "New-TenantAllowBlockListItems": {
+        "ExpirationDate": "{date:now+30d}"
+      }
+    },
+    "read": "Get-TenantAllowBlockListItems -ListType Sender|Url|FileHash|IP",
+    "check": "at start every list is empty; afterwards no entry has NoExpiration or ExpirationDate more than 30 days after its creation",
+    "permissions": [
+      "exchange:Exchange.ManageAsApp"
+    ],
+    "roles": [
+      "Exchange Administrator"
+    ],
+    "tcm": {
+      "resource": null,
+      "note": "S-02 not done; Microsoft365DSC equivalent: EXOTenantAllowBlockListItems"
+    },
+    "verified": "Connect-ExchangeOnline -AccessToken (app-only) on the test tenant; Get-Command shows the cmdlet and every parameter used here (EXO only exposes cmdlets the app's RBAC allows); the Get-* read returned the default object",
+    "notes": "Unresolved: expiry is per entry (ExpirationDate, or RemoveAfter 45 days after last use for allow entries); no tenant setting limits entries to 30 days, and administrators can add entries in the portal with no expiry. Available: per-entry ExpirationDate on entries the pipeline creates, plus a drift check that reports entries breaking the rule. 'Empty at start' is a read check (all lists returned no Sender entries on the test tenant). Decision needed: accept 'report and remove' as the control."
+  },
+  "DEF-022": {
+    "status": "not-applied",
+    "provider": "exchange",
+    "step": "policy.defender",
+    "method": "cmdlet",
+    "apply": null,
+    "payload": {},
+    "read": null,
+    "check": null,
+    "permissions": [],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": ""
+    },
+    "verified": "not verified: addon tier",
+    "notes": "Add-on: capability defender_o365_p2 (Defender for Office 365 Plan 2, attack simulation training). Never applied (SPEC \u00a720.3)."
+  },
+  "DEF-023": {
+    "status": "not-applied",
+    "provider": "identity",
+    "step": "policy.defender",
+    "method": "portal",
+    "apply": null,
+    "payload": {},
+    "read": null,
+    "check": null,
+    "permissions": [],
+    "roles": [],
+    "tcm": {
+      "resource": null,
+      "note": ""
+    },
+    "verified": "not verified: addon tier",
+    "notes": "Add-on: capability defender_suite (Defender for Cloud Apps discovery and Conditional Access App Control session control). Never applied (SPEC \u00a720.3)."
+  }
+}

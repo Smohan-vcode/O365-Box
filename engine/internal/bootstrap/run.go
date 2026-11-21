@@ -419,9 +419,7 @@ func ensureCertificate(ctx context.Context, c *graph.Client, app *App, opt Optio
 		if _, kerr := opt.Keys.Get(keyName(opt.Tenant)); kerr == nil {
 			tp := strings.ToUpper(auth.Thumbprint(der))
 			for _, k := range cur.Keys {
-				// customKeyIdentifier is the base64 of the SHA-1 thumbprint.
-				b, _ := base64.StdEncoding.DecodeString(k.CustomKeyIdentifier)
-				if strings.EqualFold(fmt.Sprintf("%X", b), tp) && time.Until(k.EndDateTime) > 30*24*time.Hour {
+				if SameThumbprint(k.CustomKeyIdentifier, tp) && time.Until(k.EndDateTime) > 30*24*time.Hour {
 					pl.Thumbprint = auth.Thumbprint(der)
 					say("✓ certificate in place (key in %s)", opt.Keys.Kind())
 					return nil
@@ -445,6 +443,17 @@ func ensureCertificate(ctx context.Context, c *graph.Client, app *App, opt Optio
 	pl.Thumbprint = auth.Thumbprint(der)
 	say("+ certificate added; private key stored in %s", opt.Keys.Kind())
 	return nil
+}
+
+// SameThumbprint compares a key credential's customKeyIdentifier with a
+// certificate thumbprint. Graph returns the identifier as the hex
+// thumbprint; older responses carried it base64-encoded. Both are accepted.
+func SameThumbprint(customKeyIdentifier, thumbprintHex string) bool {
+	if strings.EqualFold(customKeyIdentifier, thumbprintHex) {
+		return true
+	}
+	b, err := base64.StdEncoding.DecodeString(customKeyIdentifier)
+	return err == nil && strings.EqualFold(fmt.Sprintf("%X", b), thumbprintHex)
 }
 
 func ensureFederated(ctx context.Context, c *graph.Client, app *App, repo string, say func(string, ...any)) error {

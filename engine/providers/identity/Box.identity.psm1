@@ -287,13 +287,14 @@ function Get-DirectoryChanges($In, [switch] $Apply) {
     $owners = Get-GroupByName 'role-owner'
     if (-not $owners) { throw 'role-owner group not found (run identity.groups)' }
     $query = "/groups/$($owners.id)/transitiveMembers/microsoft.graph.user"
-    $hasReviewer = @($acr.reviewers | Where-Object { $_.query -eq $query }).Count -gt 0
+    # Graph stores the query with a "/v1.0" prefix.
+    $hasReviewer = @($acr.reviewers | Where-Object { ($_.query -replace '^/v1\.0', '') -eq $query }).Count -gt 0
     if (-not $acr.isEnabled -or -not $hasReviewer) {
       $changes += New-BoxChange update 'admin consent workflow' 'enabled; reviewers: role-owner'
       if ($Apply) {
         Invoke-BoxGraph -Method PUT -Uri '/policies/adminConsentRequestPolicy' -Body @{
           isEnabled = $true; notifyReviewers = $true; remindersEnabled = $true; requestDurationInDays = 30
-          reviewers = @(@{ query = $query; queryType = 'MicrosoftGraph' }) } | Out-Null
+          reviewers = @(@{ query = $query; queryType = 'MicrosoftGraph'; queryRoot = $null }) } | Out-Null   # Graph rejects reviewers without queryRoot
       }
     }
   }

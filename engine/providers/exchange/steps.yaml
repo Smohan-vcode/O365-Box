@@ -22,3 +22,36 @@ steps:
     task: T2-01
     depends_on: [exchange.shared-mailboxes]
     reads: [company, mail, disclosures]
+  # Resolved policy settings (T14-04). Security & Compliance PowerShell
+  # (labels, DLP, alert policies) runs in the same worker: it is part of
+  # ExchangeOnlineManagement.
+  - id: policy.exchange
+    title: Exchange Online settings from the resolved policy
+    track: T14
+    task: T14-04
+    depends_on: [exchange.shared-mailboxes]
+    reads: ["@policy", tenant, company, mail, users, groups]
+  - id: policy.defender
+    title: Mail protection (Defender for Office 365) from the resolved policy
+    track: T14
+    task: T14-08
+    depends_on: [exchange.shared-mailboxes, exchange.lists]
+    reads: ["@policy", tenant, company, mail]
+  - id: policy.purview
+    title: Audit, sensitivity labels, data loss prevention and alert policies
+    track: T14
+    task: T14-10
+    depends_on: [identity.groups, exchange.shared-mailboxes, exchange.lists]
+    reads: ["@policy", "@dictionary", tenant, company, mail, users, structure, jurisdictions, policy]
+  - id: policy.m365-admin.exchange
+    title: Admin centre calendar sharing (Exchange) from the resolved policy
+    track: T14
+    task: T14-04
+    depends_on: [exchange.shared-mailboxes]
+    reads: ["@policy", tenant, company]
+  - id: policy.m365-apps.exchange
+    title: Outlook add-ins and mandatory labelling from the resolved policy
+    track: T14
+    task: T14-04
+    depends_on: [policy.purview]
+    reads: ["@policy", tenant, company, mail]

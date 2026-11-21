@@ -374,3 +374,71 @@ Describe 'intune policy helpers (T14-05)' {
     }
   }
 }
+
+Describe 'exchange policy steps: comparison helpers (T14-04)' {
+  BeforeAll { Import-Module (Join-Path $PSScriptRoot 'exchange' 'Box.exchange.psm1') -Force }
+  It 'ignores case, order and Identity when comparing' {
+    InModuleScope Box.exchange {
+      $cur = [pscustomobject]@{ Enabled = 'True'; Domains = @('B:x', 'a:Y'); Mode = 'enforce' }
+      @(Compare-BoxProperties $cur @{ Identity = 'Default'; Enabled = $true; Domains = @('a:y', 'b:X'); Mode = 'Enforce' }).Count | Should -Be 0
+    }
+  }
+  It 'lists each property that differs' {
+    InModuleScope Box.exchange {
+      $d = @(Compare-BoxProperties ([pscustomobject]@{ PopEnabled = $true; ImapEnabled = $false }) @{ PopEnabled = $false; ImapEnabled = $false })
+      $d.Count | Should -Be 1
+      $d[0] | Should -BeLike 'PopEnabled:*'
+    }
+  }
+  It 'treats a missing value as different from a wanted one' {
+    InModuleScope Box.exchange { @(Compare-BoxProperties $null @{ Enabled = $true }).Count | Should -Be 1 }
+  }
+  It 'keeps only free/busy sharing and drops anonymous publishing' {
+    InModuleScope Box.exchange {
+      @(Get-BoxSharingDomains @('Anonymous:CalendarSharingFreeBusyReviewer', '*:CalendarSharingFreeBusySimple') $true) | Should -Be @('*:CalendarSharingFreeBusySimple')
+      @(Get-BoxSharingDomains @('partner.example:CalendarSharingFreeBusyDetail') $true) | Should -Be @('*:CalendarSharingFreeBusySimple')
+      @(Get-BoxSharingDomains @('partner.example:CalendarSharingFreeBusyDetail') $false).Count | Should -Be 0
+    }
+  }
+  It 'reads label policy settings' {
+    InModuleScope Box.exchange {
+      $h = ConvertFrom-BoxSettingList @('[mandatory, true]', '[defaultlabelid, 0f1e2d3c-0000-4000-8000-000000000001]')
+      $h['mandatory'] | Should -Be 'true'
+      $h['defaultlabelid'] | Should -Be '0f1e2d3c-0000-4000-8000-000000000001'
+    }
+  }
+  It 'reads label markings from LabelActions' {
+    InModuleScope Box.exchange {
+      $a = ConvertFrom-BoxLabelActions @('{"Type":"applycontentmarking","SubType":"header","Settings":[{"Key":"text","Value":"Confidential"}]}', '{"Type":"encrypt","SubType":null,"Settings":[{"Key":"protectiontype","Value":"template"}]}')
+      $a['applycontentmarking/header.text'] | Should -Be 'Confidential'
+      $a.ContainsKey('encrypt') | Should -BeTrue
+    }
+  }
+  It 'builds an own-address pattern for fictional users' {
+    InModuleScope Box.exchange {
+      $p = Get-BoxOwnAddressPattern 'Ann' 'Sample' @('mail.example')
+      'ann.sample7@mail.example' | Should -Match $p
+      'sample_ann@mail.example' | Should -Match $p
+      'someone@mail.example' | Should -Not -Match $p
+      'ann@other.example' | Should -Not -Match $p
+    }
+  }
+  It 'has a handler for every resolved setting of its policy steps' {
+    $root = Join-Path $PSScriptRoot '..' '..'
+    $maps = @{}
+    foreach ($f in Get-ChildItem (Join-Path $root 'expected-state' 'setting-ids') -Filter *.json) {
+      $j = Get-Content -Raw $f.FullName | ConvertFrom-Json -AsHashtable
+      foreach ($k in $j.Keys) { $maps[$k] = $j[$k] }
+    }
+    InModuleScope Box.exchange -Parameters @{ Maps = $maps } {
+      param($Maps)
+      $missing = @(foreach ($id in $Maps.Keys) {
+          $m = $Maps[$id]
+          if ($m.status -ne 'resolved' -or -not $script:PolicySteps.ContainsKey([string]$m.step)) { continue }
+          if (-not $script:PolicySteps[[string]$m.step].ContainsKey($id)) { "$($m.step) $id" }
+        })
+      $missing | Should -BeNullOrEmpty
+
+    }
+  }
+}

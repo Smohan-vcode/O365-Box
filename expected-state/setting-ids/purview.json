@@ -422,7 +422,40 @@
         "ExchangeLocation": "All",
         "SharePointLocation": "All",
         "OneDriveLocation": "All"
-      }
+      },
+      "New-DlpComplianceRule": [
+        {
+          "Name": "DLP-01 block",
+          "ContentContainsSensitiveInformation": {
+            "operator": "And",
+            "groups": [
+              {
+                "operator": "Or",
+                "name": "Default",
+                "labels": [
+                  {
+                    "name": "{label:Restricted}",
+                    "type": "Sensitivity"
+                  }
+                ]
+              }
+            ]
+          },
+          "AccessScope": "NotInOrganization",
+          "BlockAccess": true,
+          "BlockAccessScope": "PerUser",
+          "NotifyUser": [
+            "Owner",
+            "LastModifier",
+            "SiteAdmin"
+          ],
+          "NotifyAllowOverride": null,
+          "GenerateAlert": "{mailbox:alerts}",
+          "GenerateIncidentReport": "{mailbox:security}",
+          "IncidentReportContent": "All",
+          "ReportSeverityLevel": "High"
+        }
+      ]
     }
   },
   "PVW-011": {
@@ -505,7 +538,51 @@
         "ExchangeLocation": "All",
         "SharePointLocation": "All",
         "OneDriveLocation": "All"
-      }
+      },
+      "New-DlpComplianceRule": [
+        {
+          "Name": "DLP-02 override",
+          "ContentContainsSensitiveInformation": {
+            "operator": "And",
+            "groups": [
+              {
+                "operator": "Or",
+                "name": "Default",
+                "labels": [
+                  {
+                    "name": "{label:Confidential}",
+                    "type": "Sensitivity"
+                  },
+                  {
+                    "name": "{label:Confidential-Sales}",
+                    "type": "Sensitivity"
+                  },
+                  {
+                    "name": "{label:Confidential-Legal}",
+                    "type": "Sensitivity"
+                  },
+                  {
+                    "name": "{label:Confidential-People}",
+                    "type": "Sensitivity"
+                  }
+                ]
+              }
+            ]
+          },
+          "AccessScope": "NotInOrganization",
+          "BlockAccess": true,
+          "BlockAccessScope": "PerUser",
+          "NotifyUser": [
+            "Owner",
+            "LastModifier"
+          ],
+          "NotifyAllowOverride": "WithJustification",
+          "GenerateAlert": "{mailbox:alerts}",
+          "GenerateIncidentReport": "{mailbox:security}",
+          "IncidentReportContent": "All",
+          "ReportSeverityLevel": "Medium"
+        }
+      ]
     }
   },
   "PVW-012": {
@@ -624,7 +701,87 @@
         "ExchangeLocation": "All",
         "SharePointLocation": "All",
         "OneDriveLocation": "All"
-      }
+      },
+      "New-DlpComplianceRule": [
+        {
+          "Name": "DLP-03 tip",
+          "ContentContainsSensitiveInformation": {
+            "operator": "And",
+            "groups": [
+              {
+                "operator": "Or",
+                "name": "Default",
+                "sensitivetypes": [
+                  {
+                    "name": "Credit Card Number",
+                    "minCount": 1,
+                    "confidencelevel": "High",
+                    "maxCount": 4
+                  },
+                  {
+                    "name": "International Banking Account Number (IBAN)",
+                    "minCount": 1,
+                    "confidencelevel": "High",
+                    "maxCount": 4
+                  },
+                  {
+                    "name": "{jurisdictions:bank_account_sits}",
+                    "minCount": 1,
+                    "confidencelevel": "High",
+                    "maxCount": 4
+                  }
+                ]
+              }
+            ]
+          },
+          "AccessScope": "NotInOrganization",
+          "NotifyUser": [
+            "LastModifier",
+            "Owner"
+          ],
+          "NotifyPolicyTipCustomText": "<engine text>",
+          "GenerateIncidentReport": "{mailbox:security}"
+        },
+        {
+          "Name": "DLP-03 block",
+          "ContentContainsSensitiveInformation": {
+            "operator": "And",
+            "groups": [
+              {
+                "operator": "Or",
+                "name": "Default",
+                "sensitivetypes": [
+                  {
+                    "name": "Credit Card Number",
+                    "minCount": 5,
+                    "confidencelevel": "High"
+                  },
+                  {
+                    "name": "International Banking Account Number (IBAN)",
+                    "minCount": 5,
+                    "confidencelevel": "High"
+                  },
+                  {
+                    "name": "{jurisdictions:bank_account_sits}",
+                    "minCount": 5,
+                    "confidencelevel": "High"
+                  }
+                ]
+              }
+            ]
+          },
+          "AccessScope": "NotInOrganization",
+          "BlockAccess": true,
+          "BlockAccessScope": "PerUser",
+          "NotifyUser": [
+            "LastModifier",
+            "Owner"
+          ],
+          "NotifyAllowOverride": "WithJustification",
+          "GenerateAlert": "{mailbox:alerts}",
+          "GenerateIncidentReport": "{mailbox:security}"
+        }
+      ]
     }
   },
   "PVW-013": {
@@ -716,7 +873,60 @@
         "ExchangeLocation": "All",
         "SharePointLocation": "All",
         "OneDriveLocation": "All"
-      }
+      },
+      "New-DlpComplianceRule": [
+        {
+          "Name": "DLP-04 tip",
+          "ContentContainsSensitiveInformation": {
+            "operator": "And",
+            "groups": [
+              {
+                "operator": "Or",
+                "name": "Default",
+                "sensitivetypes": [
+                  {
+                    "name": "{jurisdictions:personal_data_sits}",
+                    "minCount": 1,
+                    "confidencelevel": "High",
+                    "maxCount": 9
+                  }
+                ]
+              }
+            ]
+          },
+          "AccessScope": "NotInOrganization",
+          "NotifyUser": [
+            "LastModifier",
+            "Owner"
+          ],
+          "GenerateIncidentReport": "{mailbox:security}"
+        },
+        {
+          "Name": "DLP-04 block",
+          "ContentContainsSensitiveInformation": {
+            "operator": "And",
+            "groups": [
+              {
+                "operator": "Or",
+                "name": "Default",
+                "sensitivetypes": [
+                  {
+                    "name": "{jurisdictions:personal_data_sits}",
+                    "minCount": 10,
+                    "confidencelevel": "High"
+                  }
+                ]
+              }
+            ]
+          },
+          "AccessScope": "NotInOrganization",
+          "BlockAccess": true,
+          "BlockAccessScope": "PerUser",
+          "NotifyAllowOverride": "WithJustification",
+          "GenerateAlert": "{mailbox:alerts}",
+          "GenerateIncidentReport": "{mailbox:security}"
+        }
+      ]
     }
   },
   "PVW-014": {
@@ -783,7 +993,35 @@
         "ExchangeLocation": "All",
         "SharePointLocation": "All",
         "OneDriveLocation": "All"
-      }
+      },
+      "New-DlpComplianceRule": [
+        {
+          "Name": "DLP-05 block",
+          "ContentContainsSensitiveInformation": {
+            "operator": "And",
+            "groups": [
+              {
+                "operator": "Or",
+                "name": "Default",
+                "sensitivetypes": [
+                  {
+                    "name": "All credential types",
+                    "minCount": 1,
+                    "confidencelevel": "High"
+                  }
+                ]
+              }
+            ]
+          },
+          "AccessScope": "NotInOrganization",
+          "BlockAccess": true,
+          "BlockAccessScope": "PerUser",
+          "NotifyAllowOverride": null,
+          "GenerateAlert": "{mailbox:alerts}",
+          "GenerateIncidentReport": "{mailbox:security}",
+          "ReportSeverityLevel": "High"
+        }
+      ]
     }
   },
   "PVW-015": {
@@ -838,7 +1076,17 @@
           "{site:people}",
           "{site:corporate}"
         ]
-      }
+      },
+      "New-DlpComplianceRule": [
+        {
+          "Name": "DLP-06 block",
+          "AccessScope": "NotInOrganization",
+          "BlockAccess": true,
+          "BlockAccessScope": "PerUser",
+          "GenerateAlert": "{mailbox:alerts}",
+          "GenerateIncidentReport": "{mailbox:security}"
+        }
+      ]
     }
   },
   "PVW-016": {
@@ -891,7 +1139,21 @@
         "SharePointLocation": [
           "{site:sales}"
         ]
-      }
+      },
+      "New-DlpComplianceRule": [
+        {
+          "Name": "DLP-07 override",
+          "AccessScope": "NotInOrganization",
+          "BlockAccess": true,
+          "BlockAccessScope": "PerUser",
+          "NotifyUser": [
+            "Owner",
+            "LastModifier"
+          ],
+          "NotifyAllowOverride": "WithJustification",
+          "GenerateIncidentReport": "{mailbox:security}"
+        }
+      ]
     }
   },
   "PVW-017": {
@@ -940,7 +1202,21 @@
         "Name": "DLP-08 Attachments to consumer mail",
         "Mode": "TestWithNotifications",
         "ExchangeLocation": "All"
-      }
+      },
+      "New-DlpComplianceRule": [
+        {
+          "Name": "DLP-08 justify",
+          "RecipientDomainIs": "{config:policy.consumer_mail_domains}",
+          "DocumentSizeOver": "0B (attachment present; condition to confirm)",
+          "BlockAccess": true,
+          "NotifyUser": [
+            "SiteAdmin"
+          ],
+          "NotifyAllowOverride": "WithJustification",
+          "GenerateIncidentReport": "{mailbox:security}",
+          "IncidentReportContent": "All"
+        }
+      ]
     }
   },
   "PVW-018": {
@@ -986,7 +1262,18 @@
         "Name": "DLP-09 Mail to own consumer address",
         "Mode": "TestWithNotifications",
         "ExchangeLocation": "All"
-      }
+      },
+      "New-DlpComplianceRule": [
+        {
+          "Name": "DLP-09 <user>",
+          "From": "{user:<each user>}",
+          "AnyOfRecipientAddressMatchesPatterns": "^({given}|{family}|{given}.?{family}|{family}.?{given})[._-]?[0-9]*@({consumer domains})$ (generated per user from configuration users)",
+          "BlockAccess": true,
+          "NotifyAllowOverride": "WithJustification",
+          "GenerateAlert": "{mailbox:alerts}",
+          "GenerateIncidentReport": "{mailbox:security}"
+        }
+      ]
     }
   },
   "PVW-019": {
@@ -1052,7 +1339,34 @@
         "ExchangeLocation": "All",
         "SharePointLocation": "All",
         "OneDriveLocation": "All"
-      }
+      },
+      "New-DlpComplianceRule": [
+        {
+          "Name": "DLP-10 tip",
+          "ContentContainsSensitiveInformation": {
+            "operator": "And",
+            "groups": [
+              {
+                "operator": "Or",
+                "name": "Default",
+                "sensitivetypes": [
+                  {
+                    "name": "{sit:company-marker-terms}",
+                    "minCount": 1,
+                    "confidencelevel": "High"
+                  }
+                ]
+              }
+            ]
+          },
+          "AccessScope": "NotInOrganization",
+          "NotifyUser": [
+            "LastModifier",
+            "Owner"
+          ],
+          "GenerateIncidentReport": "{mailbox:security}"
+        }
+      ]
     }
   },
   "PVW-020": {

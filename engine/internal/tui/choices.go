@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 
 	"github.com/Smohan-vcode/O365-Box/engine/internal/choices"
 	"github.com/Smohan-vcode/O365-Box/engine/internal/draft"
@@ -116,7 +117,13 @@ func (s *choicesScreen) View(width, _ int, th Theme, d *draft.Draft) string {
 		}
 		dots = append(dots, mark)
 	}
-	b.WriteString(strings.Join(dots, " ") + th.Muted.Render(fmt.Sprintf("   question %d of %d", s.q+1, len(s.questions))) + "\n\n")
+	label := th.Muted.Render(fmt.Sprintf("   question %d of %d", s.q+1, len(s.questions)))
+	progress := strings.Join(dots, " ")
+	if lipgloss.Width(progress)+lipgloss.Width(label) > width {
+		// Many questions: a bar instead of one dot each.
+		progress = th.Bar(max(8, min(30, width-lipgloss.Width(label)-2)), float64(s.q)/float64(max(1, len(s.questions)-1)))
+	}
+	b.WriteString(progress + label + "\n\n")
 	ch := s.questions[s.q]
 	b.WriteString(th.Accent.Render(wrap(ch.Question, width)) + "\n\n")
 	chosen, _ := s.answer(d, ch)

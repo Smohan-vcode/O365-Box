@@ -22,12 +22,51 @@ type Pool struct {
 	ModulePath string
 	Specs      map[string]PoolSpec
 	Creds      map[string]map[string]any // credentials per provider, sent after start
-	OnRaw      func(provider, line string)
-	OnLog      func(provider, step, level, msg string)
+	// CredsFunc, when set, supplies credentials per provider; it is called
+	// before every call and the worker is re-authenticated when they change
+	// (tokens are refreshed before they expire).
+	CredsFunc func(ctx context.Context, provider string) (map[string]any, error)
+	OnRaw     func(provider, line string)
+	OnLog     func(provider, step, level, msg string)
 
 	mu      sync.Mutex
 	workers map[string]*Worker
 	locks   map[string]*sync.Mutex
+	sent    map[*Worker]string
+}
+
+// authenticate sends credentials when they differ from those last sent.
+func (p *Pool) authenticate(ctx context.Context, provider string, w *Worker) error {
+	var creds map[string]any
+	if p.CredsFunc != nil {
+		c, err := p.CredsFunc(ctx, provider)
+		if err != nil {
+			return fmt.Errorf("credentials for %s: %w", provider, err)
+		}
+		creds = c
+	} else {
+		creds = p.Creds[provider]
+	}
+	if len(creds) == 0 {
+		return nil
+	}
+	b, _ := json.Marshal(creds)
+	p.mu.Lock()
+	if p.sent == nil {
+		p.sent = map[*Worker]string{}
+	}
+	same := p.sent[w] == string(b)
+	p.mu.Unlock()
+	if same {
+		return nil
+	}
+	if err := w.Auth(ctx, creds); err != nil {
+		return err
+	}
+	p.mu.Lock()
+	p.sent[w] = string(b)
+	p.mu.Unlock()
+	return nil
 }
 
 func (p *Pool) lock(provider string) *sync.Mutex {
@@ -72,12 +111,6 @@ func (p *Pool) worker(ctx context.Context, provider string) (*Worker, error) {
 	if err != nil {
 		return nil, err
 	}
-	if c := p.Creds[provider]; len(c) > 0 {
-		if err := w.Auth(ctx, c); err != nil {
-			_ = w.Kill()
-			return nil, err
-		}
-	}
 	p.mu.Lock()
 	p.workers[provider] = w
 	p.mu.Unlock()
@@ -92,6 +125,9 @@ func (p *Pool) Invoke(ctx context.Context, provider, step, operation string, inp
 	defer l.Unlock()
 	w, err := p.worker(ctx, provider)
 	if err != nil {
+		return nil, err
+	}
+	if err := p.authenticate(ctx, provider, w); err != nil {
 		return nil, err
 	}
 	raw, err := w.Invoke(ctx, Invoke{Step: step, Operation: operation, Input: input}, func(e Event) {

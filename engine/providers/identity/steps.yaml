@@ -1,6 +1,45 @@
-# Steps of the identity provider: Entra users, groups, break-glass accounts, Conditional Access and authentication methods (T1).
-# One Microsoft module per provider (spike S-05). Steps are added by the
-# tasks named above; each needs a handler in Box.identity.psm1.
+# Steps of the identity provider: Entra users, groups, break-glass accounts,
+# authentication methods and Conditional Access (T1). One Microsoft module
+# per provider (spike S-05).
 provider: identity
 modules: [Microsoft.Graph.Authentication]
-steps: []
+steps:
+  - id: identity.break-glass
+    title: Break-glass accounts and exclusion group
+    track: T1
+    task: T1-01
+    reads: [tenant, users]
+  - id: identity.gate-g02
+    title: FIDO2 keys registered for break-glass accounts
+    check_only: true
+    reads: [tenant, users]
+  - id: identity.users
+    title: Users and licences
+    track: T1
+    task: T1-02
+    depends_on: [identity.break-glass]
+    reads: [tenant, company, users]
+  - id: identity.groups
+    title: Access groups and role groups
+    track: T1
+    task: T1-03
+    depends_on: [identity.users]
+    reads: [groups, users, company]
+  - id: identity.auth-methods
+    title: Authentication methods
+    track: T1
+    task: T1-05
+    depends_on: [identity.break-glass]
+  - id: identity.conditional-access
+    title: Conditional Access policies
+    track: T1
+    task: T1-05
+    depends_on: [identity.groups, identity.auth-methods]
+    capabilities: [conditional_access]
+    fallback: identity.security-defaults
+    reads: [tenant, users]
+  - id: identity.security-defaults
+    title: Security defaults (fallback without Conditional Access)
+    track: T1
+    task: T1-05
+    fallback_only: true

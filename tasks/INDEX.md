@@ -28,11 +28,11 @@ CI runs `box backlog check`.
 | T13-06 | Structure, modules and permissions screen | P0 | M | T13-02 |  | TODO |
 | T13-07 | Review and confirmation screen | P0 | S | T13-03, T13-04, T13-05, T13-06 |  | TODO |
 | T13-08 | Run view, report and home screen | P0 | M | T13-07, T0-05, T0-06 |  | TODO |
-| T1-01 | Break-glass accounts and exclusion group | P0 | S | T0-04 | yes | TODO |
+| T1-01 | Break-glass accounts and exclusion group | P0 | S | T0-04 | yes | BLOCKED |
 | T1-02 | Users and licences | P0 | S | T1-01 |  | TODO |
 | T1-03 | Groups and role groups | P0 | S | T1-02 |  | TODO |
 | T1-04 | Device baseline | P1 | S | T1-03 |  | TODO |
-| T1-05 | Identity baseline | P0 | M | T1-03, S-02 | yes | TODO |
+| T1-05 | Identity baseline | P0 | M | T1-03, S-02 | yes | BLOCKED |
 | T2-01 | Shared mailboxes, lists and aliases | P0 | S | T1-03 |  | TODO |
 | T2-02 | Mail baseline | P0 | S | T2-01, S-02 |  | TODO |
 | T2-03 | DNS records and DKIM | P0 | S | T2-01 |  | TODO |

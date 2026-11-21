@@ -17,6 +17,7 @@ gates:
     title: Security keys registered
     guide: Register two FIDO2 security keys for each break-glass account and seal one set offline.
     expected: Each break-glass account lists a FIDO2 method
+    check: identity.gate-g02
     check_task: T1-01
   - id: G-03
     title: Flow owner connections

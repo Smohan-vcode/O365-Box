@@ -15,6 +15,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/Smohan-vcode/O365-Box/engine/internal/bootstrap"
 	"github.com/Smohan-vcode/O365-Box/engine/internal/config"
 	"github.com/Smohan-vcode/O365-Box/engine/internal/events"
 	"github.com/Smohan-vcode/O365-Box/engine/internal/plan"
@@ -58,15 +59,17 @@ func (f *runFlags) bind(cmd *cobra.Command, withOnly bool) {
 
 // session is everything one orchestration command needs.
 type session struct {
-	root    string
-	doc     *config.Document
-	catalog *plan.Catalog
-	graph   *plan.Graph
-	state   *state.File
-	pool    *providers.Pool
-	sink    events.Sink
-	red     *events.Redactor
-	caps    map[string]bool
+	root     string
+	doc      *config.Document
+	catalog  *plan.Catalog
+	graph    *plan.Graph
+	state    *state.File
+	pool     *providers.Pool
+	sink     events.Sink
+	red      *events.Redactor
+	caps     map[string]bool
+	pipeline *bootstrap.Pipeline
+	defaults map[string]any
 }
 
 func (g *globals) open(f *runFlags, out io.Writer, exact bool) (*session, error) {
@@ -146,7 +149,71 @@ func (g *globals) open(f *runFlags, out io.Writer, exact bool) (*session, error)
 			s.sink.Emit(events.Event{T: time.Now().UTC(), Ev: events.Log, Step: step, Level: level, Msg: msg})
 		},
 	}
+	if err := s.appCredentials(); err != nil {
+		return nil, err
+	}
+	if s.defaults, err = engineDefaults(root); err != nil {
+		return nil, err
+	}
 	return s, nil
+}
+
+// appCredentials gives providers app-only tokens from the pipeline app's
+// certificate, when bootstrap has run for this tenant.
+func (s *session) appCredentials() error {
+	tenant := s.doc.Config.Tenant.TenantID
+	pl, err := bootstrap.LoadPipeline(tenant)
+	if err != nil {
+		return nil // not bootstrapped yet: providers get no credentials
+	}
+	s.pipeline = pl
+	ks, err := openKeystore()
+	if err != nil {
+		return err
+	}
+	cred, _, err := bootstrap.Credential(ks, tenant)
+	if err != nil {
+		return err
+	}
+	name, _, _ := strings.Cut(pl.InitialDomain, ".")
+	name = strings.ToLower(name)
+	resources := map[string]string{
+		"identity": "https://graph.microsoft.com", "intune": "https://graph.microsoft.com", "teams": "https://graph.microsoft.com",
+		"exchange": "https://outlook.office365.com", "sharepoint": "https://" + name + ".sharepoint.com",
+	}
+	s.pool.CredsFunc = func(ctx context.Context, provider string) (map[string]any, error) {
+		res, ok := resources[provider]
+		if !ok {
+			return nil, nil
+		}
+		tok, err := cred.Token(ctx, res)
+		if err != nil {
+			return nil, err
+		}
+		s.red.AddSecret(tok.Access)
+		out := map[string]any{"app": map[string]any{"access_token": tok.Access, "resource": res}}
+		if provider == "identity" || provider == "intune" || provider == "teams" {
+			// Graph is also needed by the providers that call it alongside their own API.
+			out["graph"] = out["app"]
+		}
+		return out, nil
+	}
+	return nil
+}
+
+// engineDefaults loads the engine data steps may need (roles, baseline).
+func engineDefaults(root string) (map[string]any, error) {
+	out := map[string]any{}
+	for key, rel := range map[string]string{"roles": "defaults/roles.yaml", "baseline_identity": "baseline/identity.yaml",
+		"baseline_exchange": "baseline/exchange.yaml", "baseline_sharepoint": "baseline/sharepoint.yaml",
+		"capabilities": "engine/capabilities.yaml", "lists": "engine/register/lists.yaml"} {
+		var v any
+		if err := readYAMLFile(filepath.Join(root, rel), &v); err != nil {
+			return nil, err
+		}
+		out[key] = v
+	}
+	return out, nil
 }
 
 // capabilities returns the flag's list, or the plan's from engine/capabilities.yaml.
@@ -187,7 +254,11 @@ func (s *session) input(step *plan.Step) any {
 			sub[top] = v
 		}
 	}
-	return map[string]any{"config": sub, "environment": s.doc.Config.Tenant.Environment}
+	in := map[string]any{"config": sub, "environment": s.doc.Config.Tenant.Environment, "defaults": s.defaults}
+	if s.pipeline != nil {
+		in["tenant"] = map[string]any{"id": s.pipeline.TenantID, "initial_domain": s.pipeline.InitialDomain}
+	}
+	return in
 }
 
 func (s *session) executor(f *runFlags) *run.Executor {

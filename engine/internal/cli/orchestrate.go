@@ -37,6 +37,7 @@ type runFlags struct {
 	gatesFile    string
 	modulePath   string
 	timeout      time.Duration
+	dictionary   string
 }
 
 func (f *runFlags) bind(cmd *cobra.Command, withOnly bool) {
@@ -53,23 +54,25 @@ func (f *runFlags) bind(cmd *cobra.Command, withOnly bool) {
 	cmd.Flags().StringVar(&f.gatesFile, "gates", "", "gate definitions (default: engine/gates.yaml)")
 	cmd.Flags().StringVar(&f.modulePath, "module-path", os.Getenv("BOX_MODULE_PATH"), "PSModulePath for provider workers")
 	cmd.Flags().DurationVar(&f.timeout, "step-timeout", 10*time.Minute, "timeout per step operation")
+	cmd.Flags().StringVar(&f.dictionary, "dictionary", "", "company data values to seed the Dictionary (until the onboarding collects them)")
 	_ = cmd.Flags().MarkHidden("providers")
 	_ = cmd.Flags().MarkHidden("gates")
 }
 
 // session is everything one orchestration command needs.
 type session struct {
-	root     string
-	doc      *config.Document
-	catalog  *plan.Catalog
-	graph    *plan.Graph
-	state    *state.File
-	pool     *providers.Pool
-	sink     events.Sink
-	red      *events.Redactor
-	caps     map[string]bool
-	pipeline *bootstrap.Pipeline
-	defaults map[string]any
+	root       string
+	doc        *config.Document
+	catalog    *plan.Catalog
+	graph      *plan.Graph
+	state      *state.File
+	pool       *providers.Pool
+	sink       events.Sink
+	red        *events.Redactor
+	caps       map[string]bool
+	pipeline   *bootstrap.Pipeline
+	defaults   map[string]any
+	dictionary map[string]string
 }
 
 func (g *globals) open(f *runFlags, out io.Writer, exact bool) (*session, error) {
@@ -148,6 +151,11 @@ func (g *globals) open(f *runFlags, out io.Writer, exact bool) (*session, error)
 		OnLog: func(p, step, level, msg string) {
 			s.sink.Emit(events.Event{T: time.Now().UTC(), Ev: events.Log, Step: step, Level: level, Msg: msg})
 		},
+	}
+	if f.dictionary != "" {
+		if err := readYAMLFile(f.dictionary, &s.dictionary); err != nil {
+			return nil, err
+		}
 	}
 	if err := s.appCredentials(); err != nil {
 		return nil, err
@@ -257,13 +265,29 @@ func (s *session) input(step *plan.Step) any {
 		if i := strings.IndexAny(top, ".["); i >= 0 {
 			top = top[:i]
 		}
+		if strings.HasPrefix(top, "@") {
+			continue
+		}
 		if v, ok := s.doc.Raw[top]; ok {
 			sub[top] = v
 		}
 	}
 	in := map[string]any{"config": sub, "environment": s.doc.Config.Tenant.Environment, "defaults": s.defaults}
+	for _, r := range step.Reads {
+		switch r {
+		case "@document":
+			// The configuration document as saved, for the configuration store.
+			if b, err := os.ReadFile(s.doc.File); err == nil {
+				in["document"] = string(b)
+			}
+		case "@dictionary":
+			in["dictionary"] = s.dictionary
+		}
+	}
 	if s.pipeline != nil {
-		in["tenant"] = map[string]any{"id": s.pipeline.TenantID, "initial_domain": s.pipeline.InitialDomain}
+		name, _, _ := strings.Cut(strings.ToLower(s.pipeline.InitialDomain), ".")
+		in["tenant"] = map[string]any{"id": s.pipeline.TenantID, "initial_domain": s.pipeline.InitialDomain,
+			"sharepoint": "https://" + name + ".sharepoint.com", "sharepoint_admin": "https://" + name + "-admin.sharepoint.com"}
 	}
 	return in
 }

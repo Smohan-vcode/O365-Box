@@ -1,6 +1,38 @@
-# Steps of the sharepoint provider: Hub, sites, libraries, folders, permissions and register lists (T3, T4).
-# One Microsoft module per provider (spike S-05). Steps are added by the
-# tasks named above; each needs a handler in Box.sharepoint.psm1.
+# Steps of the sharepoint provider: tenant sharing, hub and sites,
+# libraries and folders, the register lists and the configuration store
+# (T3, T0-06). One Microsoft module per provider (spike S-05).
 provider: sharepoint
 modules: [PnP.PowerShell]
-steps: []
+steps:
+  - id: sharepoint.tenant
+    title: Tenant sharing settings
+    track: T3
+    task: T3-01
+    module: records
+  - id: sharepoint.sites
+    title: Hub and sites
+    track: T3
+    task: T3-01
+    module: records
+    depends_on: [sharepoint.tenant, identity.groups]
+    reads: [tenant, structure, users]
+  - id: sharepoint.libraries
+    title: Libraries, folders and permissions
+    track: T3
+    task: T3-02
+    module: records
+    depends_on: [sharepoint.sites]
+    reads: [structure]
+  - id: sharepoint.register
+    title: Register lists
+    track: T3
+    task: T3-03
+    module: records
+    depends_on: [sharepoint.libraries]
+    reads: [tenant, users]
+  - id: sharepoint.config-store
+    title: Configuration store and Dictionary
+    track: T0
+    task: T0-06
+    depends_on: [sharepoint.register]
+    reads: ["@document", "@dictionary", company, tenant]

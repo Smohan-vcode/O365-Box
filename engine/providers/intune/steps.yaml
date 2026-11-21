@@ -3,4 +3,18 @@
 # tasks named above; each needs a handler in Box.intune.psm1.
 provider: intune
 modules: []   # Graph over REST (common/BoxGraph.psm1)
-steps: []
+steps:
+  - id: policy.intune-windows
+    title: Windows device policies from the resolved settings (compliance, BitLocker, firewall, antivirus, ASR, LAPS, update rings)
+    track: T14
+    task: T14-05
+    module: devices
+    depends_on: [identity.groups]
+    reads: ["@policy", tenant, devices]
+  - id: policy.sharepoint.intune
+    title: OneDrive sync limited to the company tenant on Windows devices (SPO-011)
+    track: T14
+    task: T14-05
+    module: devices
+    depends_on: [policy.intune-windows]
+    reads: ["@policy", tenant]

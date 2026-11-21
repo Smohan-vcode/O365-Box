@@ -227,3 +227,74 @@ Describe 'policy.teams payloads (T14-09)' {
     @(Compare-TeamsValues $cur $want | ForEach-Object { $_.name }) | Should -Be @('AllowGuestUser', 'GlobalCatalogApps')
   }
 }
+
+Describe 'intune policy helpers (T14-05)' {
+  BeforeAll { Import-Module (Join-Path $PSScriptRoot 'intune' 'Box.intune.psm1') -Force }
+  It 'flattens settings-catalogue instances the same whatever the order and template references' {
+    InModuleScope Box.intune {
+      $a = @(
+        @{ settingInstance = @{ settingDefinitionId = 'x_fw'; choiceSettingValue = @{ value = 'x_fw_true'; children = @(
+          @{ settingDefinitionId = 'x_in'; choiceSettingValue = @{ value = 'x_in_1'; children = @() } }) } } },
+        @{ settingInstance = @{ settingDefinitionId = 'x_len'; simpleSettingValue = @{ value = 6 } } })
+      $b = @(
+        [pscustomobject]@{ id = '1'; settingInstance = [pscustomobject]@{ settingDefinitionId = 'x_len'; settingInstanceTemplateReference = $null; simpleSettingValue = [pscustomobject]@{ value = 6 } } },
+        [pscustomobject]@{ id = '0'; settingInstance = [pscustomobject]@{ settingDefinitionId = 'x_fw'; choiceSettingValue = [pscustomobject]@{ value = 'x_fw_true'; settingValueTemplateReference = $null; children = @(
+          [pscustomobject]@{ settingDefinitionId = 'x_in'; choiceSettingValue = [pscustomobject]@{ value = 'x_in_1'; children = @() } }) } } })
+      (Get-IntuneSettingLeaves $a) -join ';' | Should -Be ((Get-IntuneSettingLeaves $b) -join ';')
+      (Get-IntuneSettingLeaves $a) | Should -Contain 'x_in=x_in_1'
+    }
+  }
+  It 'merges children of one parent and the rules of one group collection' {
+    InModuleScope Box.intune {
+      $s1 = @{ settingInstance = @{ settingDefinitionId = 'fw'; choiceSettingValue = @{ value = 'fw_true'; children = @(@{ settingDefinitionId = 'in'; choiceSettingValue = @{ value = 'in_1'; children = @() } }) } } }
+      $s2 = @{ settingInstance = @{ settingDefinitionId = 'fw'; choiceSettingValue = @{ value = 'fw_true'; children = @(@{ settingDefinitionId = 'out'; choiceSettingValue = @{ value = 'out_0'; children = @() } }) } } }
+      $r1 = @{ settingInstance = @{ settingDefinitionId = 'asr'; groupSettingCollectionValue = @(@{ children = @(@{ settingDefinitionId = 'asr_a'; choiceSettingValue = @{ value = 'asr_a_audit'; children = @() } }) }) } }
+      $r2 = @{ settingInstance = @{ settingDefinitionId = 'asr'; groupSettingCollectionValue = @(@{ children = @(@{ settingDefinitionId = 'asr_b'; choiceSettingValue = @{ value = 'asr_b_audit'; children = @() } }) }) } }
+      $r = Merge-IntuneSettings -Map ([ordered]@{}) -Settings @($s1, $s2, $r1, $r2)
+      $r.conflicts.Count | Should -Be 0
+      $r.map.Count | Should -Be 2
+      Get-IntuneSettingLeaves @($r.map.Values) | Should -Be @('asr#=1', 'asr_a=asr_a_audit', 'asr_b=asr_b_audit', 'fw=fw_true', 'in=in_1', 'out=out_0')
+    }
+  }
+  It 'reports a conflict when two settings choose different options' {
+    InModuleScope Box.intune {
+      $s1 = @{ settingInstance = @{ settingDefinitionId = 'a'; choiceSettingValue = @{ value = 'a_0'; children = @() } } }
+      $s2 = @{ settingInstance = @{ settingDefinitionId = 'a'; choiceSettingValue = @{ value = 'a_1'; children = @() } } }
+      @((Merge-IntuneSettings -Map ([ordered]@{}) -Settings @($s1, $s2)).conflicts).Count | Should -Be 1
+    }
+  }
+  It 'compares properties, nested objects and ignores @odata.type' {
+    InModuleScope Box.intune {
+      $want = [ordered]@{ '@odata.type' = '#x'; a = $true; n = 3; s = @{ start = '08:00' } }
+      Compare-IntuneProps $want ([pscustomobject]@{ a = $true; n = 3; s = [pscustomobject]@{ start = '08:00'; end = '17:00' } }) | Should -BeNullOrEmpty
+      Compare-IntuneProps $want ([pscustomobject]@{ a = $false; n = 3; s = [pscustomobject]@{ start = '09:00' } }) | Should -Be @('a', 's.start')
+    }
+  }
+  It 'turns assignment targets into keys and back' {
+    InModuleScope Box.intune {
+      Get-IntuneTargetKey (New-IntuneTarget 'group:g1') | Should -Be 'group:g1'
+      Get-IntuneTargetKey (New-IntuneTarget 'exclude:g1') | Should -Be 'exclude:g1'
+      Get-IntuneTargetKey (New-IntuneTarget 'allDevices') | Should -Be 'allDevices'
+      Test-IntuneSameSet @('b', 'a') @('a', 'b') | Should -BeTrue
+      Test-IntuneSameSet @('a') @() | Should -BeFalse
+    }
+  }
+  It 'resolves placeholders and lists the ones it cannot' {
+    InModuleScope Box.intune {
+      $r = Resolve-WinPlaceholders '{"a":"{tenant:id}","b":"{config:devices.windows.minimum_os_version}","c":"{tenantid}"}' @{ '{tenant:id}' = '00000000-0000-0000-0000-000000000001'; '{config:devices.windows.minimum_os_version}' = $null }
+      $r.json | Should -Match '"a":"00000000-0000-0000-0000-000000000001"'
+      $r.json | Should -Match '"c":"\{tenantid\}"'
+      $r.missing | Should -Be @('{config:devices.windows.minimum_os_version}')
+    }
+  }
+  It 'builds the Edge sign-in pattern from verified domains' {
+    InModuleScope Box.intune {
+      ConvertTo-WinDomainPattern @('acme.example', 'Acme.onmicrosoft.com') | Should -Be '.*@(acme\.example|acme\.onmicrosoft\.com)$'
+    }
+  }
+  It 'derives the Windows SID of an Entra object' {
+    InModuleScope Box.intune {
+      ConvertTo-IntuneSid '00000001-0002-0003-0400-000000000005' | Should -Be 'S-1-12-1-1-196610-4-83886080'
+    }
+  }
+}

@@ -11,7 +11,12 @@ $script:AuditSkipped = @()
 function Connect-Teams {
   $t = (Get-BoxAuth 'teams').access_token
   if ($script:Connected -ne $t) {
-    Connect-MicrosoftTeams -AccessTokens @((Get-BoxAuth 'graph').access_token, $t) -ErrorAction Stop | Out-Null
+    # Both tokens must come from the same client: in box audit the Graph
+    # token for Teams is redeemed from the Teams sign-in (teamsgraph).
+    $g = $null
+    try { $g = (Get-BoxAuth 'teamsgraph').access_token } catch { $g = $null }
+    if (-not $g) { $g = (Get-BoxAuth 'graph').access_token }
+    Connect-MicrosoftTeams -AccessTokens @($g, $t) -ErrorAction Stop | Out-Null
     $script:Connected = $t
   }
 }

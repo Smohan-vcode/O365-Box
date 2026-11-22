@@ -29,7 +29,7 @@ var (
 	resourceVars = map[string]bool{"{sharepoint_admin}": true}
 	// Names a provider worker reads a resource token under. "graph" is the
 	// audit's own read-only Graph token and is never replaced.
-	credentialNames = map[string]bool{"app": true, "ipps": true, "teams": true}
+	credentialNames = map[string]bool{"app": true, "ipps": true, "teams": true, "teamsgraph": true}
 )
 
 // CheckResources validates the resources list.
@@ -47,7 +47,7 @@ func CheckResources(list []Resource) error {
 		case r.Client != "" && !guid.MatchString(r.Client):
 			return fmt.Errorf("resource %s: client %q is not an application id", r.Name, r.Client)
 		case !credentialNames[r.Credential]:
-			return fmt.Errorf("resource %s: credential %q is not app, ipps or teams", r.Name, r.Credential)
+			return fmt.Errorf("resource %s: credential %q is not app, ipps, teams or teamsgraph", r.Name, r.Credential)
 		case slot[r.Provider+"/"+r.Credential]:
 			return fmt.Errorf("resource %s: provider %s already gets a %s token", r.Name, r.Provider, r.Credential)
 		}

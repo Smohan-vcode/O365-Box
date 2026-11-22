@@ -94,3 +94,11 @@ resources:
     client: 12128f48-ec9e-42f0-b203-ea49fb6af367   # Microsoft Teams PowerShell
     provider: teams
     credential: teams
+  # Connect-MicrosoftTeams -AccessTokens needs its Graph token from the same
+  # client as the Teams token; redeemed from the Teams sign-in, no extra code.
+  - name: teams-graph
+    title: Microsoft Graph for Teams
+    resource: https://graph.microsoft.com
+    client: 12128f48-ec9e-42f0-b203-ea49fb6af367   # Microsoft Teams PowerShell
+    provider: teams
+    credential: teamsgraph

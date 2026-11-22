@@ -201,8 +201,10 @@ func TestAuditWorkloadTokens(t *testing.T) {
 		t.Fatalf("%v\n%s", err, buf.String())
 	}
 	text := buf.String()
-	if strings.Join(signIns, "|") != "Exchange Online and Security & Compliance (Purview)|SharePoint admin|Microsoft Teams" || len(redeems) != 1 ||
-		redeems[0] != "https://ps.compliance.protection.outlook.com/.default" {
+	// Teams needs its Graph token from its own client: redeemed from the
+	// Teams sign-in, so no extra code is asked for.
+	if strings.Join(signIns, "|") != "Exchange Online and Security & Compliance (Purview)|SharePoint admin|Microsoft Teams and Microsoft Graph for Teams" || len(redeems) != 2 ||
+		redeems[0] != "https://ps.compliance.protection.outlook.com/.default" || redeems[1] != "https://graph.microsoft.com/.default" {
 		t.Errorf("sign-ins %q, redeems %q", signIns, redeems)
 	}
 	for _, want := range []string{"✓ Exchange Online: signed in read-only", "✓ Microsoft Teams: signed in read-only", "not built yet"} {

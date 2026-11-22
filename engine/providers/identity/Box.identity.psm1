@@ -137,7 +137,12 @@ function Invoke-Users($In) {
 # ---------- identity.groups (T1-03) ----------
 function Get-DesiredGroups($In) {
   $groups = [ordered]@{}
-  foreach ($g in @($In.config.groups | Where-Object { $_.kind -eq 'access' })) { $groups[$g.name] = @{ desc = [string]$g.title; members = @() } }
+  foreach ($g in @($In.config.groups | Where-Object { $_.kind -eq 'access' })) {
+    # accounts: aliases of accounts that are not people in the configuration
+    # (the read-only audit reader, SPEC §26), on the tenant's initial domain.
+    $acc = @($g.accounts | Where-Object { $_ } | ForEach-Object { "$_@$(Get-BreakGlassDomain $In)" })
+    $groups[$g.name] = @{ desc = [string]$g.title; members = $acc }
+  }
   foreach ($r in @($In.defaults.roles.roles)) { $groups["role-$($r.name)"] = @{ desc = "Role: $($r.name)"; members = @() } }
   foreach ($u in @($In.config.users | Where-Object { -not $_.break_glass })) {
     $upn = "$($u.primary)@$(Get-Domain $In)"

@@ -572,6 +572,15 @@
           },
           "fixed": {
             "type": "boolean"
+          },
+          "accounts": {
+            "description": "Accounts that are not people in this configuration (for example the read-only audit account created by box bootstrap --audit-reader), by alias on the tenant's initial domain. identity.groups adds them; it never removes members.",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9._-]*$"
+            },
+            "uniqueItems": true
           }
         },
         "additionalProperties": false,

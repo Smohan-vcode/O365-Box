@@ -93,6 +93,9 @@ type DistList struct {
 	Name    string   `yaml:"name"`
 	Aliases []string `yaml:"aliases"`
 	Members []string `yaml:"members"`
+	// Accounts are aliases (initial domain) of accounts that are not people
+	// in this configuration, such as the audit reader (SPEC §26).
+	Accounts []string `yaml:"accounts"`
 }
 
 type User struct {

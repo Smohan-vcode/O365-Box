@@ -10,6 +10,7 @@ groups:
   - {name: grp-finance, kind: access, title: "Finance"}
   - {name: grp-engineering, kind: access, title: "Engineering"}
   - {name: grp-admins, kind: access, title: "Administrators"}
+  - {name: grp-auditors, kind: access, title: "Auditors (read only): the Compliance and Admin sites, for box audit (SPEC §26)"}
   - {name: grp-break-glass, kind: system, fixed: true, note: "excluded from every Conditional Access policy"}
 
 # Groups a choice suggests (SPEC §25, T14-04). The choice's recommended option
@@ -76,9 +77,9 @@ sites:
     url: compliance
     external: "off"
     classification: Internal
-    access: {grp-admins: owner, grp-staff: visitor}
+    access: {grp-admins: owner, grp-staff: visitor, grp-auditors: visitor}
     libraries:
-      - {name: Policies, access: {grp-admins: owner, grp-staff: visitor}}
+      - {name: Policies, access: {grp-admins: owner, grp-staff: visitor, grp-auditors: visitor}}
       - {name: Evidence}
       - {name: Audits}
       - {name: Questionnaires}
@@ -94,10 +95,10 @@ sites:
     url: admin
     external: "off"
     classification: Confidential
-    access: {grp-admins: owner}
+    access: {grp-admins: owner, grp-auditors: visitor}
     fixed: true
     libraries:
-      - {name: Configuration, versioning: major, access: {grp-admins: owner}}
+      - {name: Configuration, versioning: major, access: {grp-admins: owner, grp-auditors: visitor}}
       - {name: Setup evidence}
       - {name: Automation logs}
       - {name: Configuration exports}
